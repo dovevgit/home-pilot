@@ -36,6 +36,7 @@
 <script type="module">
 import { callFamily, signIn, saveCode } from './js/family.js';
 const $ = id => document.getElementById(id);
+try { const c = new URLSearchParams(location.search).get('c'); if (c) $('sc').value = c.slice(0, 60); } catch (_) {}
 $('form').addEventListener('submit', async (e) => {
   e.preventDefault(); $('error').textContent = '';
   $('submit').disabled = true; $('submit').textContent = 'יוצר...';
