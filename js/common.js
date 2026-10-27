@@ -200,7 +200,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       });
       draw();
     }).catch(() => {});
-    drawer.querySelector('#logout').addEventListener('click', async () => { await supabase.auth.signOut(); location.replace('login.html'); });
+    drawer.querySelector('#logout').addEventListener('click', async () => { try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {} try { Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('pabwxpounvashuoyhwte')).forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch (_) {} location.replace('login.html'); });
 
   }
   if (!back) {
