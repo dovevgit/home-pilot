@@ -192,7 +192,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
         if (st === 'on' && sessionStorage.getItem('pushSynced') !== '1') { try { await P.syncPush(session.user.id); sessionStorage.setItem('pushSynced', '1'); } catch (_) {} }
       };
       b.addEventListener('click', async () => {
-        if (b.dataset.st === 'on') { try { await P.syncPush(session.user.id); showToast('המכשיר עודכן ✓'); } catch (e) { showToast('העדכון נכשל: ' + e.message, true); } return; }
+        if (b.dataset.st === 'on') { try { await P.syncPush(session.user.id); const r = await P.sendTestPush(); showToast(r && r.sent ? 'נשלחה התראת בדיקה ✓' : 'המכשיר עודכן, אך לא נשלחה התראה (' + ((r && r.devices) || 0) + ' מכשירים)', !(r && r.sent)); } catch (e) { showToast('הבדיקה נכשלה: ' + e.message, true); } return; }
         if (b.dataset.st !== 'off') return;
         try { await P.enablePush(session.user.id); showToast('ההתראות הופעלו במכשיר הזה'); } catch (e) { showToast((e.message === 'denied' ? 'לא אושרו התראות' : 'ההפעלה נכשלה') + (e.detail ? ': ' + e.detail : ''), true); }
         draw();
