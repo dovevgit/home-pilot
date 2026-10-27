@@ -60,3 +60,44 @@ export function imageToDataUrl(file, max = 400) {
     img.src = url;
   });
 }
+
+// צילום פנים בעיגול: מצלמה בתוך האפליקציה, חיתוך ריבוע מהאזור שבתוך העיגול. מחזיר data URL (JPEG 400x400) או null.
+export function captureFace() {
+  return new Promise((resolve) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { resolve('unsupported'); return; }
+    let stream = null, facing = 'user';
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#0b1220;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px';
+    ov.innerHTML = '<div style="color:#fff;font-weight:700;font-size:18px;text-align:center">מקמו את הפנים בתוך העיגול</div>' +
+      '<div id="cfStage" style="position:relative;width:min(92vw,420px);aspect-ratio:1;overflow:hidden;border-radius:16px;background:#000">' +
+      '<video id="cfVid" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover"></video>' +
+      '<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center,transparent 0,transparent 39.5%,rgba(0,0,0,.6) 40.5%)"></div>' +
+      '<div style="position:absolute;left:10%;top:10%;width:80%;height:80%;border:3px solid #fff;border-radius:50%;pointer-events:none"></div></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">' +
+      '<button id="cfShot" type="button" class="btn" style="margin:0;min-width:130px">צילום</button>' +
+      '<button id="cfFlip" type="button" class="btn secondary" style="margin:0">החלפת מצלמה</button>' +
+      '<button id="cfCancel" type="button" class="btn secondary" style="margin:0">ביטול</button></div>' +
+      '<div id="cfMsg" style="color:#fca5a5;min-height:20px;text-align:center"></div>';
+    document.body.append(ov);
+    const vid = ov.querySelector('#cfVid'), msg = ov.querySelector('#cfMsg');
+    const stop = () => { try { stream && stream.getTracks().forEach(t => t.stop()); } catch (_) {} };
+    const close = (v) => { stop(); ov.remove(); resolve(v); };
+    const start = async () => {
+      stop(); msg.textContent = '';
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+        vid.srcObject = stream; vid.style.transform = facing === 'user' ? 'scaleX(-1)' : 'none';
+      } catch (e) { msg.textContent = 'אין גישה למצלמה. אפשר לאשר מצלמה בהגדרות הדפדפן.'; }
+    };
+    ov.querySelector('#cfCancel').onclick = () => close(null);
+    ov.querySelector('#cfFlip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; start(); };
+    ov.querySelector('#cfShot').onclick = () => {
+      const w = vid.videoWidth, h = vid.videoHeight; if (!w || !h) { msg.textContent = 'המצלמה עוד לא מוכנה'; return; }
+      const side = Math.min(w, h), crop = side * 0.8, sx = (w - crop) / 2, sy = (h - crop) / 2;
+      const c = document.createElement('canvas'); c.width = c.height = 400;
+      c.getContext('2d').drawImage(vid, sx, sy, crop, crop, 0, 0, 400, 400);
+      close(c.toDataURL('image/jpeg', 0.85));
+    };
+    start();
+  });
+}
