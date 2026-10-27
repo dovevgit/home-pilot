@@ -99,6 +99,7 @@ export const ART = new Set(["paw-print", "dog", "utensils", "trash-2", "bed-doub
 export const slotUsers = (slot) => !slot ? [] : (Array.isArray(slot.assignees) && slot.assignees.length ? slot.assignees : (slot.assignee_id ? [slot.assignee_id] : []));
 export function iconBox(task, size = 46) {
   const c = CARD_COLORS[task.color] || CARD_COLORS.blue;
+  if (typeof task.icon === 'string' && task.icon.startsWith('img:')) return `<span class="ibox art" style="width:${size}px;height:${size}px;background:${c.bg};overflow:hidden;border-radius:50%"><img src="${task.icon.slice(4)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></span>`;
   if (ART.has(task.icon)) return `<span class="ibox art" style="width:${size}px;height:${size}px;background:${c.bg}"><img src="task/${task.icon}.png" alt="" onerror="this.onerror=null;this.src='icons/task/${task.icon}.png'"></span>`;
   return `<span class="ibox" style="width:${size}px;height:${size}px;background:${c.bg};color:${c.fg}">${icon(task.icon || 'sparkles', Math.round(size * 0.52))}</span>`;
 }
