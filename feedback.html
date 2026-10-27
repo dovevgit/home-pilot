@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | ספרו לנו</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+  <div class="card" style="padding:16px">
+    <h2 style="margin:0 0 6px">ספרו לנו מה דעתכם</h2>
+    <p class="help" style="margin:0 0 12px">מה עבד טוב? מה לא ברור? מה חסר? כל הערה עוזרת לנו לשפר את האפליקציה.</p>
+    <textarea id="body" rows="6" maxlength="2000" placeholder="כתבו כאן..." style="width:100%;box-sizing:border-box"></textarea>
+    <button class="btn" id="send" type="button" style="margin-top:10px">שליחה</button>
+    <p class="error" id="err" role="alert"></p>
+  </div>
+</main>
+<script type="module">
+import { initPage, supabase, showToast } from './js/common.js';
+await initPage({ active: 'feedback', title: 'ספרו לנו', back: 'index.html' });
+const $ = id => document.getElementById(id);
+const from = (document.referrer.split('/').pop() || '').split('?')[0].slice(0, 60);
+$('send').addEventListener('click', async () => {
+  const body = $('body').value.trim();
+  if (!body) { $('err').textContent = 'כתבו משהו לפני השליחה'; return; }
+  $('err').textContent = ''; $('send').disabled = true;
+  const { error } = await supabase.from('feedback').insert({ body, page: from || null });
+  $('send').disabled = false;
+  if (error) { $('err').textContent = 'השליחה נכשלה, נסו שוב'; return; }
+  $('body').value = ''; showToast('תודה! קיבלנו');
+});
+</script>
+</body>
+</html>
