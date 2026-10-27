@@ -152,7 +152,8 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.replace('login.html'); await new Promise(() => {}); }
   const { data: profiles } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
-  const withPhoto = (profiles || []).filter(p => p.avatar_path);
+  (profiles || []).forEach(p => { if (p.avatar_path && p.avatar_path.startsWith('static/')) p.avatar_url = 'icons/avatars/' + p.avatar_path.slice(7); });
+  const withPhoto = (profiles || []).filter(p => p.avatar_path && !p.avatar_path.startsWith('static/'));
   if (withPhoto.length) {
     const u = await signedUrls(withPhoto.map(p => p.avatar_path));
     withPhoto.forEach(p => { if (u[p.avatar_path]) p.avatar_url = u[p.avatar_path]; });
