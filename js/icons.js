@@ -1,5 +1,17 @@
 // אייקונים מ-lucide-static (ISC). נוצר אוטומטית.
 export const ICONS = {
+ "dishwasher": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M4 8h16\"/><circle cx=\"12\" cy=\"14.5\" r=\"3.5\"/><path d=\"M7 5.5h.01M10 5.5h.01\"/>",
+ "car": "<path d=\"M5 17H3v-5l2-5h14l2 5v5h-2\"/><path d=\"M3 12h18\"/><circle cx=\"7.5\" cy=\"17\" r=\"2\"/><circle cx=\"16.5\" cy=\"17\" r=\"2\"/><path d=\"M9.5 17h5\"/>",
+ "flower": "<circle cx=\"12\" cy=\"4.5\" r=\"2\"/><circle cx=\"15.5\" cy=\"8\" r=\"2\"/><circle cx=\"12\" cy=\"11.5\" r=\"2\"/><circle cx=\"8.5\" cy=\"8\" r=\"2\"/><circle cx=\"12\" cy=\"8\" r=\"1.2\"/><path d=\"M12 13.5V21\"/><path d=\"M12 18c0-2 2-3 5-3 0 2-2 3-5 3z\"/>",
+ "droplet": "<path d=\"M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z\"/>",
+ "cat": "<path d=\"M4 4l4 3h8l4-3v8a8 8 0 0 1-16 0z\"/><path d=\"M9 12v.5M15 12v.5\"/><path d=\"M11 15.5h2\"/>",
+ "graduation-cap": "<path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5\"/><path d=\"M22 9v6\"/>",
+ "dumbbell": "<path d=\"M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12\"/>",
+ "wrench": "<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/>",
+ "package": "<path d=\"M3 8l9-5 9 5v8l-9 5-9-5z\"/><path d=\"M3 8l9 5 9-5M12 13v8\"/>",
+ "shopping-bag": "<path d=\"M5 8h14l-1 12H6z\"/><path d=\"M9 8V6a3 3 0 0 1 6 0v2\"/>",
+ "mail": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 6 9-6\"/>",
+ "heart": "<path d=\"M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z\"/>",
  "pill": "<path d=\"m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z\" /> <path d=\"m8.5 8.5 7 7\" />",
  "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\" /> <path d=\"M12 8v13\" /> <path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\" /> <path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\" />",
  "map-pin": "<path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\" /> <circle cx=\"12\" cy=\"10\" r=\"3\" />",
@@ -63,5 +75,5 @@ export const TASK_ICONS = [
   ['paw-print','הכלב (כפה)'],['dog','הכלב'],['utensils','כלים ואוכל'],['dishwasher','מדיח כלים'],['trash-2','פח'],['bed-double','חדר'],
   ['brush-cleaning','ניקיון'],['broom','טאטוא'],['book-open','לימודים'],['bath','אמבטיה'],
   ['footprints','מדרגות'],['shirt','כביסה'],['washing-machine','מכונת כביסה'],['shopping-cart','קניות'],
-  ['cooking-pot','בישול'],['recycle','מיחזור'],['leaf','צמחים'],['sparkles','כללי']
+  ['cooking-pot','בישול'],['recycle','מיחזור'],['leaf','צמחים'],['car','רכב'],['flower','גינה'],['droplet','השקיה / מים'],['cat','חתול'],['graduation-cap','שיעורי בית'],['dumbbell','ספורט'],['wrench','תיקונים'],['package','חבילות'],['shopping-bag','מכולת'],['mail','חשבונות ודואר'],['heart','טיפול ועזרה'],['sparkles','כללי']
 ];
