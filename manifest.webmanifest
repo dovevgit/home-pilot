@@ -1,10 +1,10 @@
 {
-  "name": "הבית שלנו",
-  "short_name": "הבית שלנו",
+  "name": "הבית שלנו – ניסוי",
+  "short_name": "ניסוי",
   "description": "משימות הבית, ביחד ובקלות",
   "lang": "he",
   "dir": "rtl",
-  "id": "habayit-shelanu-v2",
+  "id": "habayit-pilot-purple-1",
   "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
