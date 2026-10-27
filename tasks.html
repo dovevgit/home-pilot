@@ -77,7 +77,9 @@ function render() {
   const m = fMember.value, st = fStatus.value, now = new Date();
   const rows = (tasks || []).filter(t => inDay(t, day)).map(t => {
     const c = counts[t.id] || 0;
-    return { t, c, status: deriveStatus(t, c, now), slot: nextSlot(t, c) };
+    let slot = nextSlot(t, c);
+    if (m) { const mine = (t.slots || []).slice(c).find(sl => slotUsers(sl).includes(m)) || (t.slots || []).find(sl => slotUsers(sl).includes(m)); if (mine) slot = mine; }
+    return { t, c, status: deriveStatus(t, c, now), slot };
   }).filter(r => (!m || (r.t.slots || []).some(s => slotUsers(s).includes(m))) && (!st || r.status === st));
   rows.sort((a, b) => (b.status === 'overdue') - (a.status === 'overdue') ||
     (new Date(a.slot?.due_at || '2100-01-01')) - (new Date(b.slot?.due_at || '2100-01-01')));
