@@ -40,14 +40,21 @@ const fMember = document.getElementById('fMember'), fStatus = document.getElemen
 profiles.filter(p => p.is_user).forEach(p => fMember.insertAdjacentHTML('beforeend', `<option value="${p.id}">${esc(p.name)}</option>`));
 if (new URLSearchParams(location.search).get('me') === '1') fMember.value = session.user.id;
 
-let day = 'today';
+const SS = { get(k) { try { return sessionStorage.getItem(k); } catch (_) { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch (_) {} } };
+let day = SS.get('tasks_day');
+if (!['today', 'tomorrow', 'week'].includes(day)) day = 'today';
+document.querySelectorAll('#dayTabs button').forEach(x => x.classList.toggle('on', x.dataset.day === day));
+if (!new URLSearchParams(location.search).get('me')) {
+  const sm = SS.get('tasks_member'); if (sm && [...fMember.options].some(o => o.value === sm)) fMember.value = sm;
+  const ss = SS.get('tasks_status'); if (ss) fStatus.value = ss;
+}
 document.getElementById('dayTabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  day = b.dataset.day;
+  day = b.dataset.day; SS.set('tasks_day', day);
   document.querySelectorAll('#dayTabs button').forEach(x => x.classList.toggle('on', x === b));
   render();
 });
-fMember.onchange = fStatus.onchange = () => render();
+fMember.onchange = fStatus.onchange = () => { SS.set('tasks_member', fMember.value); SS.set('tasks_status', fStatus.value); render(); };
 
 const ws = weekStart();
 const since = addDays(ilDate(new Date()), -8);
