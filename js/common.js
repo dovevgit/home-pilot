@@ -184,6 +184,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="calendar.html">${icon('calendar-days')} לוח שנה</a>
       <a href="history.html">${icon('chart-column')} היסטוריה ודיווחים</a>
       <a href="shop.html">${icon('gift')} חנות</a>
+      <a href="meds.html">${icon('pill')} תרופות</a>
       <a href="requests.html">${icon('hand-heart')} בקשות מיוחדות</a>
       <a href="important.html" class="imp-link">${icon('bell')} הודעה חשובה</a>
       <a href="games.html">${icon('star')} משחקים</a>

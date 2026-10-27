@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | תרופות</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+  <div id="who" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+  <div class="sec-title" style="margin-top:0">היום</div>
+  <div id="today"><p class="empty">טוען...</p></div>
+  <button class="btn" id="add" type="button">הוספת תרופה</button>
+  <div class="sec-title" style="margin-top:22px">התרופות שלי</div>
+  <div id="list"></div>
+  <div class="sec-title" style="margin-top:22px">7 הימים האחרונים</div>
+  <div id="hist"></div>
+  <p style="color:var(--text2);font-size:13px;margin-top:22px;text-align:center">האפליקציה רק מזכירה ורושמת. היא לא מחליפה הוראות של רופא או רוקח.</p>
+</main>
+<div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
+<script type="module">
+import { initPage, supabase, esc, icon, avatar, ilDate, ilTime, dow, addDays, showToast } from './js/common.js';
+const { session, profiles, isAdmin } = await initPage({ active: 'meds', title: 'תרופות', back: 'index.html' });
+const $ = id => document.getElementById(id);
+const WD = ['א','ב','ג','ד','ה','ו','ש'];
+const myId = session.user.id;
+const people = profiles.filter(p => p.active !== false && (p.id === myId || (isAdmin && p.role !== 'admin')));
+let cur = myId, meds = [], doses = [], busy = false;
+const today = ilDate(new Date());
+
+function chips() {
+  $('who').innerHTML = people.length > 1 ? people.map(p => `<button type="button" class="whochip ${p.id === cur ? 'on' : ''}" data-id="${p.id}">${esc(p.id === myId ? 'אני' : p.name)}</button>`).join('') : '';
+  $('who').querySelectorAll('button').forEach(b => b.onclick = () => { cur = b.dataset.id; load(); });
+}
+async function load() {
+  chips();
+  const from = addDays(today, -6);
+  const [m, d] = await Promise.all([
+    supabase.from('meds').select('*').eq('user_id', cur).eq('active', true).order('created_at'),
+    supabase.from('med_doses').select('*').eq('user_id', cur).gte('dose_date', from)
+  ]);
+  meds = m.data || []; doses = d.data || [];
+  render();
+}
+const validOn = (m, date) => date >= m.start_date && (!m.end_date || date <= m.end_date) && (!m.days || m.days.includes(dow(date)));
+const taken = (m, date, t) => doses.find(x => x.med_id === m.id && x.dose_date === date && x.dose_time === t);
+function render() {
+  const now = ilTime(new Date());
+  const items = [];
+  meds.filter(m => validOn(m, today)).forEach(m => (m.times || []).forEach(t => items.push({ m, t })));
+  items.sort((a, b) => a.t.localeCompare(b.t));
+  $('today').innerHTML = items.length ? items.map(({ m, t }) => {
+    const d = taken(m, today, t), late = !d && t < now;
+    return `<div class="req ${d ? 'done' : ''}" style="padding:12px"><div class="reqtop"><div class="reqmain"><b>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
+      <div style="color:${late ? '#B91C1C' : 'var(--text2)'};font-weight:700">${t}${late ? ' · באיחור' : ''}${d ? ' · נלקחה ✓' : ''}</div></div>
+      <button type="button" class="rbtn ${d ? '' : 'go'}" data-a="${d ? 'undo' : 'take'}" data-m="${m.id}" data-t="${t}">${d ? 'ביטול' : 'לקחתי'}</button></div></div>`;
+  }).join('') : '<p class="empty">אין תרופות להיום</p>';
+  $('list').innerHTML = meds.length ? meds.map(m => `<div class="req" style="padding:12px"><div class="reqtop"><div class="reqmain"><b>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
+    <div style="color:var(--text2)">${(m.times || []).join(', ')} · ${m.days ? m.days.map(i => WD[i]).join(' ') : 'כל יום'}${m.end_date ? ' · עד ' + m.end_date.split('-').reverse().join('/') : ''}</div>${m.notes ? `<div style="color:var(--text2)">${esc(m.notes)}</div>` : ''}</div>
+    <button type="button" class="rbtn" data-a="edit" data-m="${m.id}">עריכה</button></div></div>`).join('') : '<p class="empty">עוד לא הוספת תרופות</p>';
+  let h = '';
+  for (let i = 1; i <= 6; i++) {
+    const date = addDays(today, -i); let need = 0, got = 0;
+    meds.forEach(m => { if (validOn(m, date)) (m.times || []).forEach(t => { need++; if (taken(m, date, t)) got++; }); });
+    if (need) h += `<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--field)"><span>${date.split('-').reverse().slice(0, 2).join('/')}</span><b style="color:${got === need ? '#15803D' : '#B91C1C'}">${got}/${need}</b></div>`;
+  }
+  $('hist').innerHTML = h || '<p class="empty">אין עדיין היסטוריה</p>';
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => act(b.dataset));
+}
+async function act(d) {
+  if (busy) return; busy = true;
+  try {
+    if (d.a === 'take') {
+      const m = meds.find(x => x.id === d.m);
+      const { error } = await supabase.from('med_doses').insert({ med_id: d.m, user_id: m.user_id, dose_date: today, dose_time: d.t, taken_by: myId });
+      if (error && error.code !== '23505') throw error;
+      showToast('נרשם ✓');
+    } else if (d.a === 'undo') {
+      const { error } = await supabase.from('med_doses').delete().eq('med_id', d.m).eq('dose_date', today).eq('dose_time', d.t);
+      if (error) throw error;
+    } else if (d.a === 'edit') { busy = false; return openForm(meds.find(x => x.id === d.m)); }
+    await load();
+  } catch (e) { showToast('לא הצלחתי, נסו שוב', true); }
+  busy = false;
+}
+function openForm(m) {
+  const times = m ? [...m.times] : ['08:00'], days = m?.days ? [...m.days] : [];
+  const card = $('modalCard');
+  const draw = () => {
+    card.innerHTML = `<h3 style="margin:0 0 10px">${m ? 'עריכת תרופה' : 'תרופה חדשה'}</h3>
+    <label>שם התרופה</label><input id="fn" value="${esc(m?.name || '')}" style="width:100%;margin-bottom:8px">
+    <label>מינון (למשל: כדור אחד)</label><input id="fd" value="${esc(m?.dose || '')}" style="width:100%;margin-bottom:8px">
+    <label>שעות</label><div id="ft" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">${times.map((t, i) => `<span><input type="time" data-i="${i}" value="${t}">${times.length > 1 ? `<button type="button" class="rbtn" data-rm="${i}">✕</button>` : ''}</span>`).join('')}${times.length < 8 ? '<button type="button" class="rbtn" id="fa">+ שעה</button>' : ''}</div>
+    <label>ימים (בלי בחירה = כל יום)</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${WD.map((w, i) => `<button type="button" class="whochip ${days.includes(i) ? 'on' : ''}" data-d="${i}">${w}</button>`).join('')}</div>
+    <label>עד תאריך (לא חובה)</label><input id="fe" type="date" value="${m?.end_date || ''}" style="width:100%;margin-bottom:8px">
+    <label>הערות (לא חובה)</label><input id="fo" value="${esc(m?.notes || '')}" style="width:100%;margin-bottom:12px">
+    <div style="display:flex;gap:8px"><button class="btn" id="fs" type="button">שמירה</button><button class="rbtn" id="fc" type="button">ביטול</button>${m ? '<button class="rbtn" id="fx" type="button" style="margin-inline-start:auto">מחיקה</button>' : ''}</div>`;
+    const keep = () => { card.querySelectorAll('[data-i]').forEach(i => times[+i.dataset.i] = i.value); };
+    card.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { keep(); times.splice(+b.dataset.rm, 1); draw(); });
+    const fa = $('fa'); if (fa) fa.onclick = () => { keep(); times.push('12:00'); draw(); };
+    card.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const i = +b.dataset.d; days.includes(i) ? days.splice(days.indexOf(i), 1) : days.push(i); b.classList.toggle('on'); });
+    $('fc').onclick = () => $('modal').classList.add('hidden');
+    if ($('fx')) $('fx').onclick = async () => { if (!confirm('למחוק את התרופה?')) return; await supabase.from('meds').update({ active: false }).eq('id', m.id); $('modal').classList.add('hidden'); load(); };
+    $('fs').onclick = async () => {
+      keep();
+      const name = $('fn').value.trim();
+      if (!name) return showToast('צריך שם לתרופה', true);
+      const ts = [...new Set(times.filter(Boolean))].sort();
+      if (!ts.length) return showToast('צריך לפחות שעה אחת', true);
+      const row = { name, dose: $('fd').value.trim() || null, times: ts, days: days.length ? days.sort() : null, end_date: $('fe').value || null, notes: $('fo').value.trim() || null };
+      const q = m ? supabase.from('meds').update(row).eq('id', m.id) : supabase.from('meds').insert({ ...row, user_id: cur });
+      const { error } = await q;
+      if (error) return showToast('לא הצלחתי לשמור', true);
+      $('modal').classList.add('hidden'); load();
+    };
+  };
+  draw(); $('modal').classList.remove('hidden');
+}
+$('add').onclick = () => openForm(null);
+$('modal').onclick = e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); };
+load();
+</script>
+</body>
+</html>
