@@ -95,23 +95,26 @@ async function act(d) {
 }
 function openForm(m) {
   const times = m ? [...m.times] : ['08:00'], days = m?.days ? [...m.days] : [];
+  const st = { name: m?.name || '', dose: m?.dose || '', end: m?.end_date || '', notes: m?.notes || '' };
+  let saving = false;
   const card = $('modalCard');
   const draw = () => {
     card.innerHTML = `<h3 style="margin:0 0 10px">${m ? 'עריכת תרופה' : 'תרופה חדשה'}</h3>
-    <label>שם התרופה</label><input id="fn" value="${esc(m?.name || '')}" style="width:100%;margin-bottom:8px">
-    <label>מינון (למשל: כדור אחד)</label><input id="fd" value="${esc(m?.dose || '')}" style="width:100%;margin-bottom:8px">
+    <label>שם התרופה</label><input id="fn" value="${esc(st.name)}" style="width:100%;margin-bottom:8px">
+    <label>מינון (למשל: כדור אחד)</label><input id="fd" value="${esc(st.dose)}" style="width:100%;margin-bottom:8px">
     <label>שעות</label><div id="ft" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">${times.map((t, i) => `<span><input type="time" data-i="${i}" value="${t}">${times.length > 1 ? `<button type="button" class="rbtn" data-rm="${i}">✕</button>` : ''}</span>`).join('')}${times.length < 8 ? '<button type="button" class="rbtn" id="fa">+ שעה</button>' : ''}</div>
     <label>ימים (בלי בחירה = כל יום)</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${WD.map((w, i) => `<button type="button" class="whochip ${days.includes(i) ? 'on' : ''}" data-d="${i}">${w}</button>`).join('')}</div>
-    <label>עד תאריך (לא חובה)</label><input id="fe" type="date" value="${m?.end_date || ''}" style="width:100%;margin-bottom:8px">
-    <label>הערות (לא חובה)</label><input id="fo" value="${esc(m?.notes || '')}" style="width:100%;margin-bottom:12px">
+    <label>עד תאריך (לא חובה)</label><input id="fe" type="date" value="${st.end}" style="width:100%;margin-bottom:8px">
+    <label>הערות (לא חובה)</label><input id="fo" value="${esc(st.notes)}" style="width:100%;margin-bottom:12px">
     <div style="display:flex;gap:8px"><button class="btn" id="fs" type="button">שמירה</button><button class="rbtn" id="fc" type="button">ביטול</button>${m ? '<button class="rbtn" id="fx" type="button" style="margin-inline-start:auto">מחיקה</button>' : ''}</div>`;
-    const keep = () => { card.querySelectorAll('[data-i]').forEach(i => times[+i.dataset.i] = i.value); };
+    const keep = () => { card.querySelectorAll('[data-i]').forEach(i => times[+i.dataset.i] = i.value); st.name = $('fn').value; st.dose = $('fd').value; st.end = $('fe').value; st.notes = $('fo').value; };
     card.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { keep(); times.splice(+b.dataset.rm, 1); draw(); });
     const fa = $('fa'); if (fa) fa.onclick = () => { keep(); times.push('12:00'); draw(); };
     card.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const i = +b.dataset.d; days.includes(i) ? days.splice(days.indexOf(i), 1) : days.push(i); b.classList.toggle('on'); });
     $('fc').onclick = () => $('modal').classList.add('hidden');
     if ($('fx')) $('fx').onclick = async () => { if (!confirm('למחוק את התרופה?')) return; await supabase.from('meds').update({ active: false }).eq('id', m.id); $('modal').classList.add('hidden'); load(); };
     $('fs').onclick = async () => {
+      if (saving) return;
       keep();
       const name = $('fn').value.trim();
       if (!name) return showToast('צריך שם לתרופה', true);
@@ -119,8 +122,9 @@ function openForm(m) {
       if (!ts.length) return showToast('צריך לפחות שעה אחת', true);
       const row = { name, dose: $('fd').value.trim() || null, times: ts, days: days.length ? days.sort() : null, end_date: $('fe').value || null, notes: $('fo').value.trim() || null };
       const q = m ? supabase.from('meds').update(row).eq('id', m.id) : supabase.from('meds').insert({ ...row, user_id: cur });
+      saving = true; $('fs').disabled = true;
       const { error } = await q;
-      if (error) return showToast('לא הצלחתי לשמור', true);
+      if (error) { saving = false; $('fs').disabled = false; return showToast('לא הצלחתי לשמור', true); }
       $('modal').classList.add('hidden'); load();
     };
   };
