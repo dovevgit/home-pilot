@@ -236,6 +236,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
     }));
   }
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { const g = ev.data && ev.data.goto; if (g && g !== location.href) location.href = g; });
   showPendingToast();
   if (me) import('./game.js').then(m => m.startGame(me, profiles || [])).catch(() => {});
   if (me) import('./bonus.js').then(m => m.startBonus(me, profiles || [])).catch(() => {});
