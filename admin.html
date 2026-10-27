@@ -242,20 +242,15 @@ function showForm(t) {
     ${tabsHtml('form')}
     <form class="card flat" id="f" novalidate>
       <label for="title">שם המשימה</label><input id="title" value="${esc(v.title)}" placeholder="למשל: להוציא את הכלב">
-      <label for="desc">תיאור</label><div class="field"><textarea id="desc">${esc(v.description)}</textarea></div>
-      <label for="tips">טיפים (אופציונלי)</label><div class="field"><textarea id="tips">${esc(v.tips)}</textarea></div>
+      <textarea id="desc" hidden>${esc(v.description)}</textarea><textarea id="tips" hidden>${esc(v.tips)}</textarea>
       <label>אייקון</label>
       <input type="hidden" id="icon" value="${esc(v.icon || 'sparkles')}">
       <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${ART.has(k) ? `<img src="icons/task/${k}.png" alt="" width="32" height="32">` : icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
       <input type="hidden" id="color" value="${esc(v.color || 'blue')}">
       <input type="hidden" id="subject" value="${esc(v.subject_id || '')}">
       <input type="hidden" id="room" value="${esc(v.room || '')}">
-      <div class="grid2">
-        <div><label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" value="${v.points}"></div>
-        <div><label for="penalty">קנס אם לא בוצעה</label><input id="penalty" type="number" min="0" inputmode="numeric" value="${v.penalty_points}"></div>
-      </div>
-      <label for="late">ביצוע באיחור (חלק מהנקודות)</label>
-      <select class="sel" id="late" style="width:100%">${[[0,'0% (בלי נקודות)'],[0.25,'25%'],[0.5,'50%'],[0.75,'75%'],[1,'100%']].map(([k, n]) => `<option value="${k}" ${Number(v.late_fraction) === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" value="${v.points}">
+      <input type="hidden" id="penalty" value="${v.penalty_points ?? 10}"><input type="hidden" id="late" value="${v.late_fraction ?? 0.5}">
       <div class="switch"><span><b>חובה לצלם</b></span><input id="photo" type="checkbox" ${v.requires_photo ? 'checked' : ''}></div>
       <label for="repeat">סוג משימה</label>
       <select class="sel" id="repeat" style="width:100%" ${t ? 'disabled' : ''}>
@@ -266,9 +261,7 @@ function showForm(t) {
       <div id="dateBox"><label for="date">תאריך</label><input id="date" type="date" value="${dateInit}" dir="ltr"></div>
       <label for="times">מספר חזרות</label><input id="times" type="number" min="1" max="10" inputmode="numeric" value="${v.times_required}">
       <label>אחראי ושעה לכל חזרה</label><div id="slots"></div>
-      <label for="remind">תזכורת לפני המועד (בדקות)</label><input id="remind" type="number" min="0" inputmode="numeric" value="${v.remind_before_minutes ?? ''}">
-      <label for="rtext">נוסח תזכורת</label><input id="rtext" value="${esc(v.reminder_text)}" placeholder="הגיע הזמן להוציא את הכלב">
-      <label for="otext">נוסח הודעת איחור</label><input id="otext" value="${esc(v.overdue_text)}" placeholder="הכלב עדיין לא יצא החוצה">
+      <input type="hidden" id="remind" value="${v.remind_before_minutes ?? ''}"><input type="hidden" id="rtext" value="${esc(v.reminder_text)}"><input type="hidden" id="otext" value="${esc(v.overdue_text)}">
       <p class="error" id="err" role="alert"></p>
       <button class="btn" id="save" type="submit">שמירת משימה</button>
     </form>`;
