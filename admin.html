@@ -244,8 +244,10 @@ function showForm(t) {
       <label for="title">שם המשימה</label><input id="title" value="${esc(v.title)}" placeholder="למשל: להוציא את הכלב">
       <label for="desc">תיאור</label><div class="field"><textarea id="desc">${esc(v.description)}</textarea></div>
       <label for="tips">טיפים (אופציונלי)</label><div class="field"><textarea id="tips">${esc(v.tips)}</textarea></div>
+      <label>אייקון</label>
+      <input type="hidden" id="icon" value="${esc(v.icon || 'sparkles')}">
+      <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
       <div class="grid2">
-        <div><label for="icon">אייקון</label><select class="sel" id="icon" style="width:100%">${TASK_ICONS.map(([k, n]) => `<option value="${k}" ${v.icon === k ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         <div><label for="color">צבע</label><select class="sel" id="color" style="width:100%">${Object.entries(CARD_COLORS).map(([k, c]) => `<option value="${k}" ${v.color === k ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
       </div>
       <label for="subject">נושא המשימה (אופציונלי)</label>
@@ -557,6 +559,7 @@ function showAffected(ab, list) {
 
 await loadAbsences();
 if (location.hash === '#members') showMembers(); else showList();
+document.addEventListener('click', e => { const b = e.target.closest('.icob'); if (!b) return; const h = document.getElementById('icon'); if (!h) return; h.value = b.dataset.ic; document.querySelectorAll('.icob').forEach(x => { const on = x === b; x.style.borderColor = on ? '#F97316' : 'var(--field)'; x.style.background = on ? '#FFE7CC' : '#fff'; }); });
 </script>
 </body>
 </html>
