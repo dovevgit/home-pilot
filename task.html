@@ -32,7 +32,7 @@ else {
   const S = STATUS[status];
   const slot = nextSlot(t, c);
   const repeatTxt = t.repeat === 'weekly' ? 'שבועי' : t.repeat === 'daily' ? (t.times_required > 1 ? `${t.times_required} פעמים ביום` : 'פעם ביום') : 'חד-פעמי';
-  const due = slot?.due_at ? `<span dir="ltr">${ilTime(new Date(slot.due_at))}</span>` : '—';
+  const due = slot?.due_at ? (() => { const d = new Date(slot.due_at); const day = d.toLocaleDateString('he-IL', { weekday: 'long', timeZone: 'Asia/Jerusalem' }); const dt = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', timeZone: 'Asia/Jerusalem' }); return `${day}, ${dt} · <span dir="ltr">${ilTime(d)}</span>`; })() : '—';
   document.title = 'הבית שלנו | ' + t.title;
   const urls = {};
   const paths = reps.map(r => r.photo_path).filter(Boolean);
