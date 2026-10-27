@@ -485,7 +485,7 @@ async function showList() {
   root.querySelectorAll('.st-pk:not([disabled])').forEach(b => b.onclick = async () => {
     b.disabled = true;
     const { data, error } = await supabase.rpc('st_invite', { p_opp: b.dataset.id });
-    if (error) { showToast(/game_exists/.test(error.message) ? 'כבר יש משחק פעיל עם השחקן הזה' : 'ההזמנה נכשלה', true); b.disabled = false; return; }
+    if (error) { showToast(/game_exists/.test(error.message) ? 'כבר יש משחק פעיל עם השחקן הזה' : 'ההזמנה נכשלה: ' + String(error.message || error.code || '').slice(0, 120), true); b.disabled = false; return; }
     location.href = 'stratego.html?g=' + data;
   });
 }
