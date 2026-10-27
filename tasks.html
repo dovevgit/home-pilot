@@ -61,8 +61,10 @@ function inDay(t, which) {
   const today = ilDate(new Date());
   const slots = t.slots || [];
   if (which === 'week') {
-    if (slots.length) return slots.some(s => s.due_at && new Date(s.due_at) >= ws.start && new Date(s.due_at) < ws.end);
-    return t.occurrence_date >= ws.dateStr && t.occurrence_date < addDays(ws.dateStr, 7);
+    // השבוע הנוכחי (שישי עד שישי) וגם מה שכבר נקבע לשבוע הבא
+    const wsEnd2 = new Date(ws.end.getTime() + 7 * 86400000);
+    if (slots.length) return slots.some(s => s.due_at && new Date(s.due_at) >= ws.start && new Date(s.due_at) < wsEnd2);
+    return t.occurrence_date >= ws.dateStr && t.occurrence_date < addDays(ws.dateStr, 14);
   }
   const target = which === 'today' ? today : addDays(today, 1);
   if (slots.length) return slots.some(s => s.due_at && ilDate(new Date(s.due_at)) === target);
@@ -83,7 +85,8 @@ function render() {
   el.innerHTML = rows.map(({ t, c, status, slot }) => {
     const S = STATUS[status];
     const multi = t.times_required > 1;
-    const due = slot?.due_at ? (multi && status !== 'done' ? `הבא: ${ilTime(new Date(slot.due_at))}` : ilTime(new Date(slot.due_at))) : '';
+    const dd = slot?.due_at && ilDate(new Date(slot.due_at)) !== ilDate(new Date()) ? ilDate(new Date(slot.due_at)).split('-').reverse().slice(0, 2).join('/') + ' ' : '';
+    const due = slot?.due_at ? dd + (multi && status !== 'done' ? `הבא: ${ilTime(new Date(slot.due_at))}` : ilTime(new Date(slot.due_at))) : '';
     return `<a class="tcard" href="task.html?id=${t.id}" style="background:${tintOf(t)}">
       <span class="sdot ${S.cls}">${status === 'done' ? icon('check', 14) : ''}</span>
       ${iconBox(t)}
