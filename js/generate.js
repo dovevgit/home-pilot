@@ -28,7 +28,8 @@ function makeSlots(t, date, ws, ov = {}) {
     const base = dueAt(t, date, s.due_time, ws), dDate = ilDate(new Date(base));
     const o = normExc(ov[t.id + '|' + (i + 1) + '|' + dDate]) || normExc(s.exc?.[dow(dDate)]);
     const due = o?.t ? toIsraelDate(dDate, o.t).toISOString() : base;
-    return { assignee_id: o?.u || s.assignee_id, due_at: due, reminded: false, overdue_notified: false, penalized: false };
+    const asg = (s.assignees && s.assignees.length > 1) ? (o?.u ? [o.u, ...s.assignees.filter(x => x !== s.assignee_id && x !== o.u)] : s.assignees) : null;
+    return { assignee_id: o?.u || s.assignee_id, ...(asg ? { assignees: asg } : {}), due_at: due, reminded: false, overdue_notified: false, penalized: false };
   });
   list.sort((a, b) => a.due_at.localeCompare(b.due_at));
   return list.map((x, i) => ({ n: i + 1, ...x }));

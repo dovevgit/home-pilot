@@ -32,7 +32,7 @@
   <div id="list"><p class="empty">טוען...</p></div>
 </main>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, ilDate, ilTime, addDays, weekStart, reportCounts, loadReports, deriveStatus, nextSlot, STATUS } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, ilDate, ilTime, addDays, weekStart, reportCounts, loadReports, deriveStatus, nextSlot, STATUS, slotUsers, avatarGroup } from './js/common.js';
 const { session, profiles } = await initPage({ active: 'tasks', title: 'המשימות שלנו' });
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 
@@ -78,7 +78,7 @@ function render() {
   const rows = (tasks || []).filter(t => inDay(t, day)).map(t => {
     const c = counts[t.id] || 0;
     return { t, c, status: deriveStatus(t, c, now), slot: nextSlot(t, c) };
-  }).filter(r => (!m || (r.t.slots || []).some(s => s.assignee_id === m)) && (!st || r.status === st));
+  }).filter(r => (!m || (r.t.slots || []).some(s => slotUsers(s).includes(m))) && (!st || r.status === st));
   rows.sort((a, b) => (b.status === 'overdue') - (a.status === 'overdue') ||
     (new Date(a.slot?.due_at || '2100-01-01')) - (new Date(b.slot?.due_at || '2100-01-01')));
   if (!rows.length) { el.innerHTML = '<p class="empty">אין משימות שמתאימות לסינון</p>'; return; }
@@ -92,7 +92,7 @@ function render() {
       ${iconBox(t)}
       <div class="tmain"><b>${esc(t.title)}${multi || c > t.times_required ? ` <span dir="ltr">(${c}/${t.times_required})</span>` : ''}</b><small>${due ? `<span dir="ltr">${esc(due)}</span>` : ''}</small></div>
       <span class="chip ${S.cls}">${icon(S.icon === 'clock' ? 'hourglass' : S.icon, 13)} ${S.label}</span>
-      ${avatar(byId[(status === 'done' || c > 0) ? lastBy[t.id] : slot?.assignee_id], 36)}</a>`;
+      ${(status === 'done' || c > 0) ? avatar(byId[lastBy[t.id]], 36) : avatarGroup(byId, slotUsers(slot), 36)}</a>`;
   }).join('');
 }
 render();

@@ -42,7 +42,7 @@
 </main>
 <div class="modal hidden" id="pmodal"><div class="modal-card" id="pcard"></div></div>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup } from './js/common.js';
 import { weeklyPoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
@@ -164,7 +164,7 @@ else {
     return `<a class="tcard" href="task.html?id=${t.id}" style="background:${tintOf(t)}">
       <span class="sdot ${S.cls}">${status === 'done' ? icon('check', 14) : ''}</span>${iconBox(t)}
       <div class="tmain"><b>${esc(t.title)}${t.times_required > 1 || c > t.times_required ? ` <span dir="ltr">(${c}/${t.times_required})</span>` : ''}</b><small>${slot?.due_at ? `<span dir="ltr">${ilTime(new Date(slot.due_at))}</span>` : ''}</small></div>
-      <span class="chip ${S.cls}">${icon(S.icon === 'clock' ? 'hourglass' : S.icon, 13)} ${S.label}</span>${avatar(byId[slot?.assignee_id], 34)}</a>`;
+      <span class="chip ${S.cls}">${icon(S.icon === 'clock' ? 'hourglass' : S.icon, 13)} ${S.label}</span>${avatarGroup(byId, slotUsers(slot), 34)}</a>`;
   }).join('') : '<p class="empty">כל משימות היום בוצעו</p>';
 }
 

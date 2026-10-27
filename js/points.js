@@ -1,5 +1,5 @@
 // נקודות שבועיות: מחושבות מהדיווחים ומהגדרות המשימה, לא נשמרות בטבלה.
-import { supabase, weekStart, pointsFor } from './common.js';
+import { supabase, weekStart, pointsFor, slotUsers } from './common.js';
 
 // מחזיר { pointsByUser: {userId: n}, reports }
 export async function weeklyPoints(now = new Date()) {
@@ -13,7 +13,8 @@ export async function weeklyPoints(now = new Date()) {
   for (const r of reps || []) {
     const t = tById[r.task_id]; if (!t) continue;
     const slot = (t.slots || [])[(r.payload?.slot_n || 1) - 1];
-    pointsByUser[r.user_id] = (pointsByUser[r.user_id] || 0) + pointsFor(t, slot, new Date(r.created_at)).points;
+    const pp = pointsFor(t, slot, new Date(r.created_at)).points;
+    for (const uid of new Set([r.user_id, ...slotUsers(slot)])) pointsByUser[uid] = (pointsByUser[uid] || 0) + pp;
   }
   try {
     const { data: rp } = await supabase.rpc('request_points', { p_since: ws.start.toISOString(), p_until: ws.end.toISOString() });
@@ -46,7 +47,8 @@ export async function lifetimePoints() {
   for (const r of reps) {
     const t = tById[r.task_id]; if (!t) continue;
     const slot = (t.slots || [])[(r.payload?.slot_n || 1) - 1];
-    earnedByUser[r.user_id] = (earnedByUser[r.user_id] || 0) + pointsFor(t, slot, new Date(r.created_at)).points;
+    const pp = pointsFor(t, slot, new Date(r.created_at)).points;
+    for (const uid of new Set([r.user_id, ...slotUsers(slot)])) earnedByUser[uid] = (earnedByUser[uid] || 0) + pp;
   }
   try {
     const { data: rp } = await supabase.rpc('request_points', { p_since: '2000-01-01T00:00:00Z', p_until: '2100-01-01T00:00:00Z' });

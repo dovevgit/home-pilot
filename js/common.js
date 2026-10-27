@@ -95,12 +95,19 @@ export const roomLabel = (room, profiles = []) => {
 };
 export const roomOptions = (profiles = []) => [['parents', 'חדר ההורים'], ...profiles.filter(p => p.role !== 'admin' && p.active !== false).map(p => ['kid:' + p.id, 'החדר של ' + p.name])];
 export const ART = new Set(["paw-print", "dog", "utensils", "trash-2", "bed-double", "brush-cleaning", "broom", "book-open", "bath", "footprints", "shirt", "washing-machine", "shopping-cart", "cooking-pot", "recycle", "leaf", "dishwasher", "car", "flower", "droplet", "cat", "graduation-cap", "dumbbell", "wrench", "package", "shopping-bag", "mail", "heart", "music"]);
+// כל האחראים על חזרה (משימה משותפת). assignee_id הוא הראשון, assignees הרשימה המלאה.
+export const slotUsers = (slot) => !slot ? [] : (Array.isArray(slot.assignees) && slot.assignees.length ? slot.assignees : (slot.assignee_id ? [slot.assignee_id] : []));
 export function iconBox(task, size = 46) {
   const c = CARD_COLORS[task.color] || CARD_COLORS.blue;
   if (ART.has(task.icon)) return `<span class="ibox art" style="width:${size}px;height:${size}px;background:${c.bg}"><img src="task/${task.icon}.png" alt="" onerror="this.onerror=null;this.src='icons/task/${task.icon}.png'"></span>`;
   return `<span class="ibox" style="width:${size}px;height:${size}px;background:${c.bg};color:${c.fg}">${icon(task.icon || 'sparkles', Math.round(size * 0.52))}</span>`;
 }
 
+export function avatarGroup(byId, ids, size = 36) {
+  const l = (ids || []).filter(Boolean);
+  if (l.length < 2) return avatar(byId[l[0]], size);
+  return `<span style="display:inline-flex">${l.map((id, i) => `<span style="${i ? 'margin-inline-start:-' + Math.round(size * 0.3) + 'px' : ''}">${avatar(byId[id], size)}</span>`).join('')}</span>`;
+}
 /* ---------- תמונות בני משפחה (בינתיים: ראשי תיבות) ---------- */
 export function avatar(p, size = 36) {
   if (!p) return `<span class="avatar" style="width:${size}px;height:${size}px"></span>`;

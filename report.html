@@ -26,7 +26,7 @@ input[type=file]{display:none}
 <body>
 <main id="main"><p class="empty">טוען...</p></main>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, reportCounts, deriveStatus, nextSlot, pointsFor, submitReport, shrinkImage, flashToast, showToast, avatar } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, reportCounts, deriveStatus, nextSlot, pointsFor, submitReport, shrinkImage, flashToast, showToast, avatar, slotUsers, avatarGroup } from './js/common.js';
 const { session, me, profiles } = await initPage({ title: 'דיווח משימה', back: 'tasks.html' });
 const id = new URLSearchParams(location.search).get('id');
 const main = document.getElementById('main');
@@ -52,13 +52,13 @@ const $ = i => document.getElementById(i);
 /* משימה שרשומה על מישהו אחר: אפשר לעשות אותה ולקבל את הנקודות, אחרי שמסבירים */
 {
   const slot = (t.slots || [])[done];
-  const owner = slot?.assignee_id && slot.assignee_id !== me?.id ? (profiles || []).find(p => p.id === slot.assignee_id) : null;
+  const su = slotUsers(slot), ownerList = su.map(id => (profiles || []).find(p => p.id === id)).filter(Boolean), owner = su.length && !su.includes(me?.id) ? ownerList[0] : null;
   if (!extra && owner) {
     const pts = pointsFor(t, slot, new Date()).points;
     const m = document.createElement('div'); m.className = 'modal'; m.id = 'otherModal'; m.style.zIndex = 90;
     m.innerHTML = `<div class="modal-card" style="text-align:center;border:5px solid #FF8A00">
-      ${avatar(owner, 84)}
-      <h2 style="margin:12px 0 4px;color:#9A3412">המשימה רשומה על ${esc(owner.name)}</h2>
+      ${avatarGroup(Object.fromEntries((profiles || []).map(p => [p.id, p])), su, 84)}
+      <h2 style="margin:12px 0 4px;color:#9A3412">המשימה רשומה על ${esc(ownerList.map(p => p.name).join(' ו'))}</h2>
       <p style="font-size:19px;margin:0 0 6px">אבל אפשר לעשות אותה ולקבל את הנקודות.</p>
       <p style="font-weight:800;color:#C2410C;margin:0 0 14px">הדיווח יירשם על שמך · <span dir="ltr">+${pts}</span> נקודות</p>
       <button class="btn" id="yesDo" type="button">רוצה</button>
