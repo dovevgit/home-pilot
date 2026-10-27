@@ -242,7 +242,8 @@ function showForm(t) {
     ${tabsHtml('form')}
     <form class="card flat" id="f" novalidate>
       <label for="title">שם המשימה</label><input id="title" value="${esc(v.title)}" placeholder="למשל: להוציא את הכלב">
-      <textarea id="desc" hidden>${esc(v.description)}</textarea><textarea id="tips" hidden>${esc(v.tips)}</textarea>
+      <label for="desc">תיאור</label><div class="field"><textarea id="desc">${esc(v.description)}</textarea></div>
+      <textarea id="tips" hidden>${esc(v.tips)}</textarea>
       <label>אייקון</label>
       <input type="hidden" id="icon" value="${esc(v.icon || 'sparkles')}">
       <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${ART.has(k) ? `<img src="icons/task/${k}.png" alt="" width="32" height="32">` : icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
