@@ -43,6 +43,7 @@
   <div id="items" class="shopgrid"><p class="empty">טוען...</p></div>
   <div class="sec-title" style="margin-top:22px">הרכישות שלי</div>
   <div id="mine"><p class="empty">אין רכישות עדיין</p></div>
+  <button class="smallbtn hidden" id="clearHist" type="button" style="margin-top:12px">🗑 מחיקת היסטוריית רכישות</button>
 </main>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
@@ -85,7 +86,7 @@ function render() {
     <span class="chip ${ST[p.status][1]}">${ST[p.status][0]}</span>
     ${p.status === 'pending' ? `<button class="bt no" data-cancel="${p.id}" type="button">ביטול</button>` : ''}</div>`).join('') : '<p class="empty">אין רכישות עדיין</p>';
   if (isAdmin) {
-    $('addItem').classList.remove('hidden'); $('adminBox').classList.remove('hidden');
+    $('addItem').classList.remove('hidden'); $('adminBox').classList.remove('hidden'); $('clearHist').classList.remove('hidden');
     const pend2 = purchases.filter(p => p.status === 'pending').slice().reverse();
     $('pending').innerHTML = pend2.length ? pend2.map(p => `<div class="prow">${avatar(byId[p.user_id], 40)}<div class="pmain"><b>${esc(byId[p.user_id]?.name || '')} רוצה: ${esc(p.item_name)}</b>
       <small>⭐ <span dir="ltr">${p.price}</span> · היתרה שלו/ה: <span dir="ltr">${(earned[p.user_id] || 0) - spentOf(p.user_id) + p.price}</span> לפני הבקשה</small></div>
@@ -114,6 +115,26 @@ document.querySelector('main').addEventListener('click', async e => {
   } else if (b.dataset.edit) openItem(items.find(x => x.id === b.dataset.edit));
 });
 $('addItem').onclick = () => openItem(null);
+$('clearHist').onclick = () => {
+  const rej = purchases.filter(p => p.status === 'rejected'), done = purchases.filter(p => p.status === 'approved'), pend = purchases.filter(p => p.status === 'pending');
+  $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 20)}</button>
+    <h3 style="margin:0 0 8px">מחיקת היסטוריית רכישות</h3>
+    <p style="margin:0 0 10px">של כל בני הבית. בקשות שממתינות לאישור לא נמחקות.</p>
+    <button class="btn secondary" id="hRej" type="button" ${rej.length ? '' : 'disabled'}>מחיקת רכישות שנדחו (${rej.length})</button>
+    <p style="margin:4px 0 12px;color:var(--text2);font-size:15px">לא משנה אף יתרה.</p>
+    <button class="btn secondary" id="hAll" type="button" ${rej.length + done.length ? '' : 'disabled'}>מחיקת כל ההיסטוריה (${rej.length + done.length})</button>
+    <p style="margin:4px 0 0;color:#B42318;font-size:15px">שימו לב: רכישות שנמסרו יימחקו והנקודות שלהן יחזרו ליתרה.${pend.length ? ' ' + pend.length + ' בקשות ממתינות יישארו.' : ''}</p>`;
+  $('mx').onclick = close;
+  const run = async (statuses, label) => {
+    if (!confirm(label)) return;
+    const { error } = await supabase.from('purchases').delete().in('status', statuses);
+    if (error) return showToast('המחיקה נכשלה', true);
+    close(); showToast('ההיסטוריה נמחקה'); await load();
+  };
+  $('hRej').onclick = () => run(['rejected'], 'למחוק את הרכישות שנדחו?');
+  $('hAll').onclick = () => run(['rejected', 'approved'], 'למחוק את כל ההיסטוריה? הנקודות של רכישות שנמסרו יחזרו ליתרה.');
+  $('modal').classList.remove('hidden');
+};
 
 const shrink = (file, max = 480) => new Promise((res, rej) => {
   const url = URL.createObjectURL(file), im = new Image();
