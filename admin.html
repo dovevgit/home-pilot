@@ -420,7 +420,8 @@ async function showMembers() {
       <button class="sqbtn edit" data-ph="${p.id}" aria-label="תמונה" title="תמונה">${icon('camera', 20)}</button>
       ${p.is_user ? `<button class="sqbtn edit" data-pw="${p.id}" aria-label="איפוס סיסמה" title="איפוס סיסמה">${icon('settings', 20)}</button>` : ''}
       ${p.id === me.id ? '' : `<button class="sqbtn del" data-rm="${p.id}" aria-label="הסרה">${icon('trash-2', 20)}</button>`}</div>`).join('')}</div>
-    <input type="file" id="phFile" accept="image/*" style="display:none">
+    <input type="file" id="phFile" accept="image/*" style="display:none"><input type="file" id="phCam" accept="image/*" capture="user" style="display:none">
+    <div id="phSheet" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center"><div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:16px;display:grid;gap:10px"><b style="text-align:center">תמונה לבן/בת המשפחה</b><button class="btn" id="phShoot" type="button" style="margin:0">צילום עכשיו</button><button class="btn secondary" id="phPick" type="button" style="margin:0">בחירה מהגלריה</button><button class="btn secondary" id="phCancel" type="button" style="margin:0">ביטול</button></div></div>
     <form class="card flat" id="mf" novalidate style="margin-top:12px">
       <div class="sec-title" style="margin-top:0">הוספת בן משפחה</div>
       <label for="mName">שם</label><input id="mName" maxlength="20" placeholder="למשל: דנה">
@@ -430,7 +431,7 @@ async function showMembers() {
         <label for="mPass">סיסמה (לפחות 6 תווים)</label><input id="mPass" dir="ltr" maxlength="72" placeholder="סיסמה זמנית">
         <label for="mRole">תפקיד</label><select class="sel" id="mRole" style="width:100%"><option value="member">ילד/ה</option><option value="admin">הורה</option></select>
       </div>
-      <label for="mPhoto">תמונה (אפשר לצלם או לבחור מהגלריה)</label><input id="mPhoto" type="file" accept="image/*">
+      <label for="mPhoto">תמונה (אפשר לצלם או לבחור מהגלריה)</label><input id="mPhoto" type="file" accept="image/*"><input id="mCam" type="file" accept="image/*" capture="user" style="display:none"><button class="btn secondary" id="mShoot" type="button" style="margin-top:8px">צילום עכשיו</button><small id="mCamName" style="display:block;margin-top:4px"></small>
       <p class="error" id="mErr" role="alert"></p>
       <button class="btn" id="mSave" type="submit">הוספה</button>
     </form>
@@ -441,9 +442,14 @@ async function showMembers() {
   const $ = id => document.getElementById(id), done = (msg) => { toast(msg); location.hash = '#members'; location.reload(); };
   $('mChar').onchange = () => { $('mLogin').style.display = $('mChar').checked ? 'none' : ''; };
   let phFor = null;
-  document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => { phFor = b.dataset.ph; $('phFile').click(); });
-  $('phFile').onchange = async () => {
-    const f = $('phFile').files[0]; if (!f || !phFor) return;
+  document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => { phFor = b.dataset.ph; $('phSheet').style.display = 'flex'; });
+  $('phCancel').onclick = () => { $('phSheet').style.display = 'none'; };
+  $('phShoot').onclick = () => { $('phSheet').style.display = 'none'; $('phCam').click(); };
+  $('phPick').onclick = () => { $('phSheet').style.display = 'none'; $('phFile').click(); };
+  $('mShoot').onclick = () => $('mCam').click();
+  $('mCam').onchange = () => { $('mCamName').textContent = $('mCam').files[0] ? 'צולמה תמונה ✓' : ''; };
+  $('phCam').onchange = $('phFile').onchange = async (ev) => {
+    const f = ev.target.files[0]; if (!f || !phFor) return;
     try { await callFamily('member_update', { id: phFor, avatar: await imageToDataUrl(f) }); done('התמונה עודכנה'); } catch (e) { toast(e.message, true); }
   };
   document.querySelectorAll('[data-pw]').forEach(b => b.onclick = async () => {
@@ -459,7 +465,8 @@ async function showMembers() {
     e.preventDefault(); $('mErr').textContent = '';
     const body = { name: $('mName').value, is_user: !$('mChar').checked, username: $('mUser').value, password: $('mPass').value, role: $('mRole').value };
     try {
-      if ($('mPhoto').files[0]) body.avatar = await imageToDataUrl($('mPhoto').files[0]);
+      const mf0 = $('mCam').files[0] || $('mPhoto').files[0];
+      if (mf0) body.avatar = await imageToDataUrl(mf0);
       $('mSave').disabled = true;
       await callFamily('member_create', body); done('נוסף/ה');
     } catch (err) { $('mErr').textContent = err.message; $('mSave').disabled = false; }
