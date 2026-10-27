@@ -90,12 +90,22 @@ function openCard(uid, editMode = false) {
   const head = `<div class="pbig">${avatar(p, 150)}<h2>${esc(p.name)}</h2></div>`;
   if (editMode) {
     pc.innerHTML = `${x}${head}
-      <label for="pBd">תאריך לידה (יום/חודש/שנה)</label><input id="pBd" type="text" inputmode="numeric" autocomplete="off" placeholder="20/10/1978" value="${p.birthday ? dmy(p.birthday).replace(/\./g, '/') : ''}" dir="ltr">
+      <label for="pBd">תאריך לידה (יום/חודש/שנה)</label><input id="pBd" type="text" inputmode="numeric" autocomplete="off" placeholder="20/10/1978" value="${p.birthday ? dmy(p.birthday).replace(/\./g, '/') : ''}" dir="ltr" style="margin-bottom:0">
+      <button class="btn secondary" id="pCal" type="button" style="height:46px;margin-top:8px;font-size:17px">📅 בחירה מלוח שנה</button>
       <label for="pAbout">מה כדאי לדעת</label><textarea id="pAbout" maxlength="400" placeholder="למשל: אלרגיה, אוכל אהוב, מידת נעליים">${esc(p.about || '')}</textarea>
       <p class="error" id="pErr" role="alert"></p>
       <button class="btn" id="pSave" type="button">שמירה</button>
       <button class="btn secondary" id="pCancel" type="button">ביטול</button>`;
     pc.querySelector('#pCancel').onclick = () => openCard(uid);
+    pc.querySelector('#pCal').onclick = async () => {
+      const { openDatePicker } = await import('./js/datepicker.js');
+      const cur = pc.querySelector('#pBd').value.trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+      openDatePicker({
+        value: cur ? `${cur[3]}-${String(+cur[2]).padStart(2, '0')}-${String(+cur[1]).padStart(2, '0')}` : p.birthday,
+        onPick: v => { pc.querySelector('#pBd').value = v ? v.split('-').reverse().join('/') : ''; },
+        onType: () => pc.querySelector('#pBd').focus()
+      });
+    };
     pc.querySelector('#pSave').onclick = async () => {
       const raw = pc.querySelector('#pBd').value.trim();
       let bd = null;
