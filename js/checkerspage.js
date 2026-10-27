@@ -2,6 +2,19 @@ import { initPage, supabase, esc, avatar, showToast } from './common.js';
 import { guestToken, guestMode, inviteGuest } from './guest.js';
 import { legalMoves, applyMove, colorOf, counts } from './checkers-rules.js';
 
+// מסך פתיחה של המשחק: מופיע בכל כניסה לדמקה, נסגר בלחיצה או אחרי 3.5 שניות
+(function () {
+  if (document.getElementById('splash')) return; // מסך הפתיחה של האפליקציה כבר מוצג
+  const sp = document.createElement('div');
+  sp.className = 'ck-splash'; sp.setAttribute('role', 'button'); sp.tabIndex = 0; sp.setAttribute('aria-label', 'פתיחת המשחק, לחץ כדי לדלג');
+  sp.innerHTML = '<div class="ck-sp-art"></div><div class="ck-sp-skip">לחץ כדי להתחיל</div>';
+  document.body.append(sp);
+  let done = false;
+  const hide = () => { if (done) return; done = true; sp.classList.add('ck-out'); setTimeout(() => { sp.hidden = true; }, 650); };
+  sp.addEventListener('click', hide);
+  sp.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); hide(); } });
+  setTimeout(hide, 3500);
+})();
 const GT = guestToken();
 let profiles = [], me, gid = new URLSearchParams(location.search).get('g'), gcall = null;
 if (GT) { const g = await guestMode('checkers', GT); me = g.me; gid = g.ref; gcall = g.call; }
