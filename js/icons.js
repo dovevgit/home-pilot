@@ -1,5 +1,6 @@
 // אייקונים מ-lucide-static (ISC). נוצר אוטומטית.
 export const ICONS = {
+ "music": "<path d=\"M9 18V5l12-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"18\" cy=\"16\" r=\"3\"/>",
  "dishwasher": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M4 8h16\"/><circle cx=\"12\" cy=\"14.5\" r=\"3.5\"/><path d=\"M7 5.5h.01M10 5.5h.01\"/>",
  "car": "<path d=\"M5 17H3v-5l2-5h14l2 5v5h-2\"/><path d=\"M3 12h18\"/><circle cx=\"7.5\" cy=\"17\" r=\"2\"/><circle cx=\"16.5\" cy=\"17\" r=\"2\"/><path d=\"M9.5 17h5\"/>",
  "flower": "<circle cx=\"12\" cy=\"4.5\" r=\"2\"/><circle cx=\"15.5\" cy=\"8\" r=\"2\"/><circle cx=\"12\" cy=\"11.5\" r=\"2\"/><circle cx=\"8.5\" cy=\"8\" r=\"2\"/><circle cx=\"12\" cy=\"8\" r=\"1.2\"/><path d=\"M12 13.5V21\"/><path d=\"M12 18c0-2 2-3 5-3 0 2-2 3-5 3z\"/>",
@@ -75,5 +76,5 @@ export const TASK_ICONS = [
   ['paw-print','חיית מחמד'],['dog','כלב'],['utensils','כלים ואוכל'],['dishwasher','מדיח כלים'],['trash-2','פח'],['bed-double','חדר'],
   ['brush-cleaning','ניקיון'],['broom','טאטוא'],['book-open','לימודים'],['bath','אמבטיה'],
   ['footprints','מדרגות'],['shirt','כביסה'],['washing-machine','מכונת כביסה'],['shopping-cart','קניות'],
-  ['cooking-pot','בישול'],['recycle','מיחזור'],['leaf','צמחים'],['car','רכב'],['flower','גינה'],['droplet','השקיה / מים'],['cat','חתול'],['graduation-cap','שיעורי בית'],['dumbbell','ספורט'],['wrench','תיקונים'],['package','חבילות'],['shopping-bag','מכולת'],['mail','חשבונות ודואר'],['heart','טיפול ועזרה'],['sparkles','כללי']
+  ['cooking-pot','בישול'],['recycle','מיחזור'],['leaf','צמחים'],['car','רכב'],['flower','גינה'],['droplet','השקיה / מים'],['cat','חתול'],['graduation-cap','שיעורי בית'],['dumbbell','ספורט'],['wrench','תיקונים'],['package','חבילות'],['shopping-bag','מכולת'],['mail','חשבונות ודואר'],['heart','טיפול ועזרה'],['music','מוזיקה'],['sparkles','כללי']
 ];
