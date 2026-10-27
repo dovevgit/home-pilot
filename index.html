@@ -90,14 +90,22 @@ function openCard(uid, editMode = false) {
   const head = `<div class="pbig">${avatar(p, 150)}<h2>${esc(p.name)}</h2></div>`;
   if (editMode) {
     pc.innerHTML = `${x}${head}
-      <label for="pBd">תאריך לידה</label><input id="pBd" type="date" value="${p.birthday || ''}" dir="ltr">
+      <label for="pBd">תאריך לידה (יום/חודש/שנה)</label><input id="pBd" type="text" inputmode="numeric" autocomplete="off" placeholder="20/10/1978" value="${p.birthday ? dmy(p.birthday).replace(/\./g, '/') : ''}" dir="ltr">
       <label for="pAbout">מה כדאי לדעת</label><textarea id="pAbout" maxlength="400" placeholder="למשל: אלרגיה, אוכל אהוב, מידת נעליים">${esc(p.about || '')}</textarea>
       <p class="error" id="pErr" role="alert"></p>
       <button class="btn" id="pSave" type="button">שמירה</button>
       <button class="btn secondary" id="pCancel" type="button">ביטול</button>`;
     pc.querySelector('#pCancel').onclick = () => openCard(uid);
     pc.querySelector('#pSave').onclick = async () => {
-      const row = { birthday: pc.querySelector('#pBd').value || null, about: pc.querySelector('#pAbout').value.trim() || null };
+      const raw = pc.querySelector('#pBd').value.trim();
+      let bd = null;
+      if (raw) {
+        const m = raw.match(/^(\d{1,2})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{4})$/);
+        const dt = m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null;
+        if (!m || dt.getUTCFullYear() !== +m[3] || dt.getUTCMonth() !== +m[2] - 1 || dt.getUTCDate() !== +m[1] || +m[3] < 1900 || dt > new Date()) { pc.querySelector('#pErr').textContent = 'התאריך לא תקין. כתבו למשל 20/10/1978'; return; }
+        bd = `${m[3]}-${String(+m[2]).padStart(2, '0')}-${String(+m[1]).padStart(2, '0')}`;
+      }
+      const row = { birthday: bd, about: pc.querySelector('#pAbout').value.trim() || null };
       pc.querySelector('#pSave').disabled = true;
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
       if (error) { pc.querySelector('#pErr').textContent = 'השמירה נכשלה: ' + error.message; pc.querySelector('#pSave').disabled = false; return; }
