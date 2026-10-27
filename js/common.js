@@ -156,9 +156,9 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   // יצירה אוטומטית של משימות חוזרות: כשהורה פותח את האפליקציה (לכל היותר פעם ב-30 דקות במכשיר)
   if (isAdmin) {
     try {
-      const last = Number(localStorage.getItem('genAt') || 0);
+      const last = Number(localStorage.getItem('genAt2') || 0);
       if (Date.now() - last > 30 * 60 * 1000) {
-        localStorage.setItem('genAt', String(Date.now()));
+        localStorage.setItem('genAt2', String(Date.now()));
         import('./generate.js').then(async G => {
           const r = await G.generateOccurrences(session.user.id);
           if (r && r.created > 0 && !sessionStorage.getItem('genReload')) { sessionStorage.setItem('genReload', '1'); location.reload(); }

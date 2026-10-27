@@ -52,9 +52,14 @@ export async function generateOccurrences(createdBy) {
   for (let d = today; d <= lastDay; d = addDays(d, 1)) days.push(d);
   for (const t of templates || []) {
     if (t.repeat !== 'daily' && t.repeat !== 'weekly') continue;
-    for (const date of (t.repeat === 'daily' ? days : [ws.dateStr])) {
-      const all = makeSlots(t, date, ws, ov);
-      const slots = keepFuture(t, all, now);
+    const wsNext = { dateStr: addDays(ws.dateStr, 7), start: toIsraelDate(addDays(ws.dateStr, 7), '12:00'), end: toIsraelDate(addDays(ws.dateStr, 14), '12:00') };
+    const targets = t.repeat === 'daily' ? days.map(d => ({ date: d, w: ws })) : [{ date: ws.dateStr, w: ws, fb: true }];
+    for (const tg of targets) {
+      let date = tg.date, w = tg.w;
+      let all = makeSlots(t, date, w, ov);
+      let slots = keepFuture(t, all, now);
+      // משימה שבועית שהמועד שלה השבוע כבר עבר: יוצרים אותה לשבוע הבא (שישי עד שישי)
+      if (!slots.length && tg.fb) { date = wsNext.dateStr; w = wsNext; all = makeSlots(t, date, w, ov); slots = keepFuture(t, all, now); }
       if (!slots.length) { past++; continue; }
       const row = {
         kind: 'occurrence', template_id: t.id, subject_id: t.subject_id, title: t.title, description: t.description,
