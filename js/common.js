@@ -177,6 +177,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
       <a href="outing.html">${icon('house')} אני לא בבית</a>
       <a href="info.html">${icon('info')} מידע משפחתי</a>
+      <a href="feedback.html">${icon('message-circle')} ספרו לנו</a>
       <button id="pushBtn" type="button" style="display:none">${icon('bell')} <span>התראות</span></button>
       <button id="logout" type="button">${icon('log-out')} התנתקות</button></nav>`;
     document.body.append(drawer);
