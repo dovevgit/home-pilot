@@ -17,7 +17,7 @@
 <body>
 <main id="main"><p class="empty">טוען...</p></main>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, avatar, ilDate, ilTime, toIsraelDate, addDays, dow, CARD_COLORS, roomOptions } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, avatar, ilDate, ilTime, toIsraelDate, addDays, dow, CARD_COLORS, roomOptions, ART } from './js/common.js';
 import { TASK_ICONS } from './js/icons.js';
 import { findConflicts, loadEvents, availability, hm, normExc, suggestTimes } from './js/events.js';
 import { generateOccurrences, syncOccurrences } from './js/generate.js';
@@ -246,7 +246,7 @@ function showForm(t) {
       <label for="tips">טיפים (אופציונלי)</label><div class="field"><textarea id="tips">${esc(v.tips)}</textarea></div>
       <label>אייקון</label>
       <input type="hidden" id="icon" value="${esc(v.icon || 'sparkles')}">
-      <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
+      <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${ART.has(k) ? `<img src="icons/task/${k}.png" alt="" width="32" height="32">` : icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
       <div class="grid2">
         <div><label for="color">צבע</label><select class="sel" id="color" style="width:100%">${Object.entries(CARD_COLORS).map(([k, c]) => `<option value="${k}" ${v.color === k ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
       </div>
