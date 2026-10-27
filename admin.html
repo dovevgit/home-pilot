@@ -209,7 +209,7 @@ async function showList() {
   };
   const draw = () => {
     const m = document.getElementById('fMember').value, r = document.getElementById('fRepeat').value;
-    const list = data.filter(t => (!m || (t.slots || []).some(s => slotUsers(s).includes(m))) && (!r || t.repeat === r));
+    const list = data.filter(t => (!m || (t.slots || []).some(s => slotUsers(s).includes(m) || Object.values(s.exc || {}).some(v => (typeof v === 'string' ? v : v?.u) === m))) && (!r || t.repeat === r));
     el.innerHTML = list.length ? list.map(t => `<div class="row-item">${iconBox(t, 44)}
       <div class="tmain"><b>${esc(t.title)}</b><small>${esc(repeatLabel(t))}</small>${slotsLine(t)}</div>
       <button class="sqbtn edit" data-edit="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
