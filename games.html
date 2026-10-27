@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | משחקים</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.glist{display:grid;gap:12px;margin-top:6px}
+.gtile{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:#fff;box-shadow:0 2px 10px rgba(13,110,253,.12);text-decoration:none;color:inherit;border:2px solid #e3ecff}
+.gtile .gi{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#6c5ce7,#3ab5ff);color:#fff;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.gtile b{display:block;font-size:18px}
+.gtile span{font-size:14px;opacity:.7}
+.gtile .live{margin-inline-start:auto;background:#ff7a1a;color:#fff;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:700;display:none}
+</style>
+</head>
+<body>
+<main>
+  <div class="glist">
+    <a class="gtile" href="game.html" id="tAnimals">
+      <div class="gi">א</div>
+      <div><b>חי צומח דומם</b><span>משחק מילים לכל המשפחה</span></div>
+      <div class="live" id="tLive">משחק פתוח!</div>
+    </a>
+    <a class="gtile" href="checkers.html" id="tCk">
+      <div class="gi" style="background:linear-gradient(135deg,#9A6032,#2b2b40)">&#9679;</div>
+      <div><b>דמקה</b><span>משחק לזוג, חוקי דמקה אמיתיים</span></div>
+      <div class="live" id="tCkLive">תורך!</div>
+    </a>
+    <a class="gtile" href="battleship.html" id="tBs">
+      <div class="gi" style="background:linear-gradient(135deg,#1b6aa6,#0a2540)">&#9875;</div>
+      <div><b>צוללות</b><span>משחק לזוג, להטביע את הצי של היריב</span></div>
+      <div class="live" id="tBsLive">תורך!</div>
+    </a>
+    <a class="gtile" href="poker.html" id="tPk">
+      <div class="gi" style="background:linear-gradient(135deg,#17674d,#0a3326);color:#e8bd4f">&#9824;</div>
+      <div><b>פוקר</b><span>טקסס הולדם לעד 6 שחקנים</span></div>
+      <div class="live" id="tPkLive">שולחן פתוח!</div>
+    </a>
+    <a class="gtile" href="backgammon.html" id="tBg">
+      <div class="gi" style="background:linear-gradient(135deg,#5a3a26,#17222f);color:#e2b552">&#9861;</div>
+      <div><b>שש בש</b><span>משחק לזוג, שש בש קלאסי</span></div>
+      <div class="live" id="tBgLive">תורך!</div>
+    </a>
+    <a class="gtile" href="blackjack.html" id="tBj">
+      <div class="gi" style="background:linear-gradient(135deg,#17674d,#0a3326);color:#e8bd4f">21</div>
+      <div><b>21 (בלאק ג'ק)</b><span>מול הדילר, לבד או עם המשפחה</span></div>
+      <div class="live" id="tBjLive">שולחן פתוח!</div>
+    </a>
+    <a class="gtile" href="stratego.html" id="tSt">
+      <div class="gi" style="background:linear-gradient(135deg,#4d7a3a,#1a2d12);color:#ffd23f">&#9733;</div>
+      <div><b>סטרטגו</b><span>משחק אסטרטגיה לזוג, לתפוס את הדגל</span></div>
+      <div class="live" id="tStLive">תורך!</div>
+    </a>
+    <a class="gtile" href="tetris.html" id="tTt">
+      <div class="gi" style="background:linear-gradient(135deg,#1d3a66,#0a1322);color:#2bd0e0">&#9638;</div>
+      <div><b>טטריס</b><span>משחק ליחיד, להרכיב שורות שלמות</span></div>
+    </a>
+  </div>
+</main>
+<script type="module">
+import { initPage, supabase } from './js/common.js';
+await initPage({ active: 'games', title: 'משחקים' });
+try { const { data } = await supabase.rpc('game_current'); if (data && data.status !== 'final') document.getElementById('tLive').style.display = 'block'; } catch (_) {}
+try {
+  const { data: { session } } = await supabase.auth.getSession(); const uid = session.user.id;
+  const { data } = await supabase.from('checkers_games').select('*').in('status', ['invite', 'play']);
+  const my = (data || []).some(g => (g.status === 'invite' && g.black_id === uid) || (g.status === 'play' && g.turn === (g.white_id === uid ? 'w' : 'b')));
+  if (my) document.getElementById('tCkLive').style.display = 'block';
+} catch (_) {}
+try {
+  const { data: { session } } = await supabase.auth.getSession(); const uid = session.user.id;
+  const { data } = await supabase.from('bs_games').select('*').in('status', ['invite', 'setup', 'play']);
+  const my = (data || []).some(g => { const a = g.a_id === uid; return (g.status === 'invite' && g.b_id === uid) || (g.status === 'setup' && !(a ? g.ready_a : g.ready_b)) || (g.status === 'play' && g.turn === (a ? 'a' : 'b')); });
+  if (my) document.getElementById('tBsLive').style.display = 'block';
+} catch (_) {}
+try {
+  const { data: { session } } = await supabase.auth.getSession(); const uid = session.user.id;
+  const { data } = await supabase.from('bg_games').select('id,a_id,b_id,status,turn').in('status', ['invite', 'play']);
+  const my = (data || []).some(g => (g.status === 'invite' && g.b_id === uid) || (g.status === 'play' && g.turn === (g.a_id === uid ? 'a' : 'b')));
+  if (my) document.getElementById('tBgLive').style.display = 'block';
+} catch (_) {}
+try {
+  const { data } = await supabase.rpc('poker_list');
+  if (data && (data.mine || (data.tables || []).some(t => t.status === 'lobby' && t.n < 6))) { const l = document.getElementById('tPkLive'); l.style.display = 'block'; if (data.mine) l.textContent = 'אתה בשולחן'; }
+} catch (_) {}
+try {
+  const { data } = await supabase.rpc('bj_list');
+  if (data && (data.mine || (data.tables || []).length)) { const l = document.getElementById('tBjLive'); l.style.display = 'block'; if (data.mine) l.textContent = 'אתה בשולחן'; }
+} catch (_) {}
+try {
+  const { data: { session } } = await supabase.auth.getSession(); const uid = session.user.id;
+  const { data } = await supabase.from('st_games').select('id,a_id,b_id,status,turn,ready_a,ready_b').in('status', ['invite', 'setup', 'play']);
+  const my = (data || []).some(g => { const a = g.a_id === uid; return (g.status === 'invite' && g.b_id === uid) || (g.status === 'setup' && !(a ? g.ready_a : g.ready_b)) || (g.status === 'play' && g.turn === (a ? 'a' : 'b')); });
+  if (my) document.getElementById('tStLive').style.display = 'block';
+} catch (_) {}
+</script>
+</body>
+</html>

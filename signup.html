@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | יצירת בית</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login">
+<div class="hero"><img class="logo" src="logo.png" alt="הבית שלנו"></div>
+<form class="card login-card" id="form" novalidate>
+  <h2>יצירת בית חדש</h2>
+  <label for="sc">קוד הצטרפות לניסוי</label>
+  <input id="sc" type="text" autocomplete="off" autocapitalize="none" dir="ltr" placeholder="הקוד שקיבלתם" required>
+  <label for="fname">שם הבית</label>
+  <input id="fname" type="text" maxlength="40" placeholder="למשל: משפחת כהן" required>
+  <label for="name">השם שלך (הורה)</label>
+  <input id="name" type="text" maxlength="20" placeholder="למשל: אבא" required>
+  <label for="user">שם משתמש לכניסה</label>
+  <input id="user" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" placeholder="אותיות או ספרות" required>
+  <label for="pass">סיסמה (לפחות 6 תווים)</label>
+  <input id="pass" type="password" autocomplete="new-password" dir="ltr" required>
+  <button class="btn" id="submit" type="submit">יצירת הבית</button>
+  <p class="error" id="error" role="alert"></p>
+  <a class="btn secondary" href="login.html" style="margin-top:6px">יש לי כבר בית</a>
+</form>
+<script type="module">
+import { callFamily, signIn, saveCode } from './js/family.js';
+const $ = id => document.getElementById(id);
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('error').textContent = '';
+  $('submit').disabled = true; $('submit').textContent = 'יוצר...';
+  try {
+    const r = await callFamily('signup', { signup_code: $('sc').value, family_name: $('fname').value, name: $('name').value, username: $('user').value, password: $('pass').value });
+    saveCode(r.code);
+    const { error } = await signIn(r.code, $('user').value, $('pass').value);
+    if (error) throw new Error('הבית נוצר. אפשר להתחבר עם קוד הבית ' + r.code);
+    sessionStorage.setItem('newFamily', r.code);
+    location.replace('admin.html#members');
+  } catch (err) {
+    $('error').textContent = err.message; $('submit').disabled = false; $('submit').textContent = 'יצירת הבית';
+  }
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>

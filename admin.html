@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | ניהול משימות</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="main"><p class="empty">טוען...</p></main>
+<script type="module">
+import { initPage, supabase, esc, icon, iconBox, avatar, ilDate, ilTime, toIsraelDate, addDays, dow, CARD_COLORS, roomOptions } from './js/common.js';
+import { TASK_ICONS } from './js/icons.js';
+import { findConflicts, loadEvents, availability, hm, normExc, suggestTimes } from './js/events.js';
+import { generateOccurrences, syncOccurrences } from './js/generate.js';
+import { callFamily, imageToDataUrl } from './js/family.js';
+
+const { session, me, profiles, isAdmin } = await initPage({ title: 'ניהול משימות', back: 'index.html' });
+const main = document.getElementById('main');
+if (!isAdmin) {
+  main.innerHTML = '<p class="empty">מסך זה זמין למנהל בלבד</p>';
+  throw new Error('not admin');
+}
+const users = profiles.filter(p => p.is_user);
+const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
+
+function toast(msg, err = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  document.body.append(t); setTimeout(() => t.remove(), 3500);
+}
+const repeatLabel = t => {
+  const n = t.times_required > 1 ? ` · ${t.times_required} פעמים` : '';
+  return (t.repeat === 'daily' ? 'יומי' + (t.times_required > 1 ? ` · ${t.times_required} פעמים ביום` : '')
+        : t.repeat === 'weekly' ? `שבועי · יום ${WEEKDAYS[t.weekday ?? 0]}` : 'חד-פעמי') ;
+};
+
+let view = 'list';
+let editing = null;
+
+/* ============ העדרויות: טעינה ובדיקות ============ */
+const todayStr = ilDate(new Date());
+const dm = d => d.split('-').reverse().slice(0, 2).join('.');
+let absences = [];
+async function loadAbsences() {
+  const { data } = await supabase.from('absences').select('*').gte('end_date', todayStr).order('start_date');
+  absences = data || [];
+}
+const absentOn = (uid, date) => absences.find(a => a.user_id === uid && a.start_date <= date && date <= a.end_date);
+const tabsHtml = on => `<div class="tabs"><button id="tList" class="${on === 'list' ? 'on' : ''}">משימות</button><button id="tAdd" class="${on === 'form' ? 'on' : ''}">הוספה</button><button id="tAbs" class="${on === 'abs' ? 'on' : ''}">העדרויות</button><button id="tMem" class="${on === 'mem' ? 'on' : ''}">בני משפחה</button></div>`;
+const wireTabs = () => {
+  const l = document.getElementById('tList'), a = document.getElementById('tAdd'), b = document.getElementById('tAbs');
+  if (l) l.onclick = showList; if (a) a.onclick = () => showForm(null); if (b) b.onclick = showAbsences;
+  const m = document.getElementById('tMem'); if (m) m.onclick = showMembers;
+};
+// משימות שעדיין משויכות לנעדר בתקופת ההעדרות
+async function affectedTasks(ab) {
+  const { data } = await supabase.from('tasks').select('*').eq('active', true);
+  const out = [];
+  for (const t of data || []) {
+    const mine = (t.slots || []).filter(sl => sl.assignee_id === ab.user_id);
+    if (!mine.length) continue;
+    if (t.kind === 'occurrence') {
+      if (mine.some(sl => { const d = sl.due_at ? ilDate(new Date(sl.due_at)) : t.occurrence_date; return d >= ab.start_date && d <= ab.end_date && d >= todayStr; })) out.push(t);
+    } else if (t.kind === 'template') {
+      let hit = false;
+      for (let d = ab.start_date > todayStr ? ab.start_date : todayStr; d <= ab.end_date && !hit; d = addDays(d, 1)) hit = t.repeat === 'daily' || (t.repeat === 'weekly' && dow(d) === t.weekday);
+      if (hit) out.push(t);
+    }
+  }
+  return out;
+}
+
+/* ============ רשימה ============ */
+async function showList() {
+  view = 'list'; editing = null;
+  main.innerHTML = `
+    ${tabsHtml('list')}
+    <div class="filters">
+      <select id="fMember"><option value="">כל המשפחה</option>${users.map(u => `<option value="${u.id}">${esc(u.name)}</option>`).join('')}</select>
+      <select id="fRepeat"><option value="">יומי ושבועי</option><option value="daily">יומי</option><option value="weekly">שבועי</option><option value="once">חד-פעמי</option></select>
+    </div>
+    <div id="rows"><p class="empty">טוען...</p></div>
+    <button class="btn secondary" id="delAllTasks" type="button" style="width:100%;margin-top:8px;color:#B91C1C;border-color:#EF4444">מחיקת כל המשימות (איפוס)</button>
+    <p class="note">מסיר את כל המשימות והגדרות המשימות כדי להתחיל מחדש. ההיסטוריה והנקודות נשמרות.</p>
+    <div class="sec-title" style="margin-top:22px">הצ'אט המשפחתי</div>
+    <button class="btn secondary" id="wipe" type="button" style="width:100%;margin-top:0;color:#B91C1C;border-color:#EF4444">מחיקת כל הודעות הצ'אט</button>
+    <p class="note">מוחק את הודעות הצ'אט ואת הודעות המערכת (כולל התמונות שנשלחו בצ'אט). דיווחי המשימות והנקודות לא נמחקים.</p>
+    <div class="sec-title" style="margin-top:22px">הודעה מיוחדת בדף הבית</div>
+    <textarea id="annTxt" maxlength="200" placeholder="למשל: מי שיקבל הכי הרבה נקודות השבוע יזכה בפרס: חטיף לבחירתו"></textarea>
+    <div style="display:flex;gap:10px"><button class="btn" id="annSave" type="button" style="margin-top:8px;flex:1">פרסום ההודעה</button><button class="btn secondary" id="annClear" type="button" style="margin-top:8px;flex:1">הסרת ההודעה</button></div>
+    <p class="note">ההודעה מופיעה לכולם בראש דף הבית עם גביע. רק מנהלים יכולים לשנות אותה.</p>
+    <div class="sec-title" style="margin-top:22px">בקשות מיוחדות</div>
+    <label for="reqPts" style="margin-top:0">כמה נקודות מקבל מי שמבצע בקשה</label>
+    <div style="display:flex;gap:10px;align-items:center"><input type="number" id="reqPts" min="0" max="100" style="flex:1" dir="ltr"><button class="btn" id="reqSave" type="button" style="margin-top:0;width:auto;padding:0 24px">שמירה</button></div>
+    <p class="note">הסכום נקבע בזמן שליחת הבקשה, ושינוי כאן משפיע רק על בקשות חדשות.</p>
+    <div id="bCard" style="display:none">
+    <div class="sec-title" style="margin-top:22px">נקודות בונוס</div>
+    <select class="sel" id="bUser" style="width:100%"><option value="">למי לתת?</option>${users.map(u => `<option value="${u.id}">${esc(u.name)}</option>`).join('')}</select>
+    <input type="number" id="bPts" min="1" max="1000" inputmode="numeric" dir="ltr" placeholder="כמה נקודות" style="margin-top:8px">
+    <input id="bReason" maxlength="200" placeholder="הסיבה, למשל: עזרת מעבר למה שנדרש" style="margin-top:8px">
+    <button class="btn" id="bSend" type="button" style="margin-top:8px">שליחת בונוס</button>
+    <p class="note">המקבל/ת רואה חלונית עם הסיבה, ומקבל/ת התראה לטלפון. הנקודות נכנסות לנקודות השבועיות ולחנות.</p>
+    <div id="bList"></div>
+    </div>
+    <div class="sec-title" style="margin-top:22px">היסטוריית דיווחים</div>
+    <button class="btn secondary" id="wipeRep" type="button" style="width:100%;margin-top:0;color:#B91C1C;border-color:#EF4444">מחיקת כל הדיווחים וההיסטוריה</button>
+    <p class="note">מוחק את כל דיווחי המשימות (כולל תמונות הדיווח) ומאפס את הנקודות. אי אפשר לשחזר. מתאים לניקוי אחרי בדיקות. אפשר גם למחוק דיווח בודד: במסך ההיסטוריה לוחצים על דיווח.</p>`;
+  wireTabs();
+  document.getElementById('delAllTasks').onclick = async (e) => {
+    if (!confirm('למחוק את כל המשימות והגדרות המשימות?\nההיסטוריה והנקודות נשמרות.')) return;
+    if (!confirm('בטוח? אחרי המחיקה צריך להגדיר משימות מחדש.')) return;
+    e.target.disabled = true;
+    const { error: e1 } = await supabase.from('tasks').update({ active: false }).eq('active', true);
+    if (e1) { toast('המחיקה נכשלה: ' + e1.message, true); e.target.disabled = false; return; }
+    try { const { data: cs } = await supabase.from('task_conflicts').select('id').eq('status', 'open'); for (const c of cs || []) await supabase.rpc('conflict_dismiss', { p_id: c.id }); } catch (_) {}
+    toast('כל המשימות הוסרו'); showList();
+  };
+  (async () => {
+    const { data: st } = await supabase.from('app_settings').select('value').eq('key', 'request_points').maybeSingle();
+    document.getElementById('reqPts').value = st?.value ?? 5;
+  })();
+  (async () => {
+    const { data: an } = await supabase.from('app_settings').select('value').eq('key', 'announcement').maybeSingle();
+    document.getElementById('annTxt').value = an?.value || '';
+  })();
+  const saveAnn = async (v, msg) => {
+    const { error } = await supabase.from('app_settings').upsert({ key: 'announcement', value: v });
+    toast(error ? 'השמירה נכשלה: ' + error.message : msg, !!error);
+  };
+  document.getElementById('annSave').onclick = () => saveAnn(document.getElementById('annTxt').value.trim(), 'ההודעה פורסמה');
+  document.getElementById('annClear').onclick = () => { document.getElementById('annTxt').value = ''; saveAnn('', 'ההודעה הוסרה'); };
+  document.getElementById('reqSave').onclick = async () => {
+    const v = parseInt(document.getElementById('reqPts').value);
+    if (Number.isNaN(v) || v < 0) return toast('צריך להזין מספר נקודות', true);
+    const { error } = await supabase.from('app_settings').upsert({ key: 'request_points', value: String(v) });
+    toast(error ? 'השמירה נכשלה: ' + error.message : 'נשמר', !!error);
+  };
+  const loadBonus = async () => {
+    const { data } = await supabase.from('bonus_points').select('id,user_id,points,reason,created_at').order('created_at', { ascending: false }).limit(5);
+    document.getElementById('bList').innerHTML = (data || []).length ? '<div class="note" style="text-align:start;margin-top:10px"><b>בונוסים אחרונים</b></div>' + data.map(b => `<div class="row-item" style="align-items:center">${avatar(byId[b.user_id], 36)}<div style="flex:1;min-width:0"><b>${esc(byId[b.user_id]?.name || '')}</b> <span dir="ltr">+${b.points}</span><div class="note" style="text-align:start;margin:0">${esc(b.reason)}</div></div><button class="btn secondary bdel" data-id="${b.id}" type="button" style="width:auto;margin:0;padding:0 14px">מחיקה</button></div>`).join('') : '';
+    document.querySelectorAll('.bdel').forEach(x => x.onclick = async () => {
+      if (!confirm('למחוק את הבונוס? הנקודות יורדו.')) return;
+      const { error } = await supabase.from('bonus_points').delete().eq('id', x.dataset.id);
+      toast(error ? 'המחיקה נכשלה: ' + error.message : 'נמחק', !!error); loadBonus();
+    });
+  };
+  supabase.rpc('is_bonus_giver').then(({ data }) => { if (data === true) { document.getElementById('bCard').style.display = ''; loadBonus(); } });
+  document.getElementById('bSend').onclick = async (e) => {
+    const uid = document.getElementById('bUser').value, pts = parseInt(document.getElementById('bPts').value), reason = document.getElementById('bReason').value.trim();
+    if (!uid) return toast('צריך לבחור למי לתת', true);
+    if (!(pts >= 1 && pts <= 1000)) return toast('צריך מספר נקודות בין 1 ל-1000', true);
+    if (!reason) return toast('צריך לכתוב סיבה', true);
+    e.target.disabled = true;
+    const { error } = await supabase.from('bonus_points').insert({ user_id: uid, points: pts, reason, given_by: session.user.id });
+    e.target.disabled = false;
+    if (error) return toast('השליחה נכשלה: ' + error.message, true);
+    toast(`נשלח: ${byId[uid]?.name || ''} קיבל/ה ${pts} נקודות`);
+    document.getElementById('bPts').value = ''; document.getElementById('bReason').value = ''; document.getElementById('bUser').value = '';
+    loadBonus();
+  };
+  document.getElementById('wipeRep').onclick = async (e) => {
+    if (!confirm('למחוק את כל הדיווחים וההיסטוריה? הנקודות יתאפסו (כולל יתרות החנות) ואי אפשר לשחזר.')) return;
+    e.target.disabled = true;
+    try {
+      const { data: reps } = await supabase.from('feed').select('id,photo_path').eq('type', 'report');
+      const photos = (reps || []).map(m => m.photo_path).filter(Boolean);
+      const { error: dErr } = await supabase.from('feed').delete().eq('type', 'report');
+      if (dErr) throw dErr;
+      if (photos.length) await supabase.storage.from('photos').remove(photos);
+      toast(`ההיסטוריה נמחקה (${(reps || []).length} דיווחים)`);
+    } catch (err) { toast('המחיקה נכשלה: ' + (err.message || err), true); }
+    e.target.disabled = false;
+  };
+  document.getElementById('wipe').onclick = async (e) => {
+    if (!confirm('למחוק את כל הודעות הצ\'אט? אי אפשר לשחזר.')) return;
+    e.target.disabled = true;
+    try {
+      const { data: msgs } = await supabase.from('feed').select('id,photo_path').in('type', ['chat', 'system']);
+      const photos = (msgs || []).map(m => m.photo_path).filter(Boolean);
+      const { error: dErr } = await supabase.from('feed').delete().in('type', ['chat', 'system']);
+      if (dErr) throw dErr;
+      if (photos.length) await supabase.storage.from('photos').remove(photos);
+      toast(`הצ'אט נמחק (${(msgs || []).length} הודעות)`);
+    } catch (err) { toast('המחיקה נכשלה: ' + (err.message || err), true); }
+    e.target.disabled = false;
+  };
+  const { data, error } = await supabase.from('tasks').select('*').eq('active', true)
+    .or('kind.eq.template,and(kind.eq.occurrence,template_id.is.null)').order('created_at', { ascending: false });
+  const el = document.getElementById('rows');
+  if (error) { el.innerHTML = '<p class="empty">לא הצלחנו לטעון</p>'; return; }
+  const SH = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+  const slotsLine = t => {
+    const parts = (t.slots || []).map(sl => {
+      const nm = byId[sl.assignee_id]?.name || '?', tm = sl.due_time || (sl.due_at ? ilTime(new Date(sl.due_at)) : '');
+      const ex = Object.entries(sl.exc || {}).map(([wd, v]) => `${SH[wd]}: ${byId[(typeof v === 'string' ? v : v?.u)]?.name || '?'}${v && v.t ? ' ' + v.t : ''}`).join(', ');
+      return `<span style="display:inline-block;margin:2px 0 0 8px"><span style="color:#0A58CA;font-weight:800">${esc(nm)}</span> <span dir="ltr" style="display:inline-block">${esc(tm)}</span>${ex ? ` <span style="color:#92400E">(${esc(ex)})</span>` : ''}</span>`;
+    });
+    return parts.length ? `<small style="display:block;margin-top:2px;line-height:1.5">${parts.join('')}</small>` : '';
+  };
+  const draw = () => {
+    const m = document.getElementById('fMember').value, r = document.getElementById('fRepeat').value;
+    const list = data.filter(t => (!m || (t.slots || []).some(s => s.assignee_id === m)) && (!r || t.repeat === r));
+    el.innerHTML = list.length ? list.map(t => `<div class="row-item">${iconBox(t, 44)}
+      <div class="tmain"><b>${esc(t.title)}</b><small>${esc(repeatLabel(t))}</small>${slotsLine(t)}</div>
+      <button class="sqbtn edit" data-edit="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
+      <button class="sqbtn del" data-del="${t.id}" aria-label="מחיקה">${icon('trash-2', 20)}</button></div>`).join('')
+      : '<p class="empty">אין משימות</p>';
+    el.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => showForm(data.find(t => t.id === b.dataset.edit)));
+    el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+      const t = data.find(x => x.id === b.dataset.del);
+      if (!confirm(`למחוק את "${t.title}"? ההיסטוריה נשמרת.`)) return;
+      const { error: e1 } = await supabase.from('tasks').update({ active: false }).eq('id', t.id);
+      if (e1) { toast('המחיקה נכשלה', true); return; }
+      if (t.kind === 'template') await supabase.from('tasks').update({ active: false }).eq('template_id', t.id).gte('occurrence_date', ilDate(new Date()));
+      toast('המשימה הוסרה'); showList();
+    });
+  };
+  document.getElementById('fMember').onchange = document.getElementById('fRepeat').onchange = draw;
+  draw();
+}
+
+/* ============ טופס הוספה / עריכה ============ */
+function showForm(t) {
+  view = 'form'; editing = t;
+  const v = t || { title: '', description: '', tips: '', icon: 'sparkles', color: 'blue', points: 10, requires_photo: false,
+    late_fraction: 0.5, penalty_points: 10, times_required: 1, repeat: 'daily', weekday: 5, remind_before_minutes: 15,
+    reminder_text: '', overdue_text: '', slots: [], subject_id: null };
+  const once = t?.kind === 'occurrence';
+  const slotsInit = (v.slots || []).map(s => ({ assignee_id: s.assignee_id, time: s.due_time || (s.due_at ? ilTime(new Date(s.due_at)) : '18:00'), exc: { ...(s.exc || {}) } }));
+  const dateInit = once && t.slots?.[0]?.due_at ? ilDate(new Date(t.slots[0].due_at)) : (t?.occurrence_date || ilDate(new Date()));
+  main.innerHTML = `
+    ${tabsHtml('form')}
+    <form class="card flat" id="f" novalidate>
+      <label for="title">שם המשימה</label><input id="title" value="${esc(v.title)}" placeholder="למשל: להוציא את הכלב">
+      <label for="desc">תיאור</label><div class="field"><textarea id="desc">${esc(v.description)}</textarea></div>
+      <label for="tips">טיפים (אופציונלי)</label><div class="field"><textarea id="tips">${esc(v.tips)}</textarea></div>
+      <div class="grid2">
+        <div><label for="icon">אייקון</label><select class="sel" id="icon" style="width:100%">${TASK_ICONS.map(([k, n]) => `<option value="${k}" ${v.icon === k ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div><label for="color">צבע</label><select class="sel" id="color" style="width:100%">${Object.entries(CARD_COLORS).map(([k, c]) => `<option value="${k}" ${v.color === k ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
+      </div>
+      <label for="subject">נושא המשימה (אופציונלי)</label>
+      <select class="sel" id="subject" style="width:100%"><option value="">ללא</option>${profiles.map(p => `<option value="${p.id}" ${v.subject_id === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+      <label for="room">חדר (אופציונלי, רק בני הבית של החדר יוכלו לבצע)</label>
+      <select class="sel" id="room" style="width:100%"><option value="">ללא</option>${roomOptions(profiles).map(([k, n]) => `<option value="${k}" ${v.room === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <div class="grid2">
+        <div><label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" value="${v.points}"></div>
+        <div><label for="penalty">קנס אם לא בוצעה</label><input id="penalty" type="number" min="0" inputmode="numeric" value="${v.penalty_points}"></div>
+      </div>
+      <label for="late">ביצוע באיחור (חלק מהנקודות)</label>
+      <select class="sel" id="late" style="width:100%">${[[0,'0% (בלי נקודות)'],[0.25,'25%'],[0.5,'50%'],[0.75,'75%'],[1,'100%']].map(([k, n]) => `<option value="${k}" ${Number(v.late_fraction) === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <div class="switch"><span><b>חובה לצלם</b></span><input id="photo" type="checkbox" ${v.requires_photo ? 'checked' : ''}></div>
+      <label for="repeat">סוג משימה</label>
+      <select class="sel" id="repeat" style="width:100%" ${t ? 'disabled' : ''}>
+        <option value="daily" ${v.repeat === 'daily' ? 'selected' : ''}>יומית (חוזרת כל יום)</option>
+        <option value="weekly" ${v.repeat === 'weekly' ? 'selected' : ''}>שבועית (חוזרת כל שבוע)</option>
+        <option value="once" ${v.repeat === 'once' ? 'selected' : ''}>חד-פעמית</option></select>
+      <div id="weekdayBox"><label for="weekday">יום המועד</label><select class="sel" id="weekday" style="width:100%">${WEEKDAYS.map((n, i) => `<option value="${i}" ${v.weekday === i ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div id="dateBox"><label for="date">תאריך</label><input id="date" type="date" value="${dateInit}" dir="ltr"></div>
+      <label for="times">מספר חזרות</label><input id="times" type="number" min="1" max="10" inputmode="numeric" value="${v.times_required}">
+      <label>אחראי ושעה לכל חזרה</label><div id="slots"></div>
+      <label for="remind">תזכורת לפני המועד (בדקות)</label><input id="remind" type="number" min="0" inputmode="numeric" value="${v.remind_before_minutes ?? ''}">
+      <label for="rtext">נוסח תזכורת</label><input id="rtext" value="${esc(v.reminder_text)}" placeholder="הגיע הזמן להוציא את הכלב">
+      <label for="otext">נוסח הודעת איחור</label><input id="otext" value="${esc(v.overdue_text)}" placeholder="הכלב עדיין לא יצא החוצה">
+      <p class="error" id="err" role="alert"></p>
+      <button class="btn" id="save" type="submit">שמירת משימה</button>
+    </form>`;
+  wireTabs();
+  const $ = id => document.getElementById(id);
+  let slots = slotsInit;
+  let evs = [];
+  loadEvents().then(d => { evs = d; if ($('slots')) drawSlots(); });
+  const allowedUsers = () => {
+    const r = $('room').value;
+    if (r.startsWith('kid:')) { const a = users.filter(u => u.id === r.slice(4)); if (a.length) return a; }
+    if (r === 'parents') { const a = users.filter(u => u.role === 'admin'); if (a.length) return a; }
+    return users;
+  };
+  const checkDate = () => {
+    const r = $('repeat').value;
+    if (r === 'once') return $('date').value || todayStr;
+    if (r === 'weekly') { const wd = parseInt($('weekday').value); for (let k = 0; k < 7; k++) { const d = addDays(todayStr, k); if (dow(d) === wd) return d; } }
+    return todayStr;
+  };
+  const availHtml = (i, s, allowed, cd) => {
+    if (allowed.length < 2 || !s.time) return '';
+    const cur = { repeat: $('repeat').value, weekday: parseInt($('weekday').value), date: cd };
+    const av = availability(evs, cur, s.time, allowed.map(u => u.id));
+    const daily = $('repeat').value === 'daily', SH = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+    return `<div class="avrow"><small>מי פנוי ב-${s.time}${daily ? ' (בכל יום)' : ''}:</small>${allowed.map(u => {
+      const ab = absentOn(u.id, cd), b = av[u.id];
+      let st = ab ? 'abs' : b ? 'busy' : 'free', note = ab ? `נעדר/ת: ${esc(ab.reason)}` : b ? esc(b.title) : 'פנוי/ה';
+      if (daily && !ab) {
+        const days = [0, 1, 2, 3, 4, 5, 6].filter(wd => busyWd(u.id, wd, s.time));
+        if (!days.length) { st = 'free'; note = 'פנוי/ה כל יום'; }
+        else if (days.length === 7) { st = 'busy'; note = 'תפוס/ה כל יום'; }
+        else { st = 'part'; note = `פנוי/ה חוץ מ${days.map(d => SH[d]).join(', ')}`; }
+      }
+      return `<button type="button" class="avchip ${st} ${s.assignee_id === u.id ? 'on' : ''}" data-i="${i}" data-pick="${u.id}" ${ab ? 'disabled' : ''}><b>${esc(u.name)}</b><span>${st === 'free' || st === 'part' ? '✓ ' : '✗ '}${note}</span></button>`;
+    }).join('')}</div>`;
+  };
+  // בימים שבהם האחראי תפוס (פעילות שבועית קבועה) מציעים מחליף קבוע לאותו יום בשבוע. רק למשימה יומית.
+  const busyWd = (uid, wd, time) => { const e = evs.find(x => x.user_id === uid && x.repeat === 'weekly' && x.weekday === wd && hm(x.start_time) <= time && time < hm(x.end_time)); return e ? e.title : null; };
+  const excHtml = (i, s, allowed) => {
+    if ($('repeat').value !== 'daily' || allowed.length < 2 || !s.time) return '';
+    const days = [0,1,2,3,4,5,6].filter(wd => busyWd(s.assignee_id, wd, s.time));
+    if (!days.length) return '';
+    const who = byId[s.assignee_id]?.name || '';
+    const chip = (wd, u, cls, note, attrs) => `<button type="button" class="avchip ${cls}" ${attrs}><b>${esc(u.name)}</b><span>${note}</span></button>`;
+    return days.map(wd => {
+      const cur = normExc(s.exc[wd]);
+      const others = allowed.filter(u => u.id !== s.assignee_id);
+      const free = others.filter(u => !busyWd(u.id, wd, s.time));
+      let html = `<div class="avrow exc"><small><b>${esc(who)}</b> תפוס/ה בימי ${WEEKDAYS[wd]} (${esc(busyWd(s.assignee_id, wd, s.time))}). מי יחליף/ה ביום ${WEEKDAYS[wd]}?</small>`;
+      html += free.map(u => chip(wd, u, `free ${cur && cur.u === u.id && !cur.t ? 'on' : ''}`, '✓ פנוי/ה', `data-ei="${i}" data-ewd="${wd}" data-eu="${u.id}"`)).join('');
+      if (!free.length) {
+        const sug = suggestTimes(allowed.map(u => u.id), s.time, (uid, t) => busyWd(uid, wd, t));
+        html += `<small style="color:#B91C1C;font-weight:800">אין מי שפנוי ב-${s.time} ביום ${WEEKDAYS[wd]}. אפשר לשנות את השעה ליום הזה בלבד:</small>`;
+        html += sug.length ? sug.map(x => chip(wd, byId[x.u], `free ${cur && cur.u === x.u && cur.t === x.t ? 'on' : ''}`, `✓ פנוי/ה ב-${x.t}`, `data-ei="${i}" data-ewd="${wd}" data-eu="${x.u}" data-et="${x.t}"`)).join('') : '<small>לא נמצאה שעה פנויה באותו יום</small>';
+        html += `<small>או לבחור מישהו תפוס בכל זאת:</small>` + others.map(u => chip(wd, u, `busy ${cur && cur.u === u.id && !cur.t ? 'on' : ''}`, '✗ ' + esc(busyWd(u.id, wd, s.time)), `data-ei="${i}" data-ewd="${wd}" data-eu="${u.id}"`)).join('');
+      }
+      return html + '</div>';
+    }).join('');
+  };
+  const drawSlots = () => {
+    const n = Math.max(1, Math.min(10, parseInt($('times').value) || 1));
+    const allowed = allowedUsers();
+    const cd = checkDate();
+    const free = allowed.filter(u => !absentOn(u.id, cd));
+    while (slots.length < n) slots.push({ assignee_id: (free[0] || allowed[0])?.id || '', time: '18:00', exc: {} });
+    slots.length = n;
+    slots.forEach(s => { if (!allowed.some(u => u.id === s.assignee_id)) s.assignee_id = (free[0] || allowed[0])?.id || ''; });
+    slots.forEach(s => {
+      s.exc = s.exc || {};
+      for (const k of Object.keys(s.exc)) { const x = normExc(s.exc[k]); if ($('repeat').value !== 'daily' || !busyWd(s.assignee_id, +k, s.time) || !x || (x.u === s.assignee_id && !x.t) || !allowed.some(u => u.id === x.u)) delete s.exc[k]; }
+    });
+    $('slots').innerHTML = slots.map((s, i) => `<div class="slotrow">
+      <select class="sel" data-a="${i}" ${allowed.length === 1 ? 'disabled' : ''}>${allowed.map(u => { const ab = absentOn(u.id, cd); return `<option value="${u.id}" ${s.assignee_id === u.id ? 'selected' : ''} ${ab && s.assignee_id !== u.id ? 'disabled' : ''}>${esc(u.name)}${ab ? ` (נעדר/ת: ${esc(ab.reason)})` : ''}</option>`; }).join('')}</select>
+      <input type="time" data-t="${i}" value="${s.time}" dir="ltr"></div>${availHtml(i, s, allowed, cd)}${excHtml(i, s, allowed)}`).join('');
+    $('slots').querySelectorAll('[data-a]').forEach(el => el.onchange = () => slots[el.dataset.a].assignee_id = el.value);
+    $('slots').querySelectorAll('[data-t]').forEach(el => el.onchange = () => { slots[el.dataset.t].time = el.value; drawSlots(); });
+    $('slots').querySelectorAll('[data-eu]').forEach(el => el.onclick = () => { slots[el.dataset.ei].exc[el.dataset.ewd] = el.dataset.et ? { u: el.dataset.eu, t: el.dataset.et } : el.dataset.eu; drawSlots(); });
+    $('slots').querySelectorAll('[data-pick]').forEach(el => el.onclick = () => { slots[el.dataset.i].assignee_id = el.dataset.pick; drawSlots(); });
+  };
+  const toggle = () => { $('weekdayBox').classList.toggle('hidden', $('repeat').value !== 'weekly'); $('dateBox').classList.toggle('hidden', $('repeat').value !== 'once'); };
+  $('times').oninput = drawSlots; $('room').onchange = drawSlots; $('date').onchange = drawSlots; $('weekday').onchange = drawSlots; $('repeat').onchange = () => { toggle(); drawSlots(); }; toggle(); drawSlots();
+
+  $('f').onsubmit = async (e) => {
+    e.preventDefault();
+    const err = msg => { $('err').textContent = msg; return false; };
+    $('err').textContent = '';
+    const title = $('title').value.trim();
+    const points = parseInt($('points').value);
+    const repeat = $('repeat').value;
+    if (!title) return err('צריך להזין שם למשימה');
+    if (Number.isNaN(points) || points < 0) return err('צריך להזין נקודות');
+    if (!users.length) return err('אין משתמשים לשיוך');
+    if (slots.some(s => !s.assignee_id || !s.time)) return err('צריך אחראי ושעה לכל חזרה');
+    if (repeat === 'once' && !$('date').value) return err('צריך לבחור תאריך');
+    const cd2 = checkDate();
+    for (const s of slots) { const ab = absentOn(s.assignee_id, cd2); if (ab) return err(`${byId[s.assignee_id]?.name || 'המשתמש'} נעדר/ת (${ab.reason}) עד ${dm(ab.end_date)}. בחרו אחראי אחר.`); }
+    const base = {
+      title, description: $('desc').value.trim() || null, tips: $('tips').value.trim() || null,
+      icon: $('icon').value, color: $('color').value, subject_id: $('subject').value || null, room: $('room').value || null,
+      points, penalty_points: parseInt($('penalty').value) || 0, late_fraction: Number($('late').value),
+      requires_photo: $('photo').checked, times_required: slots.length,
+      remind_before_minutes: $('remind').value === '' ? null : parseInt($('remind').value),
+      reminder_text: $('rtext').value.trim() || null, overdue_text: $('otext').value.trim() || null
+    };
+    let row;
+    if (repeat === 'once') {
+      const date = $('date').value;
+      const old = t?.slots || [];
+      row = { ...base, kind: 'occurrence', template_id: null, repeat: 'once', weekday: null, occurrence_date: date,
+        slots: slots.map((s, i) => ({ n: i + 1, assignee_id: s.assignee_id, due_at: toIsraelDate(date, s.time).toISOString(),
+          reminded: old[i]?.reminded || false, overdue_notified: old[i]?.overdue_notified || false, penalized: old[i]?.penalized || false })) };
+    } else {
+      row = { ...base, kind: 'template', repeat, weekday: repeat === 'weekly' ? parseInt($('weekday').value) : null,
+        slots: slots.map(s => ({ assignee_id: s.assignee_id, due_time: s.time, ...(Object.keys(s.exc || {}).length ? { exc: s.exc } : {}) })) };
+    }
+    try {
+      const conflicts = await findConflicts({ repeat, weekday: parseInt($('weekday').value), date: $('date').value, slots }, profiles);
+      if (conflicts.length && !confirm('שים לב להתנגשות עם לוח השנה:\n\n' + conflicts.join('\n') + '\n\nלשמור את המשימה בכל זאת?')) return;
+    } catch (_) {}
+    const btn = $('save'); btn.disabled = true; btn.textContent = 'שומר...';
+    const res = t ? await supabase.from('tasks').update(row).eq('id', t.id)
+                  : await supabase.from('tasks').insert({ ...row, created_by: session.user.id });
+    if (res.error) { btn.disabled = false; btn.textContent = 'שמירת משימה'; return err('השמירה נכשלה: ' + res.error.message); }
+    if (t && row.kind === 'template') { try { await syncOccurrences({ ...row, id: t.id }); } catch (_) {} }
+    if (row.kind === 'template') { try { await generateOccurrences(session.user.id); } catch (_) {} }
+    if (t) { toast('המשימה נשמרה'); showList(); }
+    else { toast('המשימה נשמרה. אפשר להוסיף עוד אחת'); showForm(null); window.scrollTo(0, 0); }
+  };
+}
+
+
+/* ============ בני משפחה ============ */
+async function showMembers() {
+  view = 'mem';
+  const { data: fam } = await supabase.from('families').select('name,code').maybeSingle();
+  const list = profiles.filter(p => p.active !== false);
+  main.innerHTML = `${tabsHtml('mem')}
+    <div class="card flat" style="text-align:center">
+      <div class="sec-title" style="margin:0">קוד הבית שלכם</div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:4px;margin:6px 0" dir="ltr">${esc(fam?.code || '')}</div>
+      <p class="note" style="margin:0">כל בן משפחה נכנס עם קוד הבית, שם המשתמש והסיסמה שלו.</p>
+    </div>
+    <div class="sec-title">בני המשפחה</div>
+    <div id="memRows">${list.map(p => `<div class="row-item">${avatar(p, 44)}
+      <div class="tmain"><b>${esc(p.name)}${p.role === 'admin' ? ' · הורה' : ''}</b><small>${p.is_user ? 'שם משתמש: ' + esc(p.username || '') : 'דמות (ללא כניסה)'}</small></div>
+      <button class="sqbtn edit" data-ph="${p.id}" aria-label="תמונה" title="תמונה">${icon('camera', 20)}</button>
+      ${p.is_user ? `<button class="sqbtn edit" data-pw="${p.id}" aria-label="איפוס סיסמה" title="איפוס סיסמה">${icon('settings', 20)}</button>` : ''}
+      ${p.id === me.id ? '' : `<button class="sqbtn del" data-rm="${p.id}" aria-label="הסרה">${icon('trash-2', 20)}</button>`}</div>`).join('')}</div>
+    <input type="file" id="phFile" accept="image/*" style="display:none">
+    <form class="card flat" id="mf" novalidate style="margin-top:12px">
+      <div class="sec-title" style="margin-top:0">הוספת בן משפחה</div>
+      <label for="mName">שם</label><input id="mName" maxlength="20" placeholder="למשל: דנה">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="mChar" style="width:auto"> דמות בלי כניסה (למשל חיית מחמד)</label>
+      <div id="mLogin">
+        <label for="mUser">שם משתמש</label><input id="mUser" dir="ltr" maxlength="20" autocapitalize="none" placeholder="אותיות או ספרות">
+        <label for="mPass">סיסמה (לפחות 6 תווים)</label><input id="mPass" dir="ltr" maxlength="72" placeholder="סיסמה זמנית">
+        <label for="mRole">תפקיד</label><select class="sel" id="mRole" style="width:100%"><option value="member">ילד/ה</option><option value="admin">הורה</option></select>
+      </div>
+      <label for="mPhoto">תמונה (אפשר לצלם או לבחור מהגלריה)</label><input id="mPhoto" type="file" accept="image/*">
+      <p class="error" id="mErr" role="alert"></p>
+      <button class="btn" id="mSave" type="submit">הוספה</button>
+    </form>
+    <div class="sec-title" style="margin-top:22px">מחיקת הבית</div>
+    <button class="btn secondary" id="famDel" type="button" style="width:100%;margin-top:0;color:#B91C1C;border-color:#EF4444">מחיקת הבית וכל הנתונים</button>
+    <p class="note">מוחק לצמיתות את כל המשימות, התמונות, ההודעות והנקודות של הבית. אי אפשר לשחזר.</p>`;
+  wireTabs();
+  const $ = id => document.getElementById(id), done = (msg) => { toast(msg); location.hash = '#members'; location.reload(); };
+  $('mChar').onchange = () => { $('mLogin').style.display = $('mChar').checked ? 'none' : ''; };
+  let phFor = null;
+  document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => { phFor = b.dataset.ph; $('phFile').click(); });
+  $('phFile').onchange = async () => {
+    const f = $('phFile').files[0]; if (!f || !phFor) return;
+    try { await callFamily('member_update', { id: phFor, avatar: await imageToDataUrl(f) }); done('התמונה עודכנה'); } catch (e) { toast(e.message, true); }
+  };
+  document.querySelectorAll('[data-pw]').forEach(b => b.onclick = async () => {
+    const pw = prompt('סיסמה חדשה (לפחות 6 תווים):'); if (!pw) return;
+    try { await callFamily('member_update', { id: b.dataset.pw, password: pw }); toast('הסיסמה שונתה'); } catch (e) { toast(e.message, true); }
+  });
+  document.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => {
+    const p = byId[b.dataset.rm];
+    if (!confirm(`להסיר את ${p?.name}? ההיסטוריה נשמרת, אבל אי אפשר יהיה להיכנס.`)) return;
+    try { await callFamily('member_remove', { id: b.dataset.rm }); done('הוסר/ה'); } catch (e) { toast(e.message, true); }
+  });
+  $('mf').onsubmit = async (e) => {
+    e.preventDefault(); $('mErr').textContent = '';
+    const body = { name: $('mName').value, is_user: !$('mChar').checked, username: $('mUser').value, password: $('mPass').value, role: $('mRole').value };
+    try {
+      if ($('mPhoto').files[0]) body.avatar = await imageToDataUrl($('mPhoto').files[0]);
+      $('mSave').disabled = true;
+      await callFamily('member_create', body); done('נוסף/ה');
+    } catch (err) { $('mErr').textContent = err.message; $('mSave').disabled = false; }
+  };
+  $('famDel').onclick = async () => {
+    const c = prompt(`מוחק את כל הבית לצמיתות. להמשך, הקלידו את קוד הבית (${fam?.code}):`); if (!c) return;
+    if (!confirm('בטוחים? כל הנתונים יימחקו ואי אפשר לשחזר.')) return;
+    try { await callFamily('family_delete', { confirm: c }); await supabase.auth.signOut(); location.replace('login.html'); } catch (e) { toast(e.message, true); }
+  };
+}
+
+/* ============ העדרויות ============ */
+async function showAbsences(editAb) {
+  view = 'abs';
+  await loadAbsences();
+  const a = editAb && editAb.id ? editAb : { user_id: users[0]?.id, start_date: todayStr, end_date: todayStr, reason: '' };
+  main.innerHTML = `${tabsHtml('abs')}
+    <div class="sec-title" style="margin-top:0">העדרויות פעילות ועתידיות</div>
+    <div id="absRows">${absences.length ? absences.map(x => `<div class="row-item">${avatar(byId[x.user_id], 44)}
+      <div class="tmain"><b>${esc(byId[x.user_id]?.name || '')} · ${esc(x.reason)}</b><small>${x.start_date === x.end_date ? dm(x.start_date) : `${dm(x.start_date)} עד ${dm(x.end_date)}`}${x.start_date <= todayStr ? ' · כעת' : ''}</small></div>
+      <button class="sqbtn edit" data-e="${x.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
+      <button class="sqbtn del" data-d="${x.id}" aria-label="מחיקה">${icon('trash-2', 20)}</button></div>`).join('') : '<p class="empty">אין העדרויות</p>'}</div>
+    <form class="card flat" id="af" novalidate style="margin-top:12px">
+      <div class="sec-title" style="margin-top:0">${a.id ? 'עריכת העדרות' : 'העדרות חדשה'}</div>
+      <label for="aUser">מי נעדר/ת</label>
+      <select class="sel" id="aUser" style="width:100%">${users.map(u => `<option value="${u.id}" ${a.user_id === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select>
+      <div class="grid2"><div><label for="aFrom">מתאריך</label><input id="aFrom" type="date" value="${a.start_date}" dir="ltr"></div>
+      <div><label for="aTo">עד תאריך (כולל)</label><input id="aTo" type="date" value="${a.end_date}" dir="ltr"></div></div>
+      <label for="aReason">סיבה</label>
+      <input id="aReason" maxlength="80" list="aReasons" value="${esc(a.reason)}" placeholder="למשל: חולה, טיול, אצל סבתא">
+      <datalist id="aReasons"><option value="חולה"><option value="טיול"><option value="אצל סבתא"><option value="נסיעה"><option value="מחנה"></datalist>
+      <p class="error" id="aErr" role="alert"></p>
+      <button class="btn" id="aSave" type="submit">שמירה</button>
+      ${a.id ? '<button class="btn secondary" id="aCancel" type="button">ביטול עריכה</button>' : ''}
+    </form>
+    <p class="note">בזמן העדרות אי אפשר לשייך לאדם משימות. אם כבר יש לו משימות בתקופה, תוצג רשימה כדי שתשנו אחראי.</p>`;
+  wireTabs();
+  if (a.id) document.getElementById('aCancel').onclick = () => showAbsences();
+  document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { showAbsences(absences.find(x => x.id === b.dataset.e)); window.scrollTo(0, document.body.scrollHeight); });
+  document.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
+    if (!confirm('למחוק את ההעדרות?')) return;
+    const { error } = await supabase.from('absences').delete().eq('id', b.dataset.d);
+    toast(error ? 'המחיקה נכשלה' : 'ההעדרות נמחקה', !!error); showAbsences();
+  });
+  document.getElementById('af').onsubmit = async (e) => {
+    e.preventDefault();
+    const err = m => { document.getElementById('aErr').textContent = m; return false; };
+    const row = { user_id: document.getElementById('aUser').value, start_date: document.getElementById('aFrom').value, end_date: document.getElementById('aTo').value, reason: document.getElementById('aReason').value.trim() };
+    if (!row.start_date || !row.end_date) return err('צריך לבחור תאריכים');
+    if (row.end_date < row.start_date) return err('תאריך הסיום לפני תאריך ההתחלה');
+    if (!row.reason) return err('צריך להזין סיבה');
+    const btn = document.getElementById('aSave'); btn.disabled = true;
+    const res = a.id ? await supabase.from('absences').update(row).eq('id', a.id) : await supabase.from('absences').insert(row);
+    if (res.error) { btn.disabled = false; return err('השמירה נכשלה: ' + res.error.message); }
+    toast('ההעדרות נשמרה');
+    let aff = []; try { aff = await affectedTasks(row); } catch (ex) { console.error("affected", ex); }
+    await showAbsences();
+    if (aff.length) showAffected(row, aff);
+  };
+}
+function showAffected(ab, list) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="modal-card"><button type="button" class="modal-x" aria-label="סגירה">${icon('x', 20)}</button>
+    <h2 style="margin:0 0 6px">יש משימות שצריך להעביר</h2>
+    <p class="note" style="text-align:start">ל${esc(byId[ab.user_id]?.name || '')} יש עדיין משימות בתקופת ההעדרות. לחצו על משימה כדי לשנות את האחראי.</p>
+    ${list.map(t => `<div class="row-item">${iconBox(t, 40)}<div class="tmain"><b>${esc(t.title)}</b><small>${esc(repeatLabel(t))}${t.kind === 'occurrence' && t.template_id ? ' · של היום/השבוע' : ''}</small></div>
+      <button class="sqbtn edit" data-t="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button></div>`).join('')}</div>`;
+  document.body.append(m);
+  m.querySelector('.modal-x').onclick = () => m.remove();
+  m.querySelectorAll('[data-t]').forEach(b => b.onclick = async () => {
+    let t = list.find(x => x.id === b.dataset.t);
+    // משימה שנוצרה מתבנית: עורכים את התבנית (היא תעדכן את המשימות של היום והשבוע)
+    if (t.kind === 'occurrence' && t.template_id) { const { data } = await supabase.from('tasks').select('*').eq('id', t.template_id).maybeSingle(); if (data) t = data; }
+    m.remove(); showForm(t);
+  });
+}
+
+await loadAbsences();
+if (location.hash === '#members') showMembers(); else showList();
+</script>
+</body>
+</html>
