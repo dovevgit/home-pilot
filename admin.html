@@ -248,10 +248,8 @@ function showForm(t) {
       <input type="hidden" id="icon" value="${esc(v.icon || 'sparkles')}">
       <div class="icopick" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">${TASK_ICONS.map(([k, n]) => `<button type="button" class="icob ${v.icon === k ? 'on' : ''}" data-ic="${k}" aria-label="${n}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:2px solid ${v.icon === k ? '#F97316' : 'var(--field)'};background:${v.icon === k ? '#FFE7CC' : '#fff'};border-radius:12px;font:inherit;font-size:11px;color:var(--text);cursor:pointer">${ART.has(k) ? `<img src="icons/task/${k}.png" alt="" width="32" height="32">` : icon(k, 26)}<span>${n}</span></button>`).join('')}</div>
       <input type="hidden" id="color" value="${esc(v.color || 'blue')}">
-      <label for="subject">נושא המשימה (אופציונלי)</label>
-      <select class="sel" id="subject" style="width:100%"><option value="">ללא</option>${profiles.map(p => `<option value="${p.id}" ${v.subject_id === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
-      <label for="room">חדר (אופציונלי, רק בני הבית של החדר יוכלו לבצע)</label>
-      <select class="sel" id="room" style="width:100%"><option value="">ללא</option>${roomOptions(profiles).map(([k, n]) => `<option value="${k}" ${v.room === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <input type="hidden" id="subject" value="${esc(v.subject_id || '')}">
+      <input type="hidden" id="room" value="${esc(v.room || '')}">
       <div class="grid2">
         <div><label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" value="${v.points}"></div>
         <div><label for="penalty">קנס אם לא בוצעה</label><input id="penalty" type="number" min="0" inputmode="numeric" value="${v.penalty_points}"></div>
