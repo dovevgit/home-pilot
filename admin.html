@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>הבית שלנו | ניהול משימות</title>
 <meta name="theme-color" content="#0D6EFD">
@@ -23,7 +24,7 @@ import { findConflicts, loadEvents, availability, hm, normExc, suggestTimes } fr
 import { generateOccurrences, syncOccurrences } from './js/generate.js';
 import { callFamily, imageToDataUrl, captureFace } from './js/family.js';
 
-const { session, me, profiles, isAdmin } = await initPage({ title: 'ניהול משימות', back: 'index.html' });
+const { session, me, profiles, isAdmin } = await initPage({ active: 'admin', title: 'ניהול משימות', back: 'index.html' });
 const main = document.getElementById('main');
 if (!isAdmin) {
   main.innerHTML = '<p class="empty">מסך זה זמין למנהל בלבד</p>';
@@ -211,7 +212,7 @@ async function showList() {
     const m = document.getElementById('fMember').value, r = document.getElementById('fRepeat').value;
     const list = data.filter(t => (!m || (t.slots || []).some(s => slotUsers(s).includes(m) || Object.values(s.exc || {}).some(v => (typeof v === 'string' ? v : v?.u) === m))) && (!r || t.repeat === r));
     el.innerHTML = list.length ? list.map(t => `<div class="row-item">${iconBox(t, 44)}
-      <div class="tmain"><b>${esc(t.title)}</b><small>${esc(repeatLabel(t))}</small>${slotsLine(t)}</div>
+      <div class="tmain"><b data-user>${esc(t.title)}</b><small>${esc(repeatLabel(t))}</small>${slotsLine(t)}</div>
       <button class="sqbtn edit" data-edit="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
       <button class="sqbtn del" data-del="${t.id}" aria-label="מחיקה">${icon('trash-2', 20)}</button></div>`).join('')
       : '<p class="empty">אין משימות</p>';
@@ -544,7 +545,7 @@ function showAffected(ab, list) {
   m.innerHTML = `<div class="modal-card"><button type="button" class="modal-x" aria-label="סגירה">${icon('x', 20)}</button>
     <h2 style="margin:0 0 6px">יש משימות שצריך להעביר</h2>
     <p class="note" style="text-align:start">ל${esc(byId[ab.user_id]?.name || '')} יש עדיין משימות בתקופת ההעדרות. לחצו על משימה כדי לשנות את האחראי.</p>
-    ${list.map(t => `<div class="row-item">${iconBox(t, 40)}<div class="tmain"><b>${esc(t.title)}</b><small>${esc(repeatLabel(t))}${t.kind === 'occurrence' && t.template_id ? ' · של היום/השבוע' : ''}</small></div>
+    ${list.map(t => `<div class="row-item">${iconBox(t, 40)}<div class="tmain"><b data-user>${esc(t.title)}</b><small>${esc(repeatLabel(t))}${t.kind === 'occurrence' && t.template_id ? ' · של היום/השבוע' : ''}</small></div>
       <button class="sqbtn edit" data-t="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button></div>`).join('')}</div>`;
   document.body.append(m);
   m.querySelector('.modal-x').onclick = () => m.remove();
