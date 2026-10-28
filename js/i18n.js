@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -96,6 +96,13 @@ const D = {
   'הערות (לא חובה)': 'Notes (optional)', 'מחיקה': 'Delete', 'צריך שם לתרופה': 'The medication needs a name', 'צריך לפחות שעה אחת': 'At least one time is required',
   'לא הצלחתי לשמור': 'Could not save', 'למחוק את התרופה?': 'Delete this medication?', 'נרשם ✓': 'Recorded ✓',
   'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', 'ו': 'Fri', 'ש': 'Sat',
+  'בקשות פתוחות': 'Open requests', 'בקשה חדשה': 'New request', 'נסגרו לאחרונה': 'Recently closed',
+  'דחית': 'You declined', 'אני לוקח/ת': "I'll take it", 'לא יכול/ה': "I can't", 'ביטול לקיחה': 'Release',
+  'אין בקשות פתוחות': 'No open requests', 'עוד אין בקשות שנסגרו': 'No closed requests yet', 'לא הצלחנו לטעון בקשות': 'Could not load requests',
+  'למחוק את הבקשה?': 'Delete this request?', 'הפעולה נכשלה, אפשר לנסות שוב': 'The action failed, you can try again',
+  'מה צריך?': 'What is needed?', 'למשל: לקחת אותי לחוג מחר': 'For example: take me to class tomorrow', 'למי (אפשר לבחור כמה)': 'To whom (you can choose several)',
+  'תאריך (אופציונלי)': 'Date (optional)', 'שעה (אופציונלי)': 'Time (optional)', 'שליחת בקשה': 'Send request',
+  'צריך לכתוב מה הבקשה': 'Write what the request is', 'צריך לבחור למי לשלוח': 'Choose who to send it to', 'הבקשה נשלחה': 'Request sent',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -104,7 +111,13 @@ const D = {
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const MO = { 'ינואר': 'January', 'פברואר': 'February', 'מרץ': 'March', 'אפריל': 'April', 'מאי': 'May', 'יוני': 'June', 'יולי': 'July', 'אוגוסט': 'August', 'ספטמבר': 'September', 'אוקטובר': 'October', 'נובמבר': 'November', 'דצמבר': 'December' };
 const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', 'ו': 'Fri', 'ש': 'Sat' };
+const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
+const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(ממתינה|נלקחה|בוצעה|נדחתה)(?: · (.+))?$/, (_, st, who) => STR[st] + (who ? ' · ' + who : '')],
+  [/^מאת (.+?) · ל(.+?)((?: · .+)?)$/, (_, f, to, due) => `From ${f} · to ${to === 'כולם' ? 'everyone' : to}${due ? ' · ' + due.slice(3).split(' · ').map(dueEn).join(' · ') : ''}`],
+  [/^הבקשה סומנה כבוצעה, (.*) קיבל\/ה (\d+) נקודות$/, 'Request marked as done, $1 got $2 points'],
+  [/^מי שיבצע את הבקשה יקבל (\d+) נקודות\.$/, 'Whoever does the request gets $1 points.'],
   [/^(\d{2}:\d{2})( · באיחור)?( · נלקחה ✓)?$/, (_, t, l, d) => `${t}${l ? ' · Late' : ''}${d ? ' · Taken ✓' : ''}`],
   [/^([\d:, ]+) · (כל יום|[אבגדהוש]( [אבגדהוש])*)(?: · עד (.+))?$/, (_, ts, days, _x, end) => `${ts} · ${days === 'כל יום' ? 'Every day' : days.split(' ').map(x => WL[x]).join(' ')}${end ? ' · until ' + end : ''}`],
   [/^(\d+) נקודות שמורות לבקשות שממתינות$/, '$1 points reserved for pending requests'],

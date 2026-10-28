@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -57,7 +58,7 @@ function card(r) {
     r.status === 'taken' && r.taken_by === me ? `<button type="button" class="rbtn" data-a="release" data-id="${r.id}">ביטול לקיחה</button>` : ''
   ].join('');
   return `<div class="req ${r.status}">
-    <div class="reqtop">${avatar(from, 40)}<div class="reqmain"><b>${esc(r.body)}</b>
+    <div class="reqtop">${avatar(from, 40)}<div class="reqmain"><b data-user>${esc(r.body)}</b>
       <small>מאת ${esc(from?.name || '')} · ל${esc(toTxt)}${dueText(r) ? ' · ' + esc(dueText(r)) : ''}</small></div>
       <button type="button" class="reqdel" data-a="del" data-id="${r.id}" aria-label="מחיקה">${icon('trash-2', 18)}</button></div>
     <div class="reqfoot"><span class="chip ${cls}">${lab}${taker && r.status !== 'open' ? ' · ' + esc(taker.name) : ''}</span>
