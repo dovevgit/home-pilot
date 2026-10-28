@@ -24,12 +24,13 @@
   var st = document.createElement('style'); st.textContent = css;
   (document.head || document.documentElement).appendChild(st);
 
+  var SP = 'splash.jpg'; try { if (localStorage.getItem('lang') === 'en') SP = 'splash-en.jpg'; } catch (e) {}
   var d = document.createElement('div');
   d.id = 'splash'; d.setAttribute('role', 'img'); d.setAttribute('aria-label', 'הבית שלנו');
-  var bg = document.createElement('div'); bg.className = 'bg'; bg.style.backgroundImage = 'url(splash.jpg)';
+  var bg = document.createElement('div'); bg.className = 'bg'; bg.style.backgroundImage = 'url(' + SP + ')';
   var cam = document.createElement('div'); cam.className = 'cam';
   var stage = document.createElement('div'); stage.className = 'stage';
-  var img = new Image(); img.alt = ''; img.src = 'splash.jpg';
+  var img = new Image(); img.alt = ''; img.src = SP;
   stage.appendChild(img);
   var g = document.createElement('div'); g.className = 'glint'; stage.appendChild(g);
   [[18, 10, 2.15], [82, 11, 2.35], [50, 5, 2.55], [27, 60, 2.7], [72, 62, 2.45], [50, 61, 2.9], [88, 54, 2.8], [12, 54, 2.6]]
