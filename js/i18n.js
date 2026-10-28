@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -88,6 +88,14 @@ const D = {
   'מחיר בנקודות': 'Price in points', '📷 צילום': '📷 Take photo', '🖼️ תמונה': '🖼️ Photo', 'מוצג לילדים': 'Shown to the kids', 'הסרה': 'Remove',
   'צריך שם למוצר': 'The item needs a name', 'צריך מחיר בנקודות': 'A price in points is required', 'לא הצלחנו לקרוא את התמונה': 'Could not read the photo',
   'מחיקת המוצר': 'Delete item', 'למחוק את המוצר? רכישות קודמות נשמרות.': 'Delete the item? Previous purchases are kept.',
+  'הוספת תרופה': 'Add medication', 'התרופות שלי': 'My medications', '7 הימים האחרונים': 'Last 7 days',
+  'האפליקציה רק מזכירה ורושמת. היא לא מחליפה הוראות של רופא או רוקח.': 'The app only reminds and records. It does not replace instructions from a doctor or pharmacist.',
+  'אני': 'Me', 'אין תרופות להיום': 'No medications today', 'לקחתי': 'Taken', 'עוד לא הוספת תרופות': 'No medications added yet', 'אין עדיין היסטוריה': 'No history yet',
+  'עריכת תרופה': 'Edit medication', 'תרופה חדשה': 'New medication', 'שם התרופה': 'Medication name', 'מינון (למשל: כדור אחד)': 'Dose (for example: one pill)',
+  'שעות': 'Times', '+ שעה': '+ Time', 'ימים (בלי בחירה = כל יום)': 'Days (none selected = every day)', 'עד תאריך (לא חובה)': 'Until date (optional)',
+  'הערות (לא חובה)': 'Notes (optional)', 'מחיקה': 'Delete', 'צריך שם לתרופה': 'The medication needs a name', 'צריך לפחות שעה אחת': 'At least one time is required',
+  'לא הצלחתי לשמור': 'Could not save', 'למחוק את התרופה?': 'Delete this medication?', 'נרשם ✓': 'Recorded ✓',
+  'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', 'ו': 'Fri', 'ש': 'Sat',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -95,7 +103,10 @@ const D = {
 
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const MO = { 'ינואר': 'January', 'פברואר': 'February', 'מרץ': 'March', 'אפריל': 'April', 'מאי': 'May', 'יוני': 'June', 'יולי': 'July', 'אוגוסט': 'August', 'ספטמבר': 'September', 'אוקטובר': 'October', 'נובמבר': 'November', 'דצמבר': 'December' };
+const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', 'ו': 'Fri', 'ש': 'Sat' };
 const P = [
+  [/^(\d{2}:\d{2})( · באיחור)?( · נלקחה ✓)?$/, (_, t, l, d) => `${t}${l ? ' · Late' : ''}${d ? ' · Taken ✓' : ''}`],
+  [/^([\d:, ]+) · (כל יום|[אבגדהוש]( [אבגדהוש])*)(?: · עד (.+))?$/, (_, ts, days, _x, end) => `${ts} · ${days === 'כל יום' ? 'Every day' : days.split(' ').map(x => WL[x]).join(' ')}${end ? ' · until ' + end : ''}`],
   [/^(\d+) נקודות שמורות לבקשות שממתינות$/, '$1 points reserved for pending requests'],
   [/^חסרות (\d+)$/, 'Need $1 more'],
   [/^(.+) רוצה: (.+)$/, '$1 wants: $2'],

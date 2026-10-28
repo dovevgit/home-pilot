@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -61,12 +62,12 @@ function render() {
   items.sort((a, b) => a.t.localeCompare(b.t));
   $('today').innerHTML = items.length ? items.map(({ m, t }) => {
     const d = taken(m, today, t), late = !d && t < now;
-    return `<div class="req ${d ? 'done' : ''}" style="padding:12px"><div class="reqtop"><div class="reqmain"><b>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
+    return `<div class="req ${d ? 'done' : ''}" style="padding:12px"><div class="reqtop"><div class="reqmain"><b data-user>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
       <div style="color:${late ? '#B91C1C' : 'var(--text2)'};font-weight:700">${t}${late ? ' · באיחור' : ''}${d ? ' · נלקחה ✓' : ''}</div></div>
       <button type="button" class="rbtn ${d ? '' : 'go'}" data-a="${d ? 'undo' : 'take'}" data-m="${m.id}" data-t="${t}">${d ? 'ביטול' : 'לקחתי'}</button></div></div>`;
   }).join('') : '<p class="empty">אין תרופות להיום</p>';
-  $('list').innerHTML = meds.length ? meds.map(m => `<div class="req" style="padding:12px"><div class="reqtop"><div class="reqmain"><b>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
-    <div style="color:var(--text2)">${(m.times || []).join(', ')} · ${m.days ? m.days.map(i => WD[i]).join(' ') : 'כל יום'}${m.end_date ? ' · עד ' + m.end_date.split('-').reverse().join('/') : ''}</div>${m.notes ? `<div style="color:var(--text2)">${esc(m.notes)}</div>` : ''}</div>
+  $('list').innerHTML = meds.length ? meds.map(m => `<div class="req" style="padding:12px"><div class="reqtop"><div class="reqmain"><b data-user>${esc(m.name)}</b>${m.dose ? ' · ' + esc(m.dose) : ''}
+    <div style="color:var(--text2)">${(m.times || []).join(', ')} · ${m.days ? m.days.map(i => WD[i]).join(' ') : 'כל יום'}${m.end_date ? ' · עד ' + m.end_date.split('-').reverse().join('/') : ''}</div>${m.notes ? `<div data-user style="color:var(--text2)">${esc(m.notes)}</div>` : ''}</div>
     <button type="button" class="rbtn" data-a="edit" data-m="${m.id}">עריכה</button></div></div>`).join('') : '<p class="empty">עוד לא הוספת תרופות</p>';
   let h = '';
   for (let i = 1; i <= 6; i++) {
