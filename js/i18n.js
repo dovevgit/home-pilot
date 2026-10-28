@@ -713,6 +713,8 @@ const D = {
   "ייתכן שהשולחן נסגר.": "The table may have been closed.",
   "חזרה לרשימה": "Back to list",
   "עריכת משימה": "Edit task",
+  "התרופות": "Medications",
+  "הכול נלקח היום ✓": "All taken today ✓",
   "אפשר להחליף בין יומית לשבועית. משימות עתידיות שעוד לא דווחו ייווצרו מחדש לפי הסוג החדש.": "You can switch between daily and weekly. Future tasks that have not been reported yet will be recreated for the new type.",
   "אי אפשר לשנות סוג של משימה חד-פעמית. כדי לשנות, מוחקים אותה ויוצרים חדשה.": "You can't change the type of a one-time task. To change it, delete it and create a new one.",
   "לשנות את המשימה לשבועית?\n\nמשימות עתידיות שעוד לא דווחו יימחקו ויווצרו מחדש לפי הסוג החדש. דיווחים והיסטוריה לא יימחקו.": "Change the task to weekly?\n\nFuture tasks that have not been reported yet will be deleted and recreated for the new type. Reports and history are kept.",
@@ -1077,6 +1079,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(\d+) מתוך (\d+) נלקחו היום$/, "$1 of $2 taken today"],
   [/^הוזמנת לשחק (.+) איתנו! הקישור למשחק:\n(.+)$/s, 'You are invited to play $1 with us! Link to the game:\n$2'],
   [/^הניקוד שלך: (\d+) · שורות: (\d+) · שלב: (\d+)$/, 'Your score: $1 · Lines: $2 · Level: $3'],
   [/^(דגל|מרגל|סייר|חבלן|סמל|סגן|סרן|רב-סרן|קולונל|גנרל|מרשל|פצצה) (שלך|של היריב)$/, (m,a,b)=>(b==='שלך'?'Your ':'Opponent\'s ')+tr(a)],
