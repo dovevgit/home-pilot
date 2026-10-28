@@ -240,7 +240,8 @@ function showForm(t) {
   const slotsInit = (v.slots || []).map(s => ({ assignee_id: s.assignee_id, with: slotUsers(s).filter(id => id !== s.assignee_id), time: s.due_time || (s.due_at ? ilTime(new Date(s.due_at)) : '18:00'), exc: { ...(s.exc || {}) } }));
   const dateInit = once && t.slots?.[0]?.due_at ? ilDate(new Date(t.slots[0].due_at)) : (t?.occurrence_date || ilDate(new Date()));
   main.innerHTML = `
-    ${tabsHtml('form')}
+    ${tabsHtml(t ? 'list' : 'form')}
+    ${t ? `<div class="card flat" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px"><b>עריכת משימה</b><button class="btn secondary small" id="editBack" type="button" style="margin:0">חזרה לרשימה</button></div>` : ''}
     <form class="card flat" id="f" novalidate>
       <label for="title">שם המשימה</label><input id="title" value="${esc(v.title)}" placeholder="למשל: להוציא את הכלב">
       <label for="desc">תיאור</label><div class="field"><textarea id="desc">${esc(v.description)}</textarea></div>
@@ -259,6 +260,7 @@ function showForm(t) {
         <option value="daily" ${v.repeat === 'daily' ? 'selected' : ''}>יומית (חוזרת כל יום)</option>
         <option value="weekly" ${v.repeat === 'weekly' ? 'selected' : ''}>שבועית (חוזרת כל שבוע)</option>
         <option value="once" ${v.repeat === 'once' ? 'selected' : ''}>חד-פעמית</option></select>
+      ${t ? '<p class="note" style="margin:4px 0 0">אי אפשר לשנות סוג של משימה קיימת. כדי לשנות סוג, מוחקים את המשימה ויוצרים חדשה.</p>' : ''}
       <div id="weekdayBox"><label for="weekday">יום המועד</label><select class="sel" id="weekday" style="width:100%">${WEEKDAYS.map((n, i) => `<option value="${i}" ${v.weekday === i ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <div id="dateBox"><label for="date">תאריך</label><input id="date" type="date" value="${dateInit}" dir="ltr"></div>
       <label for="times">מספר חזרות</label><input id="times" type="number" min="1" max="10" inputmode="numeric" value="${v.times_required}">
@@ -269,6 +271,7 @@ function showForm(t) {
     </form>`;
   wireTabs();
   const $ = id => document.getElementById(id);
+  if ($('editBack')) $('editBack').onclick = showList;
   let slots = slotsInit;
   let evs = [];
   loadEvents().then(d => { evs = d; if ($('slots')) drawSlots(); });
@@ -358,7 +361,7 @@ function showForm(t) {
 
   $('f').onsubmit = async (e) => {
     e.preventDefault();
-    const err = msg => { $('err').textContent = msg; return false; };
+    const err = msg => { $('err').textContent = msg; $('err').scrollIntoView({ block: 'center', behavior: 'smooth' }); return false; };
     $('err').textContent = '';
     const title = $('title').value.trim();
     const points = parseInt($('points').value);
@@ -391,7 +394,7 @@ function showForm(t) {
     }
     try {
       const conflicts = await findConflicts({ repeat, weekday: parseInt($('weekday').value), date: $('date').value, slots: slots.flatMap(s => [s, ...(s.with || []).map(u => ({ ...s, assignee_id: u }))]) }, profiles);
-      if (conflicts.length && !confirm('שים לב להתנגשות עם לוח השנה:\n\n' + conflicts.join('\n') + '\n\nלשמור את המשימה בכל זאת?')) return;
+      if (conflicts.length && !confirm('שים לב להתנגשות עם לוח השנה:\n\n' + conflicts.join('\n') + '\n\nלשמור את המשימה בכל זאת?')) { toast('השמירה בוטלה. המשימה לא נשמרה'); return; }
     } catch (_) {}
     const btn = $('save'); btn.disabled = true; btn.textContent = 'שומר...';
     const res = t ? await supabase.from('tasks').update(row).eq('id', t.id)
