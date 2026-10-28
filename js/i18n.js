@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -46,6 +46,16 @@ const D = {
   'כל החזרות בוצעו': 'All repeats done', 'ביצעתי שוב (ביצוע נוסף)': 'I did it again (extra)', 'ביצעתי את המשימה': 'I did the task',
   'משימה משותפת: אחד מכם מדווח, וכולם מקבלים את הנקודות.': 'Shared task: one of you reports and everyone gets the points.',
   'מי שביצע בפועל מדווח ומקבל את הנקודות.': 'Whoever actually did it reports and gets the points.',
+  'דיווח משימה': 'Report task', 'הערה (אופציונלי)': 'Note (optional)', 'שליחת דיווח': 'Send report',
+  'הדיווח יופיע לכל המשפחה, ולא ניתן לערוך אותו אחרי השליחה.': 'The report will be shown to the whole family and cannot be edited after sending.',
+  'ביצוע נוסף, מעבר ל-': 'Extra round, beyond the ', 'שהוגדרו. מקבלים נקודות מלאות': 'set. Full points',
+  'אבל אפשר לעשות אותה ולקבל את הנקודות.': 'But you can do it and get the points.',
+  'הדיווח יירשם על שמך ·': 'The report will be under your name ·', 'רוצה': 'I want to', 'לא רוצה': "I don't want to",
+  'צריך לצלם תמונה כהוכחה': 'Take a photo as proof', 'פתיחת המצלמה': 'Open camera', 'תמונת ההוכחה': 'Proof photo',
+  'הסרת התמונה': 'Remove photo', 'צילום תמונה נוספת': 'Take another photo', 'מעלה...': 'Uploading...', 'שולח...': 'Sending...',
+  'לא הצלחנו לקרוא את התמונה, אפשר לנסות שוב': 'Could not read the photo, you can try again',
+  'ההעלאה נכשלה, אפשר לנסות שוב. כדאי להשאיר את המסך פתוח.': 'Upload failed, you can try again. Keep the screen open.',
+  'לדווח על ביצוע? אי אפשר לערוך אחרי השליחה.': 'Report as done? It cannot be edited after sending.',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -53,6 +63,8 @@ const D = {
 
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const P = [
+  [/^הדיווח נשלח, \+(\d+) נקודות( \(באיחור\))?$/, (_, n, l) => `Report sent, +${n} points${l ? ' (overdue)' : ''}`],
+  [/^השליחה נכשלה: (.*)$/, 'Sending failed: $1'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+) ·$/, (_, d, a, b) => `${WD[d]}, ${a}/${b} ·`],
   [/^(\d+) פעמים ביום$/, '$1 times a day'],
   [/^המשימה רשומה על (.+)$/, 'This task is assigned to $1'],
@@ -119,5 +131,7 @@ export function initI18n(active) {
   if (document.body) run(); else document.addEventListener('DOMContentLoaded', run);
   const nativeAlert = window.alert.bind(window);
   window.alert = (m) => nativeAlert(tr(String(m)));
+  const nativeConfirm = window.confirm.bind(window);
+  window.confirm = (m) => nativeConfirm(tr(String(m)));
   return true;
 }

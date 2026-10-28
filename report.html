@@ -27,7 +27,7 @@ input[type=file]{display:none}
 <main id="main"><p class="empty">טוען...</p></main>
 <script type="module">
 import { initPage, supabase, esc, icon, iconBox, reportCounts, deriveStatus, nextSlot, pointsFor, submitReport, shrinkImage, flashToast, showToast, avatar, slotUsers, avatarGroup } from './js/common.js';
-const { session, me, profiles } = await initPage({ title: 'דיווח משימה', back: 'tasks.html' });
+const { session, me, profiles } = await initPage({ active: 'report', title: 'דיווח משימה', back: 'tasks.html' });
 const id = new URLSearchParams(location.search).get('id');
 const main = document.getElementById('main');
 const { data: t } = id ? await supabase.from('tasks').select('*').eq('id', id).maybeSingle() : { data: null };
