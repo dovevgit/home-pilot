@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -75,7 +76,7 @@ async function load() {
   // אפשרויות סינון משימה (לפי שם)
   const titles = [...new Set([...occ, ...Object.values(known)].map(t => t.title))].sort((a, b) => a.localeCompare(b, 'he'));
   const curT = fTask.value;
-  fTask.innerHTML = '<option value="">כל המשימות</option>' + titles.map(t => `<option ${t === curT ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  fTask.innerHTML = '<option value="">כל המשימות</option>' + titles.map(t => `<option data-user ${t === curT ? 'selected' : ''}>${esc(t)}</option>`).join('');
   const mem = fMember.value, tit = fTask.value;
 
   // סיכום
@@ -113,7 +114,7 @@ async function load() {
   $('list').innerHTML = window.__rows.map((x, i) => `
     <button type="button" class="hrow" data-i="${i}">
       ${x.url ? `<img class="th" src="${x.url}" alt="">` : (x.t ? iconBox(x.t, 46) : '')}
-      <div class="tmain"><b>${esc(x.who?.name || 'מישהו')} ביצע/ה: ${esc(x.t?.title || '')}</b>
+      <div class="tmain"><b><span>${esc(x.who?.name || 'מישהו')}</span> <span>ביצע/ה:</span> <span data-user>${esc(x.t?.title || '')}</span></b>
         <small><span dir="ltr">${esc(x.when)}</span>${x.r.body ? ' · ' + esc(x.r.body) : ''}</small></div>
       <span class="pts" dir="ltr">+${x.pts}</span></button>`).join('');
 }
@@ -126,7 +127,7 @@ $('list').addEventListener('click', e => {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${avatar(x.who, 44)}
       <div><b style="font-size:19px">${esc(x.who?.name || 'מישהו')}</b><div class="note" style="margin:0;text-align:start">${esc(x.t?.title || '')} · <span dir="ltr">${esc(x.when)}</span> · <span class="pts" dir="ltr">+${x.pts}</span></div></div></div>
     ${x.url ? `<img class="zoom" src="${x.url}" alt="תמונת הדיווח">` : '<p class="empty">אין תמונה לדיווח הזה</p>'}
-    ${x.r.body ? `<div class="card" style="margin-top:10px;background:var(--bg)">${esc(x.r.body)}</div>` : ''}
+    ${x.r.body ? `<div class="card" data-user style="margin-top:10px;background:var(--bg)">${esc(x.r.body)}</div>` : ''}
     ${isAdmin ? `<button type="button" class="btn secondary" id="delRep" style="width:100%;margin-top:12px;color:#B91C1C;border-color:#EF4444">מחיקת הדיווח</button>` : ''}`;
   $('modal').classList.remove('hidden');
   $('mx').onclick = () => $('modal').classList.add('hidden');

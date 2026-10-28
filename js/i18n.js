@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -67,6 +67,11 @@ const D = {
   'צריך לבחור תאריך': 'Choose a date', 'מחיקת הפעילות': 'Delete activity', 'למחוק את הפעילות?': 'Delete this activity?', 'המחיקה נכשלה': 'Delete failed',
   'א׳': 'Sun', 'ב׳': 'Mon', 'ג׳': 'Tue', 'ד׳': 'Wed', 'ה׳': 'Thu', 'ו׳': 'Fri', 'ש׳': 'Sat',
   'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday',
+  'היסטוריה ודיווחים': 'History and reports', 'יום': 'Day', 'שבוע': 'Week', 'חודש': 'Month', 'משימה': 'Task', 'כל המשימות': 'All tasks',
+  'סיכום שבוע': 'Week summary', 'סיכום חודש': 'Month summary', 'נותרו': 'Remaining', 'רשימת דיווחים אחרונים': 'Recent reports',
+  'אין דיווחים בתקופה הזאת': 'No reports in this period', 'לא הצלחנו לטעון נתונים': 'Could not load data', 'אתמול': 'Yesterday',
+  'ביצע/ה:': 'completed:', 'תמונת הדיווח': 'Report photo', 'אין תמונה לדיווח הזה': 'No photo for this report', 'מחיקת הדיווח': 'Delete report',
+  'למחוק את הדיווח הזה? אי אפשר לשחזר.': 'Delete this report? This cannot be undone.',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -75,6 +80,7 @@ const D = {
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const MO = { 'ינואר': 'January', 'פברואר': 'February', 'מרץ': 'March', 'אפריל': 'April', 'מאי': 'May', 'יוני': 'June', 'יולי': 'July', 'אוגוסט': 'August', 'ספטמבר': 'September', 'אוקטובר': 'October', 'נובמבר': 'November', 'דצמבר': 'December' };
 const P = [
+  [/^(\d{2}:\d{2}) (היום|אתמול)$/, (_, h, d) => `${h} ${d === 'היום' ? 'Today' : 'Yesterday'}`],
   [/^(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר) (\d{4})$/, (_, m, y) => `${MO[m]} ${y}`],
   [/^כל יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => `Every ${WD[d]}`],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+)$/, (_, d, a, b) => `${WD[d]}, ${a}/${b}`],
@@ -112,7 +118,7 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,.tmain b,.dtitle,.calmain b,.caltime,[data-user],textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.dtitle,.calmain b,.caltime,[data-user],textarea,script,style';
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
   if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP)) { const n = tr(root.nodeValue); if (n !== root.nodeValue) root.nodeValue = n; } return; }
