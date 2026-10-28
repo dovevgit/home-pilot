@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -103,6 +103,37 @@ const D = {
   'מה צריך?': 'What is needed?', 'למשל: לקחת אותי לחוג מחר': 'For example: take me to class tomorrow', 'למי (אפשר לבחור כמה)': 'To whom (you can choose several)',
   'תאריך (אופציונלי)': 'Date (optional)', 'שעה (אופציונלי)': 'Time (optional)', 'שליחת בקשה': 'Send request',
   'צריך לכתוב מה הבקשה': 'Write what the request is', 'צריך לבחור למי לשלוח': 'Choose who to send it to', 'הבקשה נשלחה': 'Request sent',
+  'שמורות': 'Saved', 'אין הודעות שמורות': 'No saved messages', 'הודעה חשובה': 'Important message',
+  'ההודעה תקפוץ אצל מי שבחרתם בחלונית גדולה, עד שיענו לה.': 'The message will pop up in a big window for the people you choose, until they answer it.',
+  'למי לשלוח?': 'Send to whom?', 'הודעה': 'Message', 'רשימת קניות': 'Shopping list', 'כתבו את ההודעה...': 'Write the message...',
+  'כתבו את הרשימה, כל פריט בשורה חדשה...': 'Write the list, one item per line...', 'צילום': 'Take photo', 'תמונה': 'Photo',
+  'תצוגה מקדימה (מנהלים)': 'Preview (admins)',
+  'מראה איך החלונית נראית אצל הנמענים, על גבי דף הבית כמו הודעה אמיתית. לא נשלח ולא נשמר כלום.': 'Shows how the window looks for the recipients, over the home page like a real message. Nothing is sent or saved.',
+  'הצג גם הודעה משולח נוסף': 'Also show a message from another sender', 'הצג לי איך זה נראה': 'Show me how it looks',
+  '🔔 השמע צליל הודעה': '🔔 Play message sound', '📲 שלח לי התראת בדיקה לטלפון': '📲 Send me a test notification to my phone',
+  'הצג איך נראית הודעה שמורה': 'Show how a saved message looks', 'הסתר את הדוגמה': 'Hide the example', 'הסתר דוגמה': 'Hide example',
+  'דוגמה בלבד, לא נשמר כלום:': 'Example only, nothing is saved:', 'ההודעות ששלחתי': 'Messages I sent', 'הודעות שקיבלתי': 'Messages I received',
+  'אל:': 'To:', 'מחק לכולם': 'Delete for everyone', 'פתח שיחה': 'Open conversation', 'הסר מהשמורות': 'Remove from saved', 'מחק': 'Delete',
+  '✓ שמור': '✓ Saved', 'שמור אצלי': 'Save for me',
+  'אין הודעות שמורות. בחלונית ההודעה יש כפתור "שמור אצלי"': 'No saved messages. The message window has a "Save for me" button',
+  'עוד לא שלחתם הודעות': 'You have not sent any messages yet', 'אין הודעות שהתקבלו': 'No messages received', 'לא הצלחנו לטעון': 'Could not load',
+  'התמונה לא נטענה': 'The photo did not load', 'בחרו למי לשלוח': 'Choose who to send to', 'כתבו את הרשימה': 'Write the list',
+  'כתבו הודעה או צרפו תמונה': 'Write a message or attach a photo', 'ההודעה נשלחה': 'Message sent', 'השליחה נכשלה, נסו שוב': 'Sending failed, try again',
+  'ההודעה נמחקה': 'Message deleted', 'רגע, האפליקציה עדיין נטענת': 'One moment, the app is still loading',
+  'קודם יש להפעיל התראות: בתפריט, "הפעל התראות"': 'First turn on notifications: in the menu, "Turn on notifications"',
+  'נשלחה התראה, תראה אותה עוד רגע': 'Notification sent, you will see it shortly', 'לא נמצא מכשיר שמחובר להתראות': 'No device connected to notifications was found',
+  'השליחה נכשלה. בדקו שהפונקציה push פרוסה ב-Supabase': 'Sending failed. Check that the push function is deployed in Supabase',
+  'למחוק את ההודעה אצלך? אצל הצד השני היא תישאר.': 'Delete the message for you? It will stay for the other side.',
+  'למחוק את ההודעה אצל כולם, גם אצל מי שקיבל אותה?': 'Delete the message for everyone, including whoever received it?',
+  'למחוק את כל השיחה אצלך? אצל הצד השני היא תישאר.': 'Delete the whole conversation for you? It will stay for the other side.',
+  'סגור': 'Close', 'יש לך הודעות חשובות': 'You have important messages', 'קרא הודעה': 'Read message',
+  'החלונית תישאר עד שתענו לכל ההודעות': 'The window stays until you answer all the messages', 'שלח/ה לך הודעה חשובה': 'sent you an important message',
+  'שליחת תשובה': 'Send reply', 'קראתי, בלי תשובה': 'I read it, no reply', 'השיחה ביניכם': 'Your conversation', 'מחק את כל השיחה אצלי': 'Delete the whole conversation for me',
+  'לא הצלחנו לטעון את ההודעה': 'Could not load the message', 'כתבו תשובה או צרפו תמונה': 'Write a reply or attach a photo',
+  'זו הייתה תצוגה בלבד, לא נשלח ולא נשמר כלום': 'This was a preview only, nothing was sent or saved', 'התשובה נשלחה': 'Reply sent',
+  'נשמר באזור "שמורות" בעמוד הודעה חשובה': 'Saved in the "Saved" area of the Important message page', 'סומן כנקרא': 'Marked as read',
+  'הפעולה נכשלה, נסו שוב': 'The action failed, try again', 'לא הצלחנו לטעון את השיחה': 'Could not load the conversation',
+  'אין הודעות בשיחה': 'No messages in the conversation', 'השיחה נמחקה': 'Conversation deleted',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -114,6 +145,15 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(אני · )?היום · (\d{2}:\d{2})$/, (_, me, t) => `${me ? 'Me · ' : ''}Today · ${t}`],
+  [/^אני · (\d+\.\d+\.\d+ · \d{2}:\d{2})$/, 'Me · $1'],
+  [/^שולח לדוגמה: (.+)$/, 'Example sender: $1'],
+  [/^(.+) ✓ נקרא( \(עוד לא ענה\))?$/, (_, n, a) => `${n} ✓ Read${a ? ' (not answered yet)' : ''}`],
+  [/^(.+) · טרם נקרא$/, '$1 · Not read yet'],
+  [/^כתבו תשובה ל(.+)\.\.\.$/, 'Write a reply to $1...'],
+  [/^יש לך הודעה חדשה(?: \((\d+)\))?$/, (_, n) => `You have a new message${n ? ' (' + n + ')' : ''}`],
+  [/^התשובה נשלחת רק ל(.+)$/, 'The reply is sent only to $1'],
+  [/^בתגובה להודעה שלך: (.*)$/, 'In reply to your message: $1'],
   [/^(ממתינה|נלקחה|בוצעה|נדחתה)(?: · (.+))?$/, (_, st, who) => STR[st] + (who ? ' · ' + who : '')],
   [/^מאת (.+?) · ל(.+?)((?: · .+)?)$/, (_, f, to, due) => `From ${f} · to ${to === 'כולם' ? 'everyone' : to}${due ? ' · ' + due.slice(3).split(' · ').map(dueEn).join(' · ') : ''}`],
   [/^הבקשה סומנה כבוצעה, (.*) קיבל\/ה (\d+) נקודות$/, 'Request marked as done, $1 got $2 points'],
@@ -165,7 +205,8 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,.dtitle,.calmain b,.caltime,[data-user],textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.dtitle,.mrow p,.xlist span,.impmsg p,.impitem span,.calmain b,.caltime,[data-user],textarea,script,style';
+const SKIP_ATTR = SKIP.replace(',textarea', '');
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
   if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP)) { const n = tr(root.nodeValue); if (n !== root.nodeValue) root.nodeValue = n; } return; }
@@ -173,7 +214,7 @@ function walk(root) {
   if (root.closest && root.closest(SKIP)) return;
   const all = [root, ...root.querySelectorAll('*')];
   for (const el of all) {
-    if (el.closest(SKIP)) continue;
+    if (el.closest(SKIP_ATTR)) continue;
     for (const a of ATTRS) { const v = el.getAttribute && el.getAttribute(a); if (v && HEB.test(v)) { const n = tr(v); if (n !== v) el.setAttribute(a, n); } }
   }
   const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
