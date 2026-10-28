@@ -1054,6 +1054,11 @@ const D = {
   "העתק קישור": "Copy link",
   "שיתוף באפליקציה אחרת": "Share in another app",
   "הקישור הועתק": "Link copied",
+  "לוחצים על \"הטל קוביות\". המערכת מטילה שתי קוביות. כל קובייה היא צעד נפרד: אפשר להזיז כלי אחד פעמיים או שני כלים כל אחד בצעד.": "Tap \"Roll dice\". The system rolls two dice. Each die is a separate step: you can move one piece twice or two pieces one step each.",
+  "עד שהתור עובר אפשר ללחוץ \"בטל מהלך\" ולהתחיל את התור מחדש.": "Until the turn passes you can tap \"Undo move\" and start the turn over.",
+  "\"קלף\" לוקח עוד קלף. \"עצור\" משאיר את היד כמו שהיא. עוברים את 21 ומפסידים מיד (נשרפת).": "\"Hit\" takes another card. \"Stand\" keeps the hand as it is. If you go over 21 you lose immediately (bust).",
+  "בוחרים ספינה, לוחצים על משבצת כדי להניח אותה, ולוחצים על \"סובב\" כדי להפוך אותה בין אופקי לאנכי. אפשר גם ללחוץ \"ערבב\" והמחשב מסדר לבד. ספינות לא יכולות לחפוף. הצי של כל שחקן נסתר מהיריב.": "Pick a ship, tap a square to place it, and tap \"Rotate\" to switch it between horizontal and vertical. You can also tap \"Shuffle\" and the computer arranges it for you. Ships can't overlap. Each player's fleet is hidden from the opponent.",
+  "קודם כל שחקן מסדר את הכלים שלו ב-4 השורות הקרובות אליו. מחליפים בין שני כלים בלחיצה על שניהם, ולוחצים \"סיימתי לסדר\". כשהשניים סיימו, הקרב מתחיל. מי שהזמין מתחיל.": "First, each player arranges their pieces in the 4 rows closest to them. Swap two pieces by tapping both, and tap \"I'm done arranging\". When both are done, the battle begins. Whoever sent the invitation starts.",
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
