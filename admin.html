@@ -237,6 +237,7 @@ function showForm(t) {
     late_fraction: 0.5, penalty_points: 10, times_required: 1, repeat: 'daily', weekday: 5, remind_before_minutes: 15,
     reminder_text: '', overdue_text: '', slots: [], subject_id: null };
   const once = t?.kind === 'occurrence';
+  const isTpl = t?.kind === 'template';
   const slotsInit = (v.slots || []).map(s => ({ assignee_id: s.assignee_id, with: slotUsers(s).filter(id => id !== s.assignee_id), time: s.due_time || (s.due_at ? ilTime(new Date(s.due_at)) : '18:00'), exc: { ...(s.exc || {}) } }));
   const dateInit = once && t.slots?.[0]?.due_at ? ilDate(new Date(t.slots[0].due_at)) : (t?.occurrence_date || ilDate(new Date()));
   main.innerHTML = `
@@ -256,11 +257,11 @@ function showForm(t) {
       <input type="hidden" id="penalty" value="${v.penalty_points ?? 10}"><input type="hidden" id="late" value="${v.late_fraction ?? 0.5}">
       <div class="switch"><span><b>חובה לצלם</b></span><input id="photo" type="checkbox" ${v.requires_photo ? 'checked' : ''}></div>
       <label for="repeat">סוג משימה</label>
-      <select class="sel" id="repeat" style="width:100%" ${t ? 'disabled' : ''}>
+      <select class="sel" id="repeat" style="width:100%" ${t && !isTpl ? 'disabled' : ''}>
         <option value="daily" ${v.repeat === 'daily' ? 'selected' : ''}>יומית (חוזרת כל יום)</option>
         <option value="weekly" ${v.repeat === 'weekly' ? 'selected' : ''}>שבועית (חוזרת כל שבוע)</option>
-        <option value="once" ${v.repeat === 'once' ? 'selected' : ''}>חד-פעמית</option></select>
-      ${t ? '<p class="note" style="margin:4px 0 0">אי אפשר לשנות סוג של משימה קיימת. כדי לשנות סוג, מוחקים את המשימה ויוצרים חדשה.</p>' : ''}
+        ${isTpl ? '' : `<option value="once" ${v.repeat === 'once' ? 'selected' : ''}>חד-פעמית</option>`}</select>
+      ${t ? `<p class="note" style="margin:4px 0 0">${isTpl ? 'אפשר להחליף בין יומית לשבועית. משימות עתידיות שעוד לא דווחו ייווצרו מחדש לפי הסוג החדש.' : 'אי אפשר לשנות סוג של משימה חד-פעמית. כדי לשנות, מוחקים אותה ויוצרים חדשה.'}</p>` : ''}
       <div id="weekdayBox"><label for="weekday">יום המועד</label><select class="sel" id="weekday" style="width:100%">${WEEKDAYS.map((n, i) => `<option value="${i}" ${v.weekday === i ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <div id="dateBox"><label for="date">תאריך</label><input id="date" type="date" value="${dateInit}" dir="ltr"></div>
       <label for="times">מספר חזרות</label><input id="times" type="number" min="1" max="10" inputmode="numeric" value="${v.times_required}">
@@ -396,10 +397,21 @@ function showForm(t) {
       const conflicts = await findConflicts({ repeat, weekday: parseInt($('weekday').value), date: $('date').value, slots: slots.flatMap(s => [s, ...(s.with || []).map(u => ({ ...s, assignee_id: u }))]) }, profiles);
       if (conflicts.length && !confirm('שים לב להתנגשות עם לוח השנה:\n\n' + conflicts.join('\n') + '\n\nלשמור את המשימה בכל זאת?')) { toast('השמירה בוטלה. המשימה לא נשמרה'); return; }
     } catch (_) {}
+    const typeChanged = isTpl && repeat !== t.repeat;
+    if (typeChanged && !confirm(`לשנות את המשימה ל${repeat === 'weekly' ? 'שבועית' : 'יומית'}?\n\nמשימות עתידיות שעוד לא דווחו יימחקו ויווצרו מחדש לפי הסוג החדש. דיווחים והיסטוריה לא יימחקו.`)) { toast('השמירה בוטלה. המשימה לא נשמרה'); return; }
     const btn = $('save'); btn.disabled = true; btn.textContent = 'שומר...';
     const res = t ? await supabase.from('tasks').update(row).eq('id', t.id)
                   : await supabase.from('tasks').insert({ ...row, created_by: session.user.id });
     if (res.error) { btn.disabled = false; btn.textContent = 'שמירת משימה'; return err('השמירה נכשלה: ' + res.error.message); }
+    if (typeChanged) {
+      try {
+        const { data: occ } = await supabase.from('tasks').select('id').eq('template_id', t.id).gte('occurrence_date', ilDate(new Date()));
+        for (const o of occ || []) {
+          const { count } = await supabase.from('feed').select('id', { count: 'exact', head: true }).eq('type', 'report').eq('task_id', o.id);
+          if (!count) await supabase.from('tasks').delete().eq('id', o.id);
+        }
+      } catch (_) {}
+    }
     if (t && row.kind === 'template') { try { await syncOccurrences({ ...row, id: t.id }); } catch (_) {} }
     if (row.kind === 'template') { try { await generateOccurrences(session.user.id); } catch (_) {} }
     if (t) { toast('המשימה נשמרה'); showList(); }
