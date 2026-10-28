@@ -46,6 +46,7 @@
 import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup, t } from './js/common.js';
 import { weeklyPoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
+document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const today = ilDate(new Date());
@@ -213,7 +214,6 @@ else {
 }
 
 /* --- הודעות: תג שלא נקראו, רשימה ושורת כתיבה --- */
-document.getElementById('qsend').innerHTML = icon('send', 22);
 let lastFeed = null;
 async function loadFeed() {
   const { data: feed, error: fErr } = await supabase.from('feed').select('id,type,user_id,body,photo_path,created_at').in('type', ['system', 'chat']).order('created_at', { ascending: false }).limit(4);
