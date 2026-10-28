@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -76,13 +77,13 @@ function render() {
     const can = bal >= i.price;
     return `<div class="pcardx ${i.active ? '' : 'off'}">
       ${i.photo ? `<img class="pimgx" src="${i.photo}" alt="">` : '<div class="pimgx">🎁</div>'}
-      <b>${esc(i.name)}</b>${i.description ? `<span class="pdesc">${esc(i.description)}</span>` : ''}
+      <b data-user>${esc(i.name)}</b>${i.description ? `<span class="pdesc" data-user>${esc(i.description)}</span>` : ''}
       <span class="pprice">⭐ <span dir="ltr">${i.price}</span></span>
       ${i.active ? `<button class="btn ${can ? '' : 'disabled'}" data-buy="${i.id}" type="button" ${can ? '' : 'disabled'}>${can ? 'מימוש' : `חסרות ${i.price - bal}`}</button>` : '<small>מוסתר מהילדים</small>'}
       ${isAdmin ? `<button class="smallbtn" data-edit="${i.id}" type="button">עריכה</button>` : ''}</div>`;
   }).join('') : `<p class="empty" style="grid-column:1/-1">${isAdmin ? 'עוד אין מוצרים. לחצו על "+ מוצר חדש".' : 'עוד אין מוצרים בחנות'}</p>`;
   const mine = purchases.filter(p => p.user_id === me.id);
-  $('mine').innerHTML = mine.length ? mine.map(p => `<div class="prow"><div class="pmain"><b>${esc(p.item_name)}</b><small>⭐ <span dir="ltr">${p.price}</span> · ${new Date(p.created_at).toLocaleDateString('he-IL')}</small></div>
+  $('mine').innerHTML = mine.length ? mine.map(p => `<div class="prow"><div class="pmain"><b data-user>${esc(p.item_name)}</b><small>⭐ <span dir="ltr">${p.price}</span> · ${new Date(p.created_at).toLocaleDateString('he-IL')}</small></div>
     <span class="chip ${ST[p.status][1]}">${ST[p.status][0]}</span>
     ${p.status === 'pending' ? `<button class="bt no" data-cancel="${p.id}" type="button">ביטול</button>` : ''}</div>`).join('') : '<p class="empty">אין רכישות עדיין</p>';
   if (isAdmin) {
@@ -98,7 +99,7 @@ document.querySelector('main').addEventListener('click', async e => {
   if (b.dataset.buy) {
     const it = items.find(x => x.id === b.dataset.buy); if (!it) return;
     if (balOf(me.id) < it.price) return showToast('אין מספיק נקודות', true);
-    if (!confirm(`לממש "${it.name}" תמורת ${it.price} נקודות?\\nהנקודות יישמרו עד שהורה יאשר.`)) return;
+    if (!confirm(`לממש "${it.name}" תמורת ${it.price} נקודות?\nהנקודות יישמרו עד שהורה יאשר.`)) return;
     b.disabled = true;
     const { error } = await supabase.from('purchases').insert({ user_id: me.id, item_id: it.id, item_name: it.name, price: it.price });
     if (error) { showToast('הבקשה נכשלה', true); b.disabled = false; return; }

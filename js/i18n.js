@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -72,6 +72,22 @@ const D = {
   'אין דיווחים בתקופה הזאת': 'No reports in this period', 'לא הצלחנו לטעון נתונים': 'Could not load data', 'אתמול': 'Yesterday',
   'ביצע/ה:': 'completed:', 'תמונת הדיווח': 'Report photo', 'אין תמונה לדיווח הזה': 'No photo for this report', 'מחיקת הדיווח': 'Delete report',
   'למחוק את הדיווח הזה? אי אפשר לשחזר.': 'Delete this report? This cannot be undone.',
+  'חנות': 'Shop', 'היתרה שלי': 'My balance', 'בקשות לאישור': 'Requests for approval', 'החנות': 'Shop', '+ מוצר חדש': '+ New item',
+  'הרכישות שלי': 'My purchases', 'אין רכישות עדיין': 'No purchases yet', '🗑 מחיקת היסטוריית רכישות': '🗑 Delete purchase history',
+  'ממתין לאישור': 'Waiting for approval', 'נמסר': 'Delivered', 'נדחה': 'Rejected', 'מימוש': 'Redeem', 'מוסתר מהילדים': 'Hidden from the kids',
+  'עוד אין מוצרים. לחצו על "+ מוצר חדש".': 'No items yet. Tap "+ New item".', 'עוד אין מוצרים בחנות': 'No items in the shop yet',
+  '· היתרה שלו/ה:': '· Their balance:', 'לפני הבקשה': 'before the request', 'דחייה': 'Reject', 'אין בקשות ממתינות': 'No pending requests',
+  'אין מספיק נקודות': 'Not enough points', 'הבקשה נכשלה': 'The request failed', 'הבקשה נשלחה להורים': 'The request was sent to the parents',
+  'העדכון נכשל': 'The update failed', 'ההיסטוריה נמחקה': 'History deleted',
+  'לבטל את הבקשה? הנקודות יחזרו אליך.': 'Cancel the request? The points will return to you.',
+  'לדחות? הנקודות יחזרו לילד/ה.': 'Reject? The points will return to the child.',
+  'מחיקת היסטוריית רכישות': 'Delete purchase history', 'של כל בני הבית. בקשות שממתינות לאישור לא נמחקות.': 'For everyone in the home. Requests waiting for approval are not deleted.',
+  'לא משנה אף יתרה.': 'Does not change any balance.', 'שימו לב: רכישות שנמסרו יימחקו והנקודות שלהן יחזרו ליתרה.': 'Note: delivered purchases will be deleted and their points will return to the balance.',
+  'למחוק את הרכישות שנדחו?': 'Delete the rejected purchases?', 'למחוק את כל ההיסטוריה? הנקודות של רכישות שנמסרו יחזרו ליתרה.': 'Delete all history? The points of delivered purchases will return to the balance.',
+  'עריכת מוצר': 'Edit item', 'מוצר חדש': 'New item', 'שם המוצר או המתנה': 'Item or gift name', 'תיאור (לא חובה)': 'Description (optional)',
+  'מחיר בנקודות': 'Price in points', '📷 צילום': '📷 Take photo', '🖼️ תמונה': '🖼️ Photo', 'מוצג לילדים': 'Shown to the kids', 'הסרה': 'Remove',
+  'צריך שם למוצר': 'The item needs a name', 'צריך מחיר בנקודות': 'A price in points is required', 'לא הצלחנו לקרוא את התמונה': 'Could not read the photo',
+  'מחיקת המוצר': 'Delete item', 'למחוק את המוצר? רכישות קודמות נשמרות.': 'Delete the item? Previous purchases are kept.',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -80,6 +96,13 @@ const D = {
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const MO = { 'ינואר': 'January', 'פברואר': 'February', 'מרץ': 'March', 'אפריל': 'April', 'מאי': 'May', 'יוני': 'June', 'יולי': 'July', 'אוגוסט': 'August', 'ספטמבר': 'September', 'אוקטובר': 'October', 'נובמבר': 'November', 'דצמבר': 'December' };
 const P = [
+  [/^(\d+) נקודות שמורות לבקשות שממתינות$/, '$1 points reserved for pending requests'],
+  [/^חסרות (\d+)$/, 'Need $1 more'],
+  [/^(.+) רוצה: (.+)$/, '$1 wants: $2'],
+  [/^מחיקת רכישות שנדחו \((\d+)\)$/, 'Delete rejected purchases ($1)'],
+  [/^מחיקת כל ההיסטוריה \((\d+)\)$/, 'Delete all history ($1)'],
+  [/^שימו לב: רכישות שנמסרו יימחקו והנקודות שלהן יחזרו ליתרה\. (\d+) בקשות ממתינות יישארו\.$/, 'Note: delivered purchases will be deleted and their points will return to the balance. $1 waiting requests will stay.'],
+  [/^לממש "([\s\S]+)" תמורת (\d+) נקודות\?\s+הנקודות יישמרו עד שהורה יאשר\.$/, 'Redeem "$1" for $2 points?\nThe points will be reserved until a parent approves.'],
   [/^(\d{2}:\d{2}) (היום|אתמול)$/, (_, h, d) => `${h} ${d === 'היום' ? 'Today' : 'Yesterday'}`],
   [/^(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר) (\d{4})$/, (_, m, y) => `${MO[m]} ${y}`],
   [/^כל יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => `Every ${WD[d]}`],
