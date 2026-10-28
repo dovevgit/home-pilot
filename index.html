@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -42,7 +43,7 @@
 </main>
 <div class="modal hidden" id="pmodal"><div class="modal-card" id="pcard"></div></div>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup, t } from './js/common.js';
 import { weeklyPoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
@@ -203,7 +204,7 @@ else {
     const t = tById[r.task_id]; const who = byId[r.user_id];
     const slot = t && r.payload?.slot_n ? (t.slots || [])[r.payload.slot_n - 1] : null;
     const pts = t ? pointsFor(t, slot, new Date(r.created_at)).points : 0;
-    const when = ilDate(new Date(r.created_at)) === today ? 'היום' : ilDate(new Date(r.created_at));
+    const when = ilDate(new Date(r.created_at)) === today ? t('היום') : ilDate(new Date(r.created_at));
     return `<div class="card recent" style="margin-bottom:8px;padding:8px 12px">${avatar(who, 40)}
       <div style="flex:1;min-width:0"><b style="font-size:16px">${esc(who?.name || 'מישהו')} ביצע/ה: ${esc(t?.title || '')}</b>
       <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> ${when}${r.body ? ' · ' + esc(r.body) : ''} · <span class="pts" dir="ltr">+${pts}</span></div></div>

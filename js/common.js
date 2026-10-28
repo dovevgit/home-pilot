@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 import { ICONS } from './icons.js';
-export { supabase };
+import { initI18n, getLang, setLang, t } from './i18n.js';
+export { supabase, t };
 
 export const TZ = 'Asia/Jerusalem';
 
@@ -150,6 +151,7 @@ export async function signedUrls(paths) {
 
 /* ---------- מעטפת העמוד: כותרת, תפריט תחתון, מגירה ---------- */
 export async function initPage({ active = '', title = '', back = null, menu = true } = {}) {
+  const EN = initI18n(active);
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.replace('login.html'); await new Promise(() => {}); }
   const { data: profiles } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
@@ -180,7 +182,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   header.className = 'bar';
   header.innerHTML = back
     ? `<a class="iconbtn" href="${back}" aria-label="חזרה">${icon('arrow-right', 24)}</a><h1>${esc(title)}</h1>${menu ? `<button class="iconbtn" id="menuBtn" aria-label="תפריט">${icon('menu', 24)}</button>` : '<span class="iconbtn ghost"></span>'}`
-    : `<span class="iconbtn ghost"></span><h1>${title === 'הבית שלנו' ? '<img class="brand" src="logo-text.png" alt="הבית שלנו">' : esc(title)}</h1>${menu ? `<button class="iconbtn" id="menuBtn" aria-label="תפריט">${icon('menu', 24)}</button>` : ''}`;
+    : `<span class="iconbtn ghost"></span><h1>${title === 'הבית שלנו' && !EN ? '<img class="brand" src="logo-text.png" alt="הבית שלנו">' : esc(title)}</h1>${menu ? `<button class="iconbtn" id="menuBtn" aria-label="תפריט">${icon('menu', 24)}</button>` : ''}`;
   document.body.prepend(header);
 
   if (menu) {
@@ -203,7 +205,9 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="info.html">${icon('info')} מידע משפחתי</a>
       <a href="feedback.html">${icon('message-circle')} ספרו לנו</a>
       <button id="pushBtn" type="button" style="display:none">${icon('bell')} <span>התראות</span></button>
+      <button id="langBtn" type="button">🌐 <span>${getLang() === 'en' ? 'עברית' : 'English'}</span></button>
       <button id="logout" type="button">${icon('log-out')} התנתקות</button></nav>`;
+    drawer.querySelector('#langBtn').addEventListener('click', () => { setLang(getLang() === 'en' ? 'he' : 'en'); location.reload(); });
     document.body.append(drawer);
     document.getElementById('menuBtn')?.addEventListener('click', () => drawer.classList.remove('hidden'));
     drawer.querySelector('.drawer-bg').addEventListener('click', () => drawer.classList.add('hidden'));

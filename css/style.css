@@ -323,3 +323,6 @@ button.avn{background:none;border:0;font:inherit;color:inherit;cursor:pointer;pa
 .avchip.busy{border-color:#EA580C;background:#FFD6A5;color:#7c2d12}
 .avchip.abs{border-color:#EA580C;background:#FFE8CC;color:#9A3412;cursor:default;opacity:.75}
 .avchip.on{box-shadow:0 0 0 3px rgba(37,99,235,.45)}
+
+/* אנגלית (כיוון שמאל לימין): החץ בכפתור החזרה מתהפך */
+html[dir=ltr] header.bar a.iconbtn svg{transform:scaleX(-1)}
