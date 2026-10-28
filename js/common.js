@@ -94,7 +94,7 @@ export const roomLabel = (room, profiles = []) => {
   return '';
 };
 export const roomOptions = (profiles = []) => [['parents', 'חדר ההורים'], ...profiles.filter(p => p.role !== 'admin' && p.active !== false).map(p => ['kid:' + p.id, 'החדר של ' + p.name])];
-export const ART = new Set(["paw-print", "dog", "utensils", "trash-2", "bed-double", "brush-cleaning", "broom", "book-open", "bath", "footprints", "shirt", "washing-machine", "shopping-cart", "cooking-pot", "recycle", "leaf", "dishwasher", "car", "flower", "droplet", "cat", "graduation-cap", "dumbbell", "wrench", "package", "shopping-bag", "mail", "heart", "music", "barbell", "kettlebell", "soccer", "judo", "sneaker", "basketball", "bicycle", "boxing-glove", "trophy", "yoga-mat", "swim-goggles", "stopwatch"]);
+export const ART = new Set(["paw-print", "dog", "utensils", "trash-2", "bed-double", "brush-cleaning", "broom", "book-open", "bath", "footprints", "shirt", "washing-machine", "shopping-cart", "cooking-pot", "recycle", "leaf", "dishwasher", "car", "flower", "droplet", "cat", "graduation-cap", "dumbbell", "wrench", "package", "shopping-bag", "mail", "heart", "music", "barbell", "kettlebell", "soccer", "judo", "sneaker", "basketball", "bicycle", "boxing-glove", "trophy", "yoga-mat", "swim-goggles", "stopwatch", "guitar", "drums", "piano", "violin", "trumpet", "microphone"]);
 // כל האחראים על חזרה (משימה משותפת). assignee_id הוא הראשון, assignees הרשימה המלאה.
 export const slotUsers = (slot) => !slot ? [] : (Array.isArray(slot.assignees) && slot.assignees.length ? slot.assignees : (slot.assignee_id ? [slot.assignee_id] : []));
 export function iconBox(task, size = 46) {
