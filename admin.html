@@ -297,7 +297,7 @@ function showForm(t) {
         else if (days.length === 7) { st = 'busy'; note = 'תפוס/ה כל יום'; }
         else { st = 'part'; note = `פנוי/ה חוץ מ${days.map(d => SH[d]).join(', ')}`; }
       }
-      return `<button type="button" class="avchip ${st} ${s.assignee_id === u.id ? 'on' : ''}" data-i="${i}" data-pick="${u.id}" ${ab ? 'disabled' : ''}><b>${esc(u.name)}</b><span>${st === 'free' || st === 'part' ? '✓ ' : '✗ '}${note}</span></button>`;
+      return `<button type="button" class="avchip ${st} ${s.assignee_id === u.id ? 'on' : ''}" data-i="${i}" data-pick="${u.id}" ${ab ? 'disabled' : ''}><b>${esc(u.name)}</b><span>${st === 'free' ? '✓ ' : st === 'part' ? '⚠ ' : '✗ '}${note}</span></button>`;
     }).join('')}</div>`;
   };
   // בימים שבהם האחראי תפוס (פעילות שבועית קבועה) מציעים מחליף קבוע לאותו יום בשבוע. רק למשימה יומית.
