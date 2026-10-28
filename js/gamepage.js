@@ -1,4 +1,5 @@
 import { initPage, supabase, esc, avatar, showToast } from './common.js';
+import { getLang } from './i18n.js';
 import { guestToken, guestMode, inviteGuest } from './guest.js';
 import { gameSplash } from './gamesplash.js';
 gameSplash('game-splash.jpg');
@@ -12,6 +13,10 @@ const ICO={
  'מקצוע':`<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><defs><mask id="wm"><rect width="64" height="64" fill="#fff"/><rect x="26" y="0" width="12" height="19" rx="2" fill="#000"/></mask></defs><g transform="rotate(35 32 32)"><rect x="27" y="28" width="10" height="33" rx="5" fill="#9FB4C7"/><rect x="27" y="44" width="10" height="17" rx="5" fill="#14B8A6"/><circle cx="32" cy="19" r="15" fill="#B7C8D8" mask="url(#wm)"/><path d="M19 17 a13 13 0 0 1 5 -9" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/><circle cx="26.5" cy="26" r="2.2" fill="#2B2A4C"/><circle cx="37.5" cy="26" r="2.2" fill="#2B2A4C"/><path d="M28.5 30.5 q3.5 3 7 0" stroke="#2B2A4C" stroke-width="1.8" fill="none" stroke-linecap="round"/></g></svg>`
 };
 const CATS = [['חי', '--c-animal'], ['צומח', '--c-plant'], ['דומם', '--c-thing'], ['ארץ', '--c-country'], ['עיר', '--c-city'], ['מקצוע', '--c-job']];
+const EN_NAMES = { 'חי': 'Animal', 'צומח': 'Plant', 'דומם': 'Thing', 'ארץ': 'Country', 'עיר': 'City', 'מקצוע': 'Job' };
+const isEnRoom = () => ST?.room?.lang === 'en';
+const catName = n => isEnRoom() ? EN_NAMES[n] : n;
+const WHEEL = () => isEnRoom() ? 'ABCDEFGHIJKLMNOPRSTUWY' : 'אבגדהוזחטיכלמנסעפצקרשת';
 const GT = guestToken();
 let me, profiles = [], gcall = null, gref = null;
 if (GT) { const x = await guestMode('game', GT); me = x.me; gcall = x.call; gref = x.ref; }
@@ -136,9 +141,10 @@ function build(key) {
     set(`${head()}<div class="gcard main"><p class="gsub">אין משחק פתוח עכשיו</p>
       ${isGiver ? `<div class="gprize"><label for="gPrize">פרס למנצח הכללי (בנקודות)</label><input id="gPrize" type="number" inputmode="numeric" min="0" max="1000" placeholder="ריק = משחק בלי פרס"></div>` : ''}
       <p class="ghint">פותחים משחק, ואז בוחרים את מי להזמין: בני משפחה או אורח בקישור</p>
-      <button class="gbtn go" id="gOpen" type="button">פתח משחק</button></div>`);
+      <button class="gbtn go" id="gOpen" type="button">פתח משחק</button>${getLang() === 'en' ? '<button class="gbtn go" id="gOpenEn" type="button" style="margin-top:8px">Open an English game (A–Z)</button>' : ''}</div>`);
     const prizeVal = () => isGiver ? Math.max(0, Math.min(1000, parseInt($('#gPrize')?.value) || 0)) : 0;
     bind('#gOpen', () => act('game_open', { p_prize: prizeVal(), p_private: false }));
+    bind('#gOpenEn', () => act('game_open', { p_prize: prizeVal(), p_private: false }, async () => { await rpc('game_set_lang', { p_room: (await rpc('game_current'))?.room_id, p_lang: 'en' }); }));
     return;
   }
   if (key === 'tie') {
@@ -192,7 +198,7 @@ function build(key) {
   if (key.startsWith('wait')) {
     if (!elig) { set(`${head()}<div class="gcard main"><p class="gsub">סבב ${r.round} כבר התחיל</p><p class="ghint">מצטרפים בסבב הבא</p></div>`); return; }
     set(`${head()}<div class="gcard main"><p class="gwho">סבב ${r.round}</p><p class="gsub" style="font-size:20px">המשחק התחיל!<br>לחצו <b style="color:var(--gcoral)">סטופ</b> כדי לקבל את האות</p>
-      <div class="gwheel" id="gwheel">${'אבגדהוזחטיכלמנסעפצקרשת'.split('').map((_, i, a) => { const t = i / a.length * 2 * Math.PI - Math.PI / 2; return `<i class="d" style="left:${50 + 46 * Math.cos(t)}%;top:${50 + 46 * Math.sin(t)}%"></i>`; }).join('')}<button class="gstop" id="gStop" type="button">סטופ</button></div>
+      <div class="gwheel" id="gwheel">${WHEEL().split('').map((_, i, a) => { const t = i / a.length * 2 * Math.PI - Math.PI / 2; return `<i class="d" style="left:${50 + 46 * Math.cos(t)}%;top:${50 + 46 * Math.sin(t)}%"></i>`; }).join('')}<button class="gstop" id="gStop" type="button">סטופ</button></div>
       <p class="ghint">הספירה רצה בשקט, בלי לראות אותיות. מי שלוחץ ראשון עוצר אותה, והאות נבחרת מעצמה</p></div>`, () => {
       sfx.start();
       const dots = [...document.querySelectorAll('#gwheel .d')]; let ci = 0;
@@ -220,7 +226,7 @@ function build(key) {
       return;
     }
     set(`<div class="gcard main"><div class="gbar"><div class="glet">${esc(r.letter)}</div><div class="gtimer"><div class="ghint" style="text-align:start;margin:0">הזמן נגמר בעוד</div><b id="gtm"></b><div class="gtrack"><div class="gfill" id="gfl"></div></div></div></div>
-      <div class="gform">${CATS.map(([n, k], i) => `<div class="gfield" style="--k:var(${k})"><label for="gf${i}"><span class="gico">${ICO[n]}</span>${n}</label><input id="gf${i}" autocomplete="off" maxlength="40" placeholder="מתחיל ב-${esc(r.letter)}"></div>`).join('')}</div>
+      <div class="gform">${CATS.map(([n, k], i) => `<div class="gfield" style="--k:var(${k})"><label for="gf${i}"><span class="gico">${ICO[n]}</span>${catName(n)}</label><input id="gf${i}" autocomplete="off" dir="auto" maxlength="40" placeholder="${isEnRoom() ? 'Starts with ' : 'מתחיל ב-'}${esc(r.letter)}"></div>`).join('')}</div>
       <p class="ghint" id="gwho2"></p>
       <button class="gbtn go" id="gOk" type="button">אישור</button></div>`);
     bind('#gOk', () => submitMine(false));
@@ -229,7 +235,7 @@ function build(key) {
   if (key.startsWith('reveal')) {
     const elig2 = ST.players.filter(p => p.status === 'joined' && p.joined_round <= r.round);
     set(`<div class="gcard"><div class="gbar"><div class="glet">${esc(r.letter)}</div><div><b style="font-size:20px">כל התשובות לאות ${esc(r.letter)}</b></div></div>
-      <div class="gcats">${CATS.map(([n, k], i) => `<div class="gcat" style="--k:var(${k})"><h3><span class="gico sm">${ICO[n]}</span>${n}</h3>${elig2.map(p => { const t = (ST.answers?.[p.user_id] || [])[i]; return `<div class="gans">${av(p.user_id, 30)}${t ? `<span class="t">${esc(t)}</span>` : '<span class="t nada">לא ענה/תה</span>'}</div>`; }).join('')}</div>`).join('')}</div></div>
+      <div class="gcats">${CATS.map(([n, k], i) => `<div class="gcat" style="--k:var(${k})"><h3><span class="gico sm">${ICO[n]}</span>${catName(n)}</h3>${elig2.map(p => { const t = (ST.answers?.[p.user_id] || [])[i]; return `<div class="gans">${av(p.user_id, 30)}${t ? `<span class="t">${esc(t)}</span>` : '<span class="t nada">לא ענה/תה</span>'}</div>`; }).join('')}</div>`).join('')}</div></div>
       <div class="gcard"><p class="gwho" style="margin-bottom:6px">${host ? 'מי ניצח/ה בסבב?' : 'המנהל בוחר מנצח לסבב'}</p>
       ${host ? `<div class="gpick">${elig2.map(p => `<button class="gpl" data-id="${p.user_id}" type="button">${av(p.user_id)}<span>${nm(p.user_id)}</span></button>`).join('')}</div>` : '<p class="ghint">מחכים להכרעה…</p>'}</div>`, () => {
       sfx.reveal(); window.scrollTo({ top: 0 });
