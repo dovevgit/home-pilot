@@ -29,13 +29,13 @@
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
 import { initPage, supabase, esc, icon, avatar, ilDate, ilTime, addDays, flashToast, showToast, shrinkImage, signedUrls, playChime } from './js/common.js';
+document.getElementById('send').innerHTML = icon('send', 22);
 const { session, profiles } = await initPage({ active: 'chat', title: 'הודעות משפחתיות', back: 'index.html' });
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const me = session.user.id;
 const $ = id => document.getElementById(id);
 $('photoBtn').innerHTML = icon('image', 24);
 $('cameraBtn').innerHTML = icon('camera', 24);
-$('send').innerHTML = icon('send', 22);
 const today = ilDate(new Date());
 let list = [], urls = {}, busy = false;
 
