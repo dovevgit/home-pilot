@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -134,6 +134,15 @@ const D = {
   'נשמר באזור "שמורות" בעמוד הודעה חשובה': 'Saved in the "Saved" area of the Important message page', 'סומן כנקרא': 'Marked as read',
   'הפעולה נכשלה, נסו שוב': 'The action failed, try again', 'לא הצלחנו לטעון את השיחה': 'Could not load the conversation',
   'אין הודעות בשיחה': 'No messages in the conversation', 'השיחה נמחקה': 'Conversation deleted',
+  'חי צומח דומם': 'Animal Plant Object', 'משחק מילים לכל המשפחה': 'Word game for the whole family (Hebrew)',
+  'דמקה': 'Checkers', 'משחק לזוג, חוקי דמקה אמיתיים': 'Two-player game, real checkers rules',
+  'צוללות': 'Battleship', 'משחק לזוג, להטביע את הצי של היריב': 'Two-player game, sink the opponent\'s fleet',
+  'פוקר': 'Poker', 'טקסס הולדם לעד 6 שחקנים': "Texas Hold'em for up to 6 players",
+  'שש בש': 'Backgammon', 'משחק לזוג, שש בש קלאסי': 'Two-player game, classic backgammon',
+  "21 (בלאק ג'ק)": 'Blackjack (21)', 'מול הדילר, לבד או עם המשפחה': 'Against the dealer, alone or with the family',
+  'משחק אסטרטגיה לזוג, לתפוס את הדגל': 'Two-player strategy game, capture the flag',
+  'טטריס': 'Tetris', 'משחק ליחיד, להרכיב שורות שלמות': 'Single-player game, complete whole rows',
+  'משחק פתוח!': 'Open game!', 'תורך!': 'Your turn!', 'שולחן פתוח!': 'Open table!', 'אתה בשולחן': "You're at the table",
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
@@ -205,7 +214,7 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,.dtitle,.mrow p,.xlist span,.impmsg p,.impitem span,.calmain b,.caltime,[data-user],textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.dtitle,.gi,.mrow p,.xlist span,.impmsg p,.impitem span,.calmain b,.caltime,[data-user],textarea,script,style';
 const SKIP_ATTR = SKIP.replace(',textarea', '');
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
