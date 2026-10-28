@@ -203,6 +203,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
       <a href="outing.html">${icon('house')} אני לא בבית</a>
       <a href="info.html">${icon('info')} מידע משפחתי</a>
+      <a href="guide.html">${icon('info')} הוראות שימוש</a>
       <a href="feedback.html">${icon('message-circle')} ספרו לנו</a>
       <button id="pushBtn" type="button" style="display:none">${icon('bell')} <span>התראות</span></button>
       <button id="langBtn" type="button">🌐 <span>${getLang() === 'en' ? 'עברית' : 'English'}</span></button>
