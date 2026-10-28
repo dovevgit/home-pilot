@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -38,7 +38,10 @@ const D = {
   'רוצים לקבל הודעות גם כשהאפליקציה סגורה?': 'Want to get messages even when the app is closed?',
   'משימה אחת צריכה מחליף': 'One task needs a replacement',
   'בקשת מימוש אחת מחכה לאישור': 'One redemption request is waiting for approval',
-  'לא הצלחתי, נסו שוב': 'Could not do it, try again'
+  'לא הצלחתי, נסו שוב': 'Could not do it, try again',
+  'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
+  'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
+  'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
 };
 
 const P = [
@@ -55,6 +58,7 @@ const P = [
   [/^הודעת מערכת · (.+)$/, 'System message · $1'],
   [/^הכרטיס של (.+)$/, "$1's card"],
   [/^השמירה נכשלה: (.*)$/, 'Saving failed: $1'],
+  [/^(\d+\/\d+ )?הבא: (.+)$/, '$1Next: $2'],
   [/^הבדיקה נכשלה: (.*)$/, 'The test failed: $1']
 ];
 
@@ -68,7 +72,7 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.tmain b,textarea,script,style';
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
   if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP)) { const n = tr(root.nodeValue); if (n !== root.nodeValue) root.nodeValue = n; } return; }
