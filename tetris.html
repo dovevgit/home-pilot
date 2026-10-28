@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>הבית שלנו | טטריס</title>
 <meta name="theme-color" content="#0f1a2b">
@@ -335,5 +336,6 @@ requestAnimationFrame(function(t){last=t;loop(t);});
 window.__t={get:function(){return {score:score,lines:lines,level:level,over:over,cur:cur,grid:grid};},start:start,move:move,rotate:rotate,hard:hardDrop,soft:softDrop,hold:hold};
 })();
 </script>
+<script type="module">import { initI18n } from './js/i18n.js'; try { initI18n('games'); } catch (e) {}</script>
 </body>
 </html>

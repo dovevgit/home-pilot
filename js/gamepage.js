@@ -15,7 +15,7 @@ const CATS = [['חי', '--c-animal'], ['צומח', '--c-plant'], ['דומם', '-
 const GT = guestToken();
 let me, profiles = [], gcall = null, gref = null;
 if (GT) { const x = await guestMode('game', GT); me = x.me; gcall = x.call; gref = x.ref; }
-else { const x = await initPage({ title: 'חי צומח דומם', back: 'index.html' }); me = x.me; profiles = x.profiles; }
+else { const x = await initPage({ active: 'game', title: 'חי צומח דומם', back: 'index.html' }); me = x.me; profiles = x.profiles; }
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 if (GT) byId[me.id] = me;
 // שמות של שחקנים שאינם ברשימה הרגילה (אורחים)
