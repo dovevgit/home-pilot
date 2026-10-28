@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -39,12 +39,23 @@ const D = {
   'משימה אחת צריכה מחליף': 'One task needs a replacement',
   'בקשת מימוש אחת מחכה לאישור': 'One redemption request is waiting for approval',
   'לא הצלחתי, נסו שוב': 'Could not do it, try again',
+  'פרטי משימה': 'Task details', 'המשימה לא נמצאה': 'Task not found', 'דיווחים': 'Reports', '· באיחור': '· Overdue',
+  'אבל אפשר לעשות אותה ולקבל את הנקודות. הדיווח יירשם על שמך.': 'But you can do it and get the points. The report will be under your name.',
+  'אחראי/ת': 'Assigned to', 'מועד': 'Due', 'חזרה': 'Repeats', 'חובה לצלם': 'Photo required', 'כן': 'Yes', 'לא': 'No',
+  'תיאור': 'Description', 'טיפים': 'Tips', 'שבועי': 'Weekly', 'פעם ביום': 'Once a day', 'חד-פעמי': 'One-time',
+  'כל החזרות בוצעו': 'All repeats done', 'ביצעתי שוב (ביצוע נוסף)': 'I did it again (extra)', 'ביצעתי את המשימה': 'I did the task',
+  'משימה משותפת: אחד מכם מדווח, וכולם מקבלים את הנקודות.': 'Shared task: one of you reports and everyone gets the points.',
+  'מי שביצע בפועל מדווח ומקבל את הנקודות.': 'Whoever actually did it reports and gets the points.',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
 };
 
+const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
 const P = [
+  [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+) ·$/, (_, d, a, b) => `${WD[d]}, ${a}/${b} ·`],
+  [/^(\d+) פעמים ביום$/, '$1 times a day'],
+  [/^המשימה רשומה על (.+)$/, 'This task is assigned to $1'],
   [/^בעוד יום אחד · יום הולדת (\d+)$/, 'In 1 day · turning $1'],
   [/^בעוד (\d+) ימים · יום הולדת (\d+)$/, 'In $1 days · turning $2'],
   [/^היום יום ההולדת! \(גיל (\d+)\)$/, 'Birthday today! (age $1)'],
@@ -72,7 +83,7 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,.tmain b,textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.tmain b,.dtitle,[data-user],textarea,script,style';
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
   if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP)) { const n = tr(root.nodeValue); if (n !== root.nodeValue) root.nodeValue = n; } return; }

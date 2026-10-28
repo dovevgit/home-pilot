@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
@@ -45,7 +46,7 @@ else {
     const pr = pointsFor(t, sl, new Date(r.created_at));
     return `<div class="rep">${avatar(who, 38)}
       <div style="flex:1;min-width:0"><b>${esc(who?.name || 'מישהו')}</b>
-        <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> ${ilDate(new Date(r.created_at)) === ilDate(new Date()) ? 'היום' : ilDate(new Date(r.created_at))}${pr.late ? ' · באיחור' : ''}${r.body ? ' · ' + esc(r.body) : ''}</div></div>
+        <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> <span>${ilDate(new Date(r.created_at)) === ilDate(new Date()) ? 'היום' : ilDate(new Date(r.created_at))}</span>${pr.late ? ' <span>· באיחור</span>' : ''}${r.body ? ' <span data-user>· ' + esc(r.body) + '</span>' : ''}</div></div>
       ${urls[r.photo_path] ? `<img src="${urls[r.photo_path]}" alt="" style="width:52px;height:46px;border-radius:10px;object-fit:cover">` : ''}
       <span class="pts" dir="ltr">+${pr.points}</span></div>`;
   }).join('')}</div>` : '';
@@ -61,8 +62,8 @@ else {
       <div class="kv"><span>${icon('star', 18)} נקודות</span><span class="pts" dir="ltr">${t.points}</span></div>
       <div class="kv"><span>${icon('camera', 18)} חובה לצלם</span><span>${t.requires_photo ? 'כן' : 'לא'}</span></div>
     </div>
-    ${t.description ? `<div class="card flat"><h3>תיאור</h3><p>${esc(t.description)}</p></div>` : ''}
-    ${t.tips ? `<div class="card flat"><h3>טיפים</h3><p>${esc(t.tips)}</p></div>` : ''}
+    ${t.description ? `<div class="card flat"><h3>תיאור</h3><p data-user>${esc(t.description)}</p></div>` : ''}
+    ${t.tips ? `<div class="card flat"><h3>טיפים</h3><p data-user>${esc(t.tips)}</p></div>` : ''}
     ${repsHtml}
     ${status === 'done'
       ? `<button class="btn disabled" type="button" disabled>כל החזרות בוצעו</button><a class="btn secondary" href="report.html?id=${t.id}">ביצעתי שוב (ביצוע נוסף)</a>`
