@@ -43,7 +43,7 @@
 </main>
 <div class="modal hidden" id="pmodal"><div class="modal-card" id="pcard"></div></div>
 <script type="module">
-import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup, t } from './js/common.js';
+import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup, t as tx } from './js/common.js';
 import { weeklyPoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
 document.getElementById('qsend').innerHTML = icon('send', 22);
@@ -205,7 +205,7 @@ else {
     const t = tById[r.task_id]; const who = byId[r.user_id];
     const slot = t && r.payload?.slot_n ? (t.slots || [])[r.payload.slot_n - 1] : null;
     const pts = t ? pointsFor(t, slot, new Date(r.created_at)).points : 0;
-    const when = ilDate(new Date(r.created_at)) === today ? t('היום') : ilDate(new Date(r.created_at));
+    const when = ilDate(new Date(r.created_at)) === today ? tx('היום') : ilDate(new Date(r.created_at));
     return `<div class="card recent" style="margin-bottom:8px;padding:8px 12px">${avatar(who, 40)}
       <div style="flex:1;min-width:0"><b style="font-size:16px">${esc(who?.name || 'מישהו')} ביצע/ה: ${esc(t?.title || '')}</b>
       <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> ${when}${r.body ? ' · ' + esc(r.body) : ''} · <span class="pts" dir="ltr">+${pts}</span></div></div>
