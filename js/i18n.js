@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -56,13 +56,30 @@ const D = {
   'לא הצלחנו לקרוא את התמונה, אפשר לנסות שוב': 'Could not read the photo, you can try again',
   'ההעלאה נכשלה, אפשר לנסות שוב. כדאי להשאיר את המסך פתוח.': 'Upload failed, you can try again. Keep the screen open.',
   'לדווח על ביצוע? אי אפשר לערוך אחרי השליחה.': 'Report as done? It cannot be edited after sending.',
+  'כולם': 'Everyone', 'חודש קודם': 'Previous month', 'חודש הבא': 'Next month', 'הפעילויות שלי': 'My activities',
+  'עוד לא הוספת פעילויות. לחצו על "הוספת פעילות".': 'No activities yet. Tap "Add activity".',
+  'הוספת פעילות': 'Add activity', 'הוספת פעילות ליום הזה': 'Add activity for this day', 'אין פעילויות ביום הזה': 'No activities on this day',
+  'לא הצלחנו לטעון את לוח השנה': 'Could not load the calendar', 'עריכת פעילות': 'Edit activity', 'פעילות חדשה': 'New activity',
+  'שם הפעילות': 'Activity name', 'למשל: חוג כדורסל': 'For example: basketball class', 'של מי': 'Whose', 'תדירות': 'How often',
+  'פעם אחת': 'Once', 'כל שבוע באותו יום': 'Every week on the same day', 'יום בשבוע': 'Day of the week', 'תאריך': 'Date',
+  'משעה': 'From', 'עד שעה': 'Until', 'צריך להזין שם לפעילות': 'Enter a name for the activity',
+  'צריך שעת התחלה ושעת סיום': 'A start time and an end time are required', 'שעת הסיום צריכה להיות אחרי שעת ההתחלה': 'The end time must be after the start time',
+  'צריך לבחור תאריך': 'Choose a date', 'מחיקת הפעילות': 'Delete activity', 'למחוק את הפעילות?': 'Delete this activity?', 'המחיקה נכשלה': 'Delete failed',
+  'א׳': 'Sun', 'ב׳': 'Mon', 'ג׳': 'Tue', 'ד׳': 'Wed', 'ה׳': 'Thu', 'ו׳': 'Fri', 'ש׳': 'Sat',
+  'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday',
   'המשימות שלנו': 'Our tasks', 'הבית שלנו | משימות': 'Our Home | Tasks',
   'מחר': 'Tomorrow', 'השבוע': 'This week', 'בן משפחה': 'Family member', 'סטטוס': 'Status',
   'כל המשפחה': 'Whole family', 'כל הסטטוסים': 'All statuses', 'אין משימות שמתאימות לסינון': 'No tasks match the filter'
 };
 
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
+const MO = { 'ינואר': 'January', 'פברואר': 'February', 'מרץ': 'March', 'אפריל': 'April', 'מאי': 'May', 'יוני': 'June', 'יולי': 'July', 'אוגוסט': 'August', 'ספטמבר': 'September', 'אוקטובר': 'October', 'נובמבר': 'November', 'דצמבר': 'December' };
 const P = [
+  [/^(ינואר|פברואר|מרץ|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר) (\d{4})$/, (_, m, y) => `${MO[m]} ${y}`],
+  [/^כל יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => `Every ${WD[d]}`],
+  [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+)$/, (_, d, a, b) => `${WD[d]}, ${a}/${b}`],
+  [/^(.*) · כל שבוע$/, '$1 · Every week'],
+  [/^🎂 יום הולדת (\d+) ל(.+)$/, '🎂 $2 turns $1'],
   [/^הדיווח נשלח, \+(\d+) נקודות( \(באיחור\))?$/, (_, n, l) => `Report sent, +${n} points${l ? ' (overdue)' : ''}`],
   [/^השליחה נכשלה: (.*)$/, 'Sending failed: $1'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+) ·$/, (_, d, a, b) => `${WD[d]}, ${a}/${b} ·`],
@@ -95,7 +112,7 @@ function tr(s) {
 }
 export const t = (he) => (ENGLISH ? tr(he) : he);
 
-const SKIP = '.bubble,.announce,.sys,.tmain b,.dtitle,[data-user],textarea,script,style';
+const SKIP = '.bubble,.announce,.sys,.tmain b,.dtitle,.calmain b,.caltime,[data-user],textarea,script,style';
 const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
 function walk(root) {
   if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP)) { const n = tr(root.nodeValue); if (n !== root.nodeValue) root.nodeValue = n; } return; }

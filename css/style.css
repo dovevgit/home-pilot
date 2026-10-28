@@ -326,3 +326,4 @@ button.avn{background:none;border:0;font:inherit;color:inherit;cursor:pointer;pa
 
 /* אנגלית (כיוון שמאל לימין): החץ בכפתור החזרה מתהפך */
 html[dir=ltr] header.bar a.iconbtn svg{transform:scaleX(-1)}
+html[dir=ltr] .calnav .sqbtn svg{transform:scaleX(-1)}
