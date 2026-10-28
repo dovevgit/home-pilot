@@ -1134,7 +1134,7 @@ const P = [
   [/^(\d+) ספינות$/, '$1 ships'],
   [/^פרס למנצח הכללי: (\d+) נקודות$/, 'Prize for the overall winner: $1 points'],
   [/^מי מקבל את הפרס \((\d+) נקודות\)\?$/, 'Who gets the prize ($1 points)?'],
-  [/^(.+) פתח\/ה משחק חי צומח דומם$/, '$1 opened an Categories game'],
+  [/^(.+) פתח\/ה משחק חי צומח דומם$/, '$1 opened a Categories game'],
   [/^(.+) פתח\/ה משחק\. מי שהוזמן ולוחץ$/, '$1 opened a game. Whoever is invited and presses'],
   [/^(.+) קיבל\/ה הודעה$/, '$1 got a notification'],
   [/^סבב (\d+) כבר התחיל$/, 'Round $1 has already started'],
