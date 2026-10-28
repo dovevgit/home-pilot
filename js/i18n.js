@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'game']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'game', 'guide']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -12,7 +12,7 @@ const D = {
   'המשימות שלי': 'My tasks', 'לוח שנה': 'Calendar', 'היסטוריה ודיווחים': 'History and reports', 'חנות': 'Shop',
   'תרופות': 'Medications', 'בקשות מיוחדות': 'Special requests', 'הודעה חשובה': 'Important message', 'משחקים': 'Games',
   'הודעות משפחתיות': 'Family messages', 'פתקים על המקרר': 'Fridge notes', 'אני לא בבית': "I'm not home",
-  'מידע משפחתי': 'Family info', 'ספרו לנו': 'Tell us', 'התראות': 'Notifications', 'התנתקות': 'Log out',
+  'מידע משפחתי': 'Family info', 'ספרו לנו': 'Tell us', 'הוראות שימוש': 'User guide', 'התראות': 'Notifications', 'התנתקות': 'Log out',
   'משימות': 'Tasks', 'היסטוריה': 'History',
   'התראות פעילות ✓': 'Notifications on ✓', 'התראות חסומות (בהגדרות הטלפון)': 'Notifications blocked (in phone settings)',
   'התראות: פתחו מהאייקון במסך הבית': 'Notifications: open from the home screen icon', 'התראות לא נתמכות כאן': 'Notifications not supported here',
