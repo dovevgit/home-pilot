@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>הבית שלנו | התנגשויות בשיבוץ</title>
 <meta name="theme-color" content="#0D6EFD">
@@ -33,7 +34,7 @@
 <script type="module">
 import { initPage, supabase, esc, avatar, ilDate, addDays, dow, showToast } from './js/common.js';
 import { hm, suggestTimes } from './js/events.js';
-const { me, profiles, isAdmin } = await initPage({ title: 'התנגשויות בשיבוץ', back: 'index.html', menu: false });
+const { me, profiles, isAdmin } = await initPage({ active: 'conflicts', title: 'התנגשויות בשיבוץ', back: 'index.html', menu: false });
 const $ = id => document.getElementById(id);
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const users = profiles.filter(p => p.is_user);

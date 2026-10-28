@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>הבית שלנו | פתקים על המקרר</title>
 <meta name="theme-color" content="#0D6EFD">
@@ -59,7 +60,7 @@ main{overscroll-behavior:contain}.fphoto{object-fit:cover!important;border-radiu
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
 import { initPage, supabase, esc, icon, avatar, ilDate, ilTime, showToast } from './js/common.js';
-const { session, profiles, isAdmin } = await initPage({ title: 'פתקים על המקרר', back: 'index.html' });
+const { session, profiles, isAdmin } = await initPage({ active: 'fridge', title: 'פתקים על המקרר', back: 'index.html' });
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const me = session.user.id;
 const $ = id => document.getElementById(id);
