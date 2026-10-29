@@ -199,6 +199,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="shop.html">${icon('gift')} חנות</a>
       <a href="meds.html">${icon('pill')} תרופות</a>
       <a href="requests.html">${icon('hand-heart')} בקשות מיוחדות</a>
+      <a href="bonus.html">${icon('star')} משימות בונוס</a>
       <a href="important.html" class="imp-link">${icon('bell')} הודעה חשובה</a>
       <a href="games.html">${icon('star')} משחקים</a>
       <a href="chat.html">${icon('message-circle')} הודעות משפחתיות</a>
