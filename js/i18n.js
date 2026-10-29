@@ -733,6 +733,10 @@ const D = {
   "ימים עם שינוי:": "Days with a change:",
   "ביום": "On",
   "חובה לצלם": "Photo required",
+  "הסתרה מההיסטוריה (הנקודות נשארות)": "Hide from history (points stay)",
+  "מחיקה מלאה (גם הנקודות)": "Delete completely (points too)",
+  "ההסתרה נכשלה": "Hiding failed",
+  "להסתיר את הדיווח הזה מההיסטוריה?\n\nהנקודות לא משתנות.": "Hide this report from history?\n\nPoints do not change.",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
@@ -1100,6 +1104,9 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^הסתרת (\d+) הדיווחים המוצגים מההיסטוריה$/, 'Hide the $1 reports shown from history'],
+  [/^להסתיר מההיסטוריה את (\d+) הדיווחים המוצגים עכשיו\?\s+הנקודות לא משתנות, והמשימות נשארות מסומנות כבוצעו\. הדיווחים רק לא יופיעו ברשימה\.$/, 'Hide the $1 reports shown now from history?\n\nPoints do not change, and tasks stay marked as done. The reports just will not appear in the list.'],
+  [/^(\d+) דיווחים לא הוסתרו$/, '$1 reports were not hidden'],
   [/^· (\d+) שינויים$/, '· $1 changes'],
   [/^בכל יום ב-(\d\d:\d\d)$/, 'Every day at $1'],
   [/^ביום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת) ב-(\d\d:\d\d)$/, (_, d, t) => `Every ${WD[d]} at ${t}`],

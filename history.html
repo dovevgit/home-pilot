@@ -30,6 +30,7 @@
   <div class="card" style="margin-bottom:8px"><div class="sec-title" style="margin:0" id="sumTitle">סיכום שבוע</div>
     <div class="stats" id="stats"><p class="empty" style="flex:1">טוען...</p></div></div>
   <div class="sec-title">רשימת דיווחים אחרונים</div>
+  <div id="clearBox"></div>
   <div id="list"><p class="empty">טוען...</p></div>
 </main>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
@@ -54,6 +55,20 @@ function range() {
   return { sinceDate: first, endDate: last, since: toIsraelDate(first, '00:00') };
 }
 
+// הסתרה מההיסטוריה: הדיווח נשאר (הנקודות והסימון "בוצע" לא משתנים), רק לא מוצג ברשימה.
+async function hideReports(ids, msg) {
+  if (!ids.length || !confirm(msg)) return false;
+  const { data: rows, error } = await supabase.from('feed').select('id,payload').in('id', ids);
+  if (error) { alert('ההסתרה נכשלה'); return false; }
+  let bad = 0;
+  for (const r of rows || []) {
+    const { data: upd, error: e } = await supabase.from('feed').update({ payload: { ...(r.payload || {}), hidden: true, hidden_at: new Date().toISOString() } }).eq('id', r.id).select('id');
+    if (e || !upd || !upd.length) bad++;
+  }
+  if (bad) alert(`${bad} דיווחים לא הוסתרו`);
+  load(); return true;
+}
+
 async function load() {
   const my = ++seq;
   $('sumTitle').textContent = NAMES[period];
@@ -61,12 +76,12 @@ async function load() {
   const R = range();
   const [tr, fr] = await Promise.all([
     supabase.from('tasks').select('*').eq('kind', 'occurrence').eq('active', true).gte('occurrence_date', R.sinceDate).lte('occurrence_date', R.endDate),
-    supabase.from('feed').select('*').eq('type', 'report').gte('created_at', R.since.toISOString()).order('created_at', { ascending: false }).limit(100)
+    supabase.from('feed').select('*').eq('type', 'report').gte('created_at', R.since.toISOString()).order('created_at', { ascending: false }).limit(300)
   ]);
   if (my !== seq) return;
   if (tr.error || fr.error) { $('list').innerHTML = '<p class="empty">לא הצלחנו לטעון נתונים</p>'; $('stats').innerHTML = ''; return; }
   const occ = tr.data || [];
-  let reps = fr.data || [];
+  let reps = (fr.data || []).filter(r => !r.payload?.hidden);
   // משימות של הדיווחים (יכולות להיות מתאריך אחר)
   const known = Object.fromEntries(occ.map(t => [t.id, t]));
   const missing = [...new Set(reps.map(r => r.task_id).filter(id => id && !known[id]))];
@@ -98,7 +113,9 @@ async function load() {
 
   // רשימת דיווחים
   reps = reps.filter(r => (!mem || r.user_id === mem) && (!tit || known[r.task_id]?.title === tit));
+  $('clearBox').innerHTML = '';
   if (!reps.length) { $('list').innerHTML = '<p class="empty">אין דיווחים בתקופה הזאת</p>'; return; }
+  if (isAdmin) { $('clearBox').innerHTML = `<button type="button" class="btn secondary" id="clearHist" style="width:100%;margin-bottom:8px">הסתרת ${reps.length} הדיווחים המוצגים מההיסטוריה</button>`; $('clearHist').onclick = () => hideReports(reps.map(r => r.id), `להסתיר מההיסטוריה את ${reps.length} הדיווחים המוצגים עכשיו?\n\nהנקודות לא משתנות, והמשימות נשארות מסומנות כבוצעו. הדיווחים רק לא יופיעו ברשימה.`); }
   const paths = reps.map(r => r.photo_path).filter(Boolean);
   const urls = {};
   if (paths.length) {
@@ -128,12 +145,15 @@ $('list').addEventListener('click', e => {
       <div><b style="font-size:19px">${esc(x.who?.name || 'מישהו')}</b><div class="note" style="margin:0;text-align:start">${esc(x.t?.title || '')} · <span dir="ltr">${esc(x.when)}</span> · <span class="pts" dir="ltr">+${x.pts}</span></div></div></div>
     ${x.url ? `<img class="zoom" src="${x.url}" alt="תמונת הדיווח">` : '<p class="empty">אין תמונה לדיווח הזה</p>'}
     ${x.r.body ? `<div class="card" data-user style="margin-top:10px;background:var(--bg)">${esc(x.r.body)}</div>` : ''}
-    ${isAdmin ? `<button type="button" class="btn secondary" id="delRep" style="width:100%;margin-top:12px;color:#B91C1C;border-color:#EF4444">מחיקת הדיווח</button>` : ''}`;
+    ${isAdmin ? `<button type="button" class="btn" id="hideRep" style="width:100%;margin-top:12px">הסתרה מההיסטוריה (הנקודות נשארות)</button>
+    <button type="button" class="btn secondary" id="delRep" style="width:100%;margin-top:8px;color:#B91C1C;border-color:#EF4444">מחיקה מלאה (גם הנקודות)</button>` : ''}`;
   $('modal').classList.remove('hidden');
   $('mx').onclick = () => $('modal').classList.add('hidden');
+  const hid = $('hideRep');
+  if (hid) hid.onclick = async () => { if (await hideReports([x.r.id], 'להסתיר את הדיווח הזה מההיסטוריה?\n\nהנקודות לא משתנות.')) $('modal').classList.add('hidden'); };
   const del = $('delRep');
   if (del) del.onclick = async () => {
-    if (!confirm('למחוק את הדיווח הזה? אי אפשר לשחזר.')) return;
+    if (!confirm('למחוק את הדיווח הזה לגמרי? הנקודות שהוא נתן יורדות, ואי אפשר לשחזר.\n\nאם רוצים רק להסתיר אותו מהרשימה, לוחצים על "הסתרה מההיסטוריה".')) return;
     del.disabled = true;
     const { error } = await supabase.from('feed').delete().eq('id', x.r.id);
     if (error) { del.disabled = false; alert('המחיקה נכשלה'); return; }

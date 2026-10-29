@@ -189,7 +189,8 @@ else {
 }
 
 /* --- מה קרה לאחרונה --- */
-const { data: reps } = await supabase.from('feed').select('*').eq('type', 'report').order('created_at', { ascending: false }).limit(3);
+const { data: repsAll } = await supabase.from('feed').select('*').eq('type', 'report').order('created_at', { ascending: false }).limit(30);
+const reps = (repsAll || []).filter(r => !r.payload?.hidden).slice(0, 3);
 const rEl = document.getElementById('recent');
 if (!reps || !reps.length) rEl.innerHTML = '<p class="empty">עוד לא דווחו משימות</p>';
 else {
