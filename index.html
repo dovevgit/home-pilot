@@ -48,6 +48,17 @@ import { weeklyPoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
 document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
+
+// עיגול כתום אישי: מופיע רק למי שיש לו קישור בטבלה owner_links (בעל האפליקציה). לאחרים הטבלה ריקה ושום דבר לא מוצג.
+supabase.from('owner_links').select('claude_url').eq('profile_id', me.id).maybeSingle().then(({ data }) => {
+  if (!data?.claude_url || !/^https:\/\/claude\.ai\//.test(data.claude_url)) return;
+  const a = document.createElement('a');
+  a.href = data.claude_url; a.target = '_blank'; a.rel = 'noopener';
+  a.setAttribute('aria-label', 'נהל את האפליקציה'); a.title = 'נהל את האפליקציה';
+  a.style.cssText = 'position:fixed;bottom:calc(92px + env(safe-area-inset-bottom));inset-inline-end:16px;width:58px;height:58px;border-radius:50%;background:linear-gradient(180deg,#FFA94D,#F97316);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(249,115,22,.45);z-index:30;text-decoration:none';
+  a.innerHTML = icon('sparkles', 28);
+  document.body.append(a);
+}).catch(() => {});
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const today = ilDate(new Date());
 if (me?.role === 'admin') {

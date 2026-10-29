@@ -213,13 +213,6 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
     document.body.append(drawer);
     document.getElementById('menuBtn')?.addEventListener('click', () => drawer.classList.remove('hidden'));
     drawer.querySelector('.drawer-bg').addEventListener('click', () => drawer.classList.add('hidden'));
-    // קישור אישי (רק למי שיש לו שורה בטבלה owner_links, כלומר בעל האפליקציה)
-    supabase.from('owner_links').select('claude_url').eq('profile_id', session.user.id).maybeSingle().then(({ data }) => {
-      if (!data?.claude_url || !/^https:\/\/claude\.ai\//.test(data.claude_url)) return;
-      const a = document.createElement('a'); a.href = data.claude_url; a.target = '_blank'; a.rel = 'noopener';
-      a.innerHTML = `${icon('sparkles')} דבר עם Claude`;
-      const fb = drawer.querySelector('a[href="feedback.html"]'); fb ? fb.before(a) : drawer.querySelector('nav').prepend(a);
-    }).catch(() => {});
     import('./push.js').then(async P => {
       const b = drawer.querySelector('#pushBtn'), lab = b.querySelector('span');
       const draw = async () => {
