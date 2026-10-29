@@ -218,7 +218,7 @@ else {
 /* --- הודעות: תג שלא נקראו, רשימה ושורת כתיבה --- */
 let lastFeed = null;
 async function loadFeed() {
-  const { data: feed, error: fErr } = await supabase.from('feed').select('id,type,user_id,body,photo_path,created_at').in('type', ['system', 'chat']).order('created_at', { ascending: false }).limit(4);
+  const { data: feed, error: fErr } = await supabase.from('feed').select('id,type,user_id,body,photo_path,payload,created_at').in('type', ['system', 'chat']).order('created_at', { ascending: false }).limit(4);
   const fEl = document.getElementById('feed');
   if (fErr) { fEl.innerHTML = '<p class="empty">לא הצלחנו לטעון הודעות</p>'; return; }
   if (!feed.length) { fEl.innerHTML = '<p class="empty">אין הודעות עדיין. כתבו הודעה ראשונה!</p>'; return; }
@@ -227,7 +227,7 @@ async function loadFeed() {
   fEl.innerHTML = feed.slice().reverse().map(m => m.type === 'system'
     ? `<div class="sys"><small>הודעת מערכת · ${ilTime(new Date(m.created_at))}</small>${esc(m.body)}</div>`
     : `<div class="msg ${m.user_id === me?.id ? 'mine' : ''}">${avatar(byId[m.user_id], 34)}
-        <div class="bubble">${m.user_id === me?.id ? '' : `<b>${esc(byId[m.user_id]?.name || 'מישהו')}</b>`}${m.photo_path ? '<div>📷 תמונה</div>' : ''}${m.body ? `<div>${esc(m.body)}</div>` : ''}<span class="mtime" dir="ltr">${ilTime(new Date(m.created_at))}</span></div></div>`).join('');
+        <div class="bubble">${m.user_id === me?.id ? '' : `<b>${esc(byId[m.user_id]?.name || 'מישהו')}</b>`}${m.photo_path ? (m.payload?.audio ? '<div>🎤 הודעה קולית</div>' : '<div>📷 תמונה</div>') : ''}${m.body ? `<div>${esc(m.body)}</div>` : ''}<span class="mtime" dir="ltr">${ilTime(new Date(m.created_at))}</span></div></div>`).join('');
   let seen = ''; try { seen = localStorage.getItem('chatSeen') || ''; } catch (_) {}
   const n = feed.filter(m => m.user_id !== me?.id && (!seen || m.created_at > seen)).length;
   const l = document.getElementById('chatLink');

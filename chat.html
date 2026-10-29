@@ -25,8 +25,11 @@
   <input type="file" id="camera" accept="image/*" capture="environment" hidden>
   <button class="cbtn" id="emoBtn" type="button" aria-label="אימוג'ים זזים">😊</button>
   <input id="text" type="text" placeholder="כתבו הודעה..." maxlength="500" enterkeyhint="send">
+  <button class="cbtn" id="micBtn" type="button" aria-label="הודעה קולית"></button>
   <button class="cbtn send" id="send" type="submit" aria-label="שליחה"></button>
 </form>
+<div id="audPanel" class="aud-panel hidden" role="dialog" aria-label="הודעה קולית"></div>
+<input type="file" id="audioFile" accept="audio/*" hidden>
 <div id="emoPanel" class="emo-panel hidden" role="dialog" aria-label="אימוג'ים זזים"></div>
 <style>
 .emo-panel{position:fixed;inset-inline:8px;bottom:calc(72px + env(safe-area-inset-bottom));background:#fff;border:1px solid var(--border,#ddd);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px;max-height:42vh;overflow:auto;z-index:50}
@@ -34,6 +37,13 @@
 #emoBtn{font-size:26px;line-height:1}
 .emo-panel button{border:0;background:none;font-size:32px;line-height:1;padding:6px;border-radius:12px;cursor:pointer}
 .emo-panel button:active{background:var(--bg)}
+.composer{gap:6px}.composer .cbtn{width:42px;height:42px}.composer input[type=text]{height:42px;min-width:0}
+.aud-panel{position:fixed;inset-inline:8px;bottom:calc(72px + env(safe-area-inset-bottom));background:#fff;border:1px solid var(--border,#ddd);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:14px;z-index:50;display:flex;flex-direction:column;gap:10px;align-items:stretch;text-align:center}
+.aud-panel.hidden{display:none}
+.aud-panel .abtn{height:50px;border-radius:25px;border:0;font-size:17px;font-weight:700;cursor:pointer;background:var(--bg);color:#0A58CA}
+.aud-panel .abtn.red{background:#E5484D;color:#fff}.aud-panel .abtn.green{background:var(--blue);color:#fff}
+.aud-panel audio{width:100%}.aud-timer{font-size:28px;font-weight:800;color:#E5484D}
+.maud{width:min(240px,62vw);height:40px;display:block;margin:4px 0}
 .aemo{width:1.5em;height:1.5em;vertical-align:-.35em;display:inline-block}
 .aemo.big{width:64px;height:64px;vertical-align:middle}
 </style>
@@ -47,6 +57,7 @@ const me = session.user.id;
 const $ = id => document.getElementById(id);
 $('photoBtn').innerHTML = icon('image', 24);
 $('cameraBtn').innerHTML = icon('camera', 24);
+$('micBtn').innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const today = ilDate(new Date());
 // אימוג'ים זזים (Google Noto Animated Emoji, רישיון CC BY 4.0): בהודעה נשמר תו האימוג'י הרגיל, ובתצוגה מוחלף בתמונה זזה. אם התמונה לא נטענת, נשאר האימוג'י הרגיל.
 const AEMO = ['😀','😂','🥰','😍','😎','🤩','😉','😋','😜','🤔','😴','😭','😡','🥳','😱','🤗','🙏','👍','👏','🙌','💪','👋','❤️','🔥','✨','🎉','🎂','🎈','⭐','💯','☀️','🌈','🍕','🍦','⚽','🎮','🏆','🐶','🐱'];
@@ -77,9 +88,10 @@ function render(scroll) {
     const time = `<span class="mtime" dir="ltr">${ilTime(at)}</span>`;
     if (m.type === 'system') return `${sep}<div class="sysmsg"><small>הודעת מערכת</small>${esc(m.body)} ${time}</div>`;
     const mine = m.user_id === me; const who = byId[m.user_id];
-    const img = m.photo_path && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
+    const aud = m.photo_path && m.payload?.audio && urls[m.photo_path] ? `<audio class="maud" controls preload="metadata" src="${urls[m.photo_path]}"></audio>` : '';
+    const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
-      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
+      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
   }).join('');
   if (nearEnd) window.scrollTo(0, document.body.scrollHeight);
 }
@@ -110,6 +122,66 @@ $('msgs').addEventListener('click', e => {
   $('modal').classList.remove('hidden'); $('mx').onclick = () => $('modal').classList.add('hidden');
 });
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
+
+/* ---------- הודעה קולית: הקלטה (עד דקה) או קובץ שמע (עד 5MB) ---------- */
+const MAX_SEC = 60, MAX_BYTES = 5 * 1024 * 1024;
+let rec = null, recChunks = [], recTimer = null, recSec = 0, audBlob = null, audUrl = null;
+const audPanel = $('audPanel');
+function audClose() { try { if (rec && rec.state === 'recording') { rec.onstop = null; rec.stop(); rec.stream.getTracks().forEach(t => t.stop()); } } catch (_) {} clearInterval(recTimer); rec = null; if (audUrl) { URL.revokeObjectURL(audUrl); audUrl = null; } audBlob = null; audPanel.classList.add('hidden'); }
+function audIdle() {
+  audPanel.innerHTML = `<button type="button" class="abtn red" id="aRec">🎤 התחלת הקלטה</button><button type="button" class="abtn" id="aUp">העלאת קובץ שמע</button>`;
+  $('aRec').onclick = audStart; $('aUp').onclick = () => $('audioFile').click();
+}
+function audReady() {
+  if (audUrl) URL.revokeObjectURL(audUrl); audUrl = URL.createObjectURL(audBlob);
+  audPanel.innerHTML = `<audio controls src="${audUrl}"></audio><button type="button" class="abtn green" id="aSend">שליחה</button><button type="button" class="abtn" id="aDel">מחיקה</button>`;
+  $('aDel').onclick = () => { audBlob = null; audIdle(); };
+  $('aSend').onclick = audSend;
+}
+async function audStart() {
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { showToast('הקלטה לא נתמכת במכשיר הזה. אפשר להעלות קובץ שמע', true); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (_) { showToast('אין אישור להשתמש במיקרופון', true); return; }
+  const mt = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find(t => MediaRecorder.isTypeSupported?.(t));
+  try { rec = mt ? new MediaRecorder(stream, { mimeType: mt }) : new MediaRecorder(stream); } catch (_) { stream.getTracks().forEach(t => t.stop()); showToast('ההקלטה נכשלה', true); return; }
+  recChunks = []; recSec = 0;
+  rec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
+  rec.onstop = () => {
+    stream.getTracks().forEach(t => t.stop()); clearInterval(recTimer);
+    audBlob = new Blob(recChunks, { type: rec.mimeType || mt || 'audio/webm' });
+    if (!audBlob.size) { audBlob = null; audIdle(); showToast('ההקלטה ריקה', true); return; }
+    audReady();
+  };
+  rec.start();
+  audPanel.innerHTML = `<div class="aud-timer" id="aT" dir="ltr">0:00</div><button type="button" class="abtn red" id="aStop">עצירה</button>`;
+  $('aStop').onclick = () => rec.stop();
+  recTimer = setInterval(() => { recSec++; const t = $('aT'); if (t) t.textContent = Math.floor(recSec / 60) + ':' + String(recSec % 60).padStart(2, '0'); if (recSec >= MAX_SEC && rec?.state === 'recording') rec.stop(); }, 1000);
+}
+$('audioFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (!/^audio\//.test(f.type) && !/\.(mp3|m4a|aac|wav|ogg|opus|webm)$/i.test(f.name)) { showToast('זה לא קובץ שמע', true); return; }
+  if (f.size > MAX_BYTES) { showToast('הקובץ גדול מדי (עד 5MB)', true); return; }
+  audBlob = f; audPanel.classList.remove('hidden'); audReady();
+});
+async function audSend() {
+  if (!audBlob || busy) return;
+  const t = (audBlob.type || '').toLowerCase().split(';')[0], n = (audBlob.name || '').toLowerCase();
+  const ext = /mp4|m4a|aac/.test(t) || /\.(m4a|aac)$/.test(n) ? 'm4a' : /ogg|opus/.test(t) || /\.(ogg|opus)$/.test(n) ? 'ogg' : /wav/.test(t) || /\.wav$/.test(n) ? 'wav' : /mpeg|mp3/.test(t) || /\.mp3$/.test(n) ? 'mp3' : 'webm';
+  const mime = t.startsWith('audio/') ? t.split(';')[0] : ({ m4a: 'audio/mp4', ogg: 'audio/ogg', wav: 'audio/wav', mp3: 'audio/mpeg', webm: 'audio/webm' })[ext];
+  $('aSend').disabled = true; showToast('שולח הקלטה...');
+  try {
+    const path = `reports/${me}/chat-${crypto.randomUUID()}.${ext}`;
+    const up = await supabase.storage.from('photos').upload(path, audBlob, { contentType: mime, upsert: false });
+    if (up.error) throw new Error('upload');
+    const ok = await post({ photo_path: path, body: null, payload: { audio: true, sec: recSec || null } });
+    if (ok) audClose(); else $('aSend').disabled = false;
+  } catch (_) { showToast('שליחת ההקלטה נכשלה', true); const b = $('aSend'); if (b) b.disabled = false; }
+}
+$('micBtn').addEventListener('click', () => {
+  $('emoPanel').classList.add('hidden');
+  if (!audPanel.classList.contains('hidden')) { audClose(); return; }
+  audPanel.classList.remove('hidden'); audIdle();
+});
 
 async function post(row) {
   if (busy) return; busy = true; $('send').disabled = true;
