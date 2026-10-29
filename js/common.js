@@ -265,6 +265,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   showPendingToast();
   if (me) import('./game.js').then(m => m.startGame(me, profiles || [])).catch(() => {});
   if (me) import('./bonus.js').then(m => m.startBonus(me, profiles || [])).catch(() => {});
+  if (me) import('./bonuspopup.js').then(m => m.startBonusPopup(me, profiles || [])).catch(() => {});
   if (me) import('./important.js').then(m => m.startImportant(me, profiles || [])).catch(() => {});
   return { session, me, profiles: profiles || [], isAdmin };
 }
