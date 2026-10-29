@@ -34,7 +34,7 @@ export async function outAction(kind, o, ctx) {
     const { data, error } = await supabase.from('outings').update({ excused: kind === 'exc' }).eq('id', o.id).select('id');
     if (error || !data?.length) { alert('הפעולה נכשלה'); return; }
     ctx.host.modal.classList.add('hidden'); await ctx.onDone();
-    if (kind === 'exc' && confirm('הפטור נשמר. לבדוק אם יש לו משימות בתקופה הזאת שצריך להעביר למישהו אחר?')) location.href = 'admin.html#aff=' + o.id;
+    if (kind === 'exc') location.href = 'admin.html#aff=' + o.id;
     return;
   }
   else if (kind === 'del') { if (!confirm('למחוק?')) return; await supabase.from('outings').delete().eq('id', o.id); }
@@ -103,8 +103,8 @@ export function openOutForm(host, { me, existing, today, onDone, isAdmin = false
     const res = o ? await supabase.from('outings').update(isAdmin ? { ...row, user_id: who } : row).eq('id', o.id).select('id') : await supabase.from('outings').insert({ ...row, user_id: who }).select('id');
     if (res.error) { c.querySelector('#oSave').disabled = false; return err('השמירה נכשלה: ' + res.error.message); }
     host.modal.classList.add('hidden'); await onDone();
-    // פטור ממשימות שנשמר מהטופס: מציעים לבדוק מיד אם יש משימות בתקופה שצריך להעביר
+    // פטור ממשימות שנשמר: עוברים ישר לחלון המשימות שצריך להעביר (בלי שאלת אישור)
     const savedId = res.data?.[0]?.id || (o && o.id);
-    if (isAdmin && row.excused && savedId && row.end_date >= (today || '') && confirm('הפטור נשמר. לבדוק אם יש לו משימות בתקופה הזאת שצריך להעביר למישהו אחר?')) location.href = 'admin.html#aff=' + savedId;
+    if (isAdmin && row.excused && savedId && row.end_date >= (today || '')) location.href = 'admin.html#aff=' + savedId;
   };
 }
