@@ -16,7 +16,9 @@
 <script src="js/splash.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <style>
-.bn-hero{position:relative;overflow:hidden;border-radius:26px;padding:20px 18px;padding-inline-end:128px;margin-bottom:16px;color:#4A2A00;background:radial-gradient(circle at 18% 30%,#FFE27A 0,#FFC233 38%,#FF9A1F 100%);box-shadow:0 8px 22px rgba(255,138,0,.35)}
+main{--hero:radial-gradient(circle at 18% 30%,#FFE27A 0,#FFC233 38%,#FF9A1F 100%);--ink:#4A2A00;--glow:rgba(255,138,0,.35);--go1:#FF9A3D;--go2:#FF6A00;--go-sh:#C95000;--pill1:#FFD84D;--pill2:#FFB020;--pill-ink:#5A3200;--edge:#FFE6B0}
+main[data-kind=enrichment]{--hero:radial-gradient(circle at 18% 30%,#D8CCFF 0,#A58BFF 40%,#6E4BEF 100%);--ink:#1F0F57;--glow:rgba(110,75,239,.35);--go1:#8F72FF;--go2:#5B3BE0;--go-sh:#3E24A8;--pill1:#CDBFFF;--pill2:#9D83FF;--pill-ink:#26116B;--edge:#DDD3FF}
+.bn-hero{position:relative;overflow:hidden;border-radius:26px;padding:20px 18px;padding-inline-end:128px;margin-bottom:16px;color:var(--ink);background:var(--hero);box-shadow:0 8px 22px var(--glow)}
 .bn-hero img{position:absolute;inset-inline-end:8px;bottom:-6px;width:116px;height:116px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(120,60,0,.35))}
 .bn-hero h1{margin:0;font-size:28px;font-weight:800;line-height:1.1}
 .bn-hero p{margin:6px 0 0;font-size:16px;font-weight:600;line-height:1.35;max-width:20ch}
@@ -27,16 +29,16 @@
 .bn-preview b{flex:1;font-size:15px;line-height:1.3}
 .bn-preview button{width:auto;margin:0;padding:0 16px;height:40px}
 .bn-sec{display:flex;align-items:center;gap:8px;margin:20px 0 10px;font-size:19px;font-weight:800;color:#1F2A44}
-.bn-sec .bn-count{background:#FF7A1A;color:#fff;border-radius:12px;font-size:14px;padding:1px 9px}
-.bn-card{background:#fff;border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(31,42,68,.1);border:2px solid #FFE6B0}
+.bn-sec .bn-count{background:var(--go2);color:#fff;border-radius:12px;font-size:14px;padding:1px 9px}
+.bn-card{background:#fff;border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(31,42,68,.1);border:2px solid var(--edge)}
 .bn-row{display:flex;align-items:center;gap:12px}
 .bn-tile{flex:none;width:68px;height:68px;border-radius:20px;display:grid;place-items:center}
 .bn-tile img{width:50px;height:50px;object-fit:contain}
 .bn-t{flex:1;min-width:0}.bn-t b{display:block;font-size:19px;line-height:1.2;color:#1F2A44}
 .bn-t small{display:block;margin-top:3px;font-size:14px;color:#5B6478;line-height:1.3}
-.bn-pts{flex:none;background:linear-gradient(180deg,#FFD84D,#FFB020);color:#5A3200;font-weight:800;font-size:19px;padding:6px 12px;border-radius:16px;box-shadow:inset 0 -3px 0 rgba(150,80,0,.25)}
-.bn-go{display:block;width:100%;height:52px;margin:12px 0 0;border:0;border-radius:26px;font:inherit;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(180deg,#FF9A3D,#FF6A00);box-shadow:0 4px 0 #C95000;cursor:pointer}
-.bn-go:active{transform:translateY(2px);box-shadow:0 2px 0 #C95000}
+.bn-pts{flex:none;background:linear-gradient(180deg,var(--pill1),var(--pill2));color:var(--pill-ink);font-weight:800;font-size:19px;padding:6px 12px;border-radius:16px;box-shadow:inset 0 -3px 0 rgba(150,80,0,.25)}
+.bn-go{display:block;width:100%;height:52px;margin:12px 0 0;border:0;border-radius:26px;font:inherit;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(180deg,var(--go1),var(--go2));box-shadow:0 4px 0 var(--go-sh);cursor:pointer}
+.bn-go:active{transform:translateY(2px);box-shadow:0 2px 0 var(--go-sh)}
 .bn-go[disabled]{opacity:.6}
 .bn-chip{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:8px 14px;border-radius:20px;font-weight:800;font-size:15px}
 .bn-wait{background:#FFF3D1;color:#8A5A00}.bn-ok{background:#DCFCE7;color:#166534}.bn-no{background:#FEE2E2;color:#991B1B}
@@ -47,19 +49,33 @@
 .bn-min{display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:10px 12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(31,42,68,.08)}
 .bn-min .bn-tile{width:44px;height:44px;border-radius:14px}.bn-min .bn-tile img{width:32px;height:32px}
 .bn-min .bn-chip{margin:0;padding:4px 10px;font-size:13px}
+.bn-tabs{display:flex;gap:8px;margin:0 0 14px;background:#fff;border-radius:22px;padding:5px;box-shadow:0 2px 10px rgba(31,42,68,.1)}
+.bn-tabs button{flex:1;margin:0;height:46px;border:0;border-radius:18px;background:none;font:inherit;font-size:17px;font-weight:800;color:#5B6478;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.bn-tabs button[aria-selected=true][data-k=bonus]{background:linear-gradient(180deg,#FFD84D,#FFB020);color:#5A3200}
+.bn-tabs button[aria-selected=true][data-k=enrichment]{background:linear-gradient(180deg,#CDBFFF,#9D83FF);color:#26116B}
+.bn-tabs .bn-count{background:#E5484D;color:#fff;border-radius:10px;font-size:12px;padding:0 7px;line-height:20px}
+.bn-photo{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;font-weight:700;color:#5B6478;background:#F1F5F9;border-radius:12px;padding:3px 9px}
+.bn-seg{display:flex;gap:8px;margin:4px 0 10px}.bn-seg button{flex:1;margin:0;height:44px;border-radius:14px;border:2px solid #D9E2F2;background:#fff;font:inherit;font-weight:800;color:#44506B;cursor:pointer}
+.bn-seg button[aria-pressed=true]{border-color:#0D6EFD;background:#EAF3FF;color:#0A58CA}
+.bn-icons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:4px 0 10px}
+.bn-icons button{aspect-ratio:1;border-radius:14px;border:2px solid transparent;background:#F4F7FD;display:grid;place-items:center;padding:4px;cursor:pointer}
+.bn-icons button[aria-pressed=true]{border-color:#0D6EFD;background:#EAF3FF}
+.bn-icons img{width:80%;height:80%;object-fit:contain}
+.bn-thumb{width:100%;max-height:220px;object-fit:cover;border-radius:16px;margin-top:10px;cursor:zoom-in}
 </style>
 </head>
 <body>
-<main>
+<main id="main" data-kind="bonus">
   <div id="prevBar" class="bn-preview hidden"><b>כך הילד רואה את העמוד. הדיווח כאן לא נשלח באמת.</b><button class="btn" id="prevOff" type="button">חזרה</button></div>
+  <div class="bn-tabs" role="tablist"><button type="button" role="tab" data-k="bonus" id="tabBonus">⭐ בונוס <span class="bn-count hidden" id="nB"></span></button><button type="button" role="tab" data-k="enrichment" id="tabEnr">📚 העשרה <span class="bn-count hidden" id="nE"></span></button></div>
   <section class="bn-hero" aria-label="משימות בונוס">
     <span class="bn-spark" style="top:12px;inset-inline-end:132px">✦</span><span class="bn-spark" style="top:70px;inset-inline-end:150px;font-size:12px">✦</span><span class="bn-spark" style="bottom:12px;inset-inline-end:122px;font-size:14px">✦</span>
-    <img src="icons/task/trophy.png" alt="">
-    <h1>משימות בונוס</h1>
-    <p>עשו משהו מיוחד וקבלו עוד נקודות</p>
+    <img id="heroImg" src="icons/task/trophy.png" alt="">
+    <h1 id="heroT">משימות בונוס</h1>
+    <p id="heroP">עשו משהו מיוחד וקבלו עוד נקודות</p>
   </section>
   <div id="adminBar" class="bn-tools hidden">
-    <button class="btn" id="add" type="button">משימת בונוס חדשה</button>
+    <button class="btn" id="add" type="button">משימה חדשה</button>
     <button class="btn secondary" id="prevOn" type="button">איך הילד רואה</button>
   </div>
   <div id="pendBox" class="hidden">
@@ -69,30 +85,36 @@
   <div class="bn-sec">משימות פתוחות</div>
   <div id="open"><p class="empty">טוען...</p></div>
   <div id="adminBox" class="hidden">
-    <div class="bn-sec">ניהול משימות בונוס</div>
+    <div class="bn-sec" id="manageT">ניהול משימות</div>
     <div id="manage"></div>
   </div>
-  <div class="bn-sec">הבונוסים שלי</div>
+  <div class="bn-sec" id="mineT">הבונוסים שלי</div>
   <div id="mine"></div>
 </main>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
-import { initPage, supabase, esc, icon, avatar, showToast } from './js/common.js';
+import { initPage, supabase, esc, icon, avatar, showToast, shrinkImage, signedUrls } from './js/common.js';
 const { session, profiles, isAdmin } = await initPage({ active: 'bonus', title: 'משימות בונוס', back: 'index.html' });
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const me = session.user.id;
 const $ = id => document.getElementById(id);
-let tasks = [], claims = [], busy = false, kidView = false;
+let tasks = [], claims = [], urls = {}, busy = false, kidView = false, tab = 'bonus', pendingTask = null;
+try { if (localStorage.getItem('bonusTab') === 'enrichment') tab = 'enrichment'; } catch (_) {}
 
-// אייקון וצבע למשימה: לפי מילה בשם, ואם אין התאמה לפי חישוב קבוע מהשם
-const ICONS = ['trophy', 'soccer', 'broom', 'car', 'flower', 'dog', 'cat', 'bicycle', 'book-open', 'music', 'heart', 'wrench', 'shopping-bag', 'cooking-pot', 'recycle', 'washing-machine'];
-const KEYS = [[/אוטו|רכב/, 'car'], [/כלב|טיול/, 'dog'], [/חתול/, 'cat'], [/כביס|בגד/, 'washing-machine'], [/מטבח|בישול|אוכל|ארוח/, 'cooking-pot'], [/ניקי|שטיפ|רצפ|מטאטא|אבק|שואב/, 'broom'], [/חצר|גינה|פרח|עציץ|להשק/, 'flower'], [/קניות|סופר/, 'shopping-bag'], [/ספר|לימוד|שיעור|קריאה/, 'book-open'], [/כדור|ספורט|משחק/, 'soccer'], [/אופניים/, 'bicycle'], [/מוזיק|שיר|פסנתר/, 'music'], [/מחזור|זבל|אשפה/, 'recycle'], [/תיקון|מברג|לתקן/, 'wrench']];
+const KINDS = {
+  bonus: { hero: 'משימות בונוס', sub: 'עשו משהו מיוחד וקבלו עוד נקודות', img: 'trophy', mine: 'הבונוסים שלי', none: 'בונוס' },
+  enrichment: { hero: 'משימות העשרה', sub: 'לקרוא, ללמוד, לתרגל ולגלות דברים חדשים', img: 'book-open', mine: 'ההעשרה שלי', none: 'העשרה' }
+};
+const ICONS = ['trophy', 'soccer', 'broom', 'car', 'flower', 'dog', 'cat', 'bicycle', 'book-open', 'music', 'heart', 'wrench', 'shopping-bag', 'cooking-pot', 'recycle', 'washing-machine', 'graduation-cap', 'guitar', 'piano', 'stopwatch'];
+const KEYS = [[/אוטו|רכב/, 'car'], [/גיטר/, 'guitar'], [/פסנתר|נגינה/, 'piano'], [/כלב|טיול/, 'dog'], [/חתול/, 'cat'], [/כביס|בגד/, 'washing-machine'], [/מטבח|בישול|אוכל|ארוח/, 'cooking-pot'], [/ניקי|שטיפ|רצפ|מטאטא|אבק|שואב/, 'broom'], [/חצר|גינה|פרח|עציץ|להשק/, 'flower'], [/קניות|סופר/, 'shopping-bag'], [/ספר|קריאה|לקרוא/, 'book-open'], [/לימוד|שיעור|קורס|ללמוד|תרגיל|שיעורי/, 'graduation-cap'], [/כדור|ספורט|משחק/, 'soccer'], [/אופניים/, 'bicycle'], [/מוזיק|שיר/, 'music'], [/מחזור|זבל|אשפה/, 'recycle'], [/תיקון|מברג|לתקן/, 'wrench'], [/ריצה|שעון|זמן/, 'stopwatch']];
 const TILES = ['#FFE3C2', '#FFD3E1', '#D6F5E3', '#E2DAFF', '#D4EBFF'];
 const hash = t => [...t].reduce((a, c) => a + c.charCodeAt(0), 0);
-const iconOf = t => (KEYS.find(([r]) => r.test(t.title)) || [0, ICONS[hash(t.title) % ICONS.length]])[1];
-const tile = t => `<div class="bn-tile" style="background:${TILES[hash(t.title) % TILES.length]}"><img src="icons/task/${iconOf(t)}.png" alt=""></div>`;
-
+const guessIcon = title => (KEYS.find(([r]) => r.test(title)) || [0, 'trophy'])[1];
+const kindOf = t => t?.kind === 'enrichment' ? 'enrichment' : 'bonus';
+const tile = (title, ic) => `<div class="bn-tile" style="background:${TILES[hash(title) % TILES.length]}"><img src="icons/task/${ic || guessIcon(title)}.png" alt=""></div>`;
+const claimKind = c => kindOf(tasks.find(t => t.id === c.task_id));
 const myClaim = t => claims.find(c => c.task_id === t.id && c.user_id === me && (c.status === 'pending' || c.status === 'approved'));
+
 async function load() {
   const [t, c] = await Promise.all([
     supabase.from('bonus_tasks').select('*').order('created_at', { ascending: false }),
@@ -100,38 +122,75 @@ async function load() {
   ]);
   if (t.error || c.error) { $('open').innerHTML = '<p class="empty">לא הצלחנו לטעון</p>'; return; }
   tasks = t.data || []; claims = c.data || [];
+  try { urls = await signedUrls(claims.map(x => x.photo_path)); } catch (_) { urls = {}; }
   render();
 }
-const card = (t, extra, off) => `<div class="bn-card${off ? ' bn-off' : ''}"><div class="bn-row">${tile(t)}<div class="bn-t"><b>${esc(t.title)}</b>${t.description ? `<small>${esc(t.description)}</small>` : ''}</div><span class="bn-pts" dir="ltr">⭐ +${t.points}</span></div>${extra || ''}</div>`;
-const empty = (txt) => `<div class="bn-empty"><img src="icons/task/trophy.png" alt="">${txt}</div>`;
+const photoChip = t => t.requires_photo ? '<span class="bn-photo">📷 צריך צילום להוכחה</span>' : '';
+const card = (t, extra, off) => `<div class="bn-card${off ? ' bn-off' : ''}"><div class="bn-row">${tile(t.title, t.icon)}<div class="bn-t"><b>${esc(t.title)}</b>${t.description ? `<small>${esc(t.description)}</small>` : ''}${photoChip(t)}</div><span class="bn-pts" dir="ltr">⭐ +${t.points}</span></div>${extra || ''}</div>`;
+const empty = (txt) => `<div class="bn-empty"><img src="icons/task/${KINDS[tab].img}.png" alt="">${txt}</div>`;
 function render() {
-  const showAdmin = isAdmin && !kidView;
+  const K = KINDS[tab], showAdmin = isAdmin && !kidView;
+  $('main').dataset.kind = tab;
+  $('tabBonus').setAttribute('aria-selected', tab === 'bonus'); $('tabEnr').setAttribute('aria-selected', tab === 'enrichment');
+  $('heroT').textContent = K.hero; $('heroP').textContent = K.sub; $('heroImg').src = `icons/task/${K.img}.png`;
+  $('mineT').textContent = K.mine; $('manageT').textContent = tab === 'bonus' ? 'ניהול משימות בונוס' : 'ניהול משימות העשרה';
   $('prevBar').classList.toggle('hidden', !kidView);
   $('adminBar').classList.toggle('hidden', !showAdmin);
   $('adminBox').classList.toggle('hidden', !showAdmin);
-  const act = tasks.filter(t => t.active);
+  const allPend = showAdmin ? claims.filter(c => c.status === 'pending' && c.user_id !== me) : [];
+  [['nB', 'bonus'], ['nE', 'enrichment']].forEach(([id, k]) => { const n = allPend.filter(c => claimKind(c) === k).length; $(id).textContent = n; $(id).classList.toggle('hidden', !n); });
+  const act = tasks.filter(t => t.active && kindOf(t) === tab);
   $('open').innerHTML = act.length ? act.map(t => {
     const c = kidView ? null : myClaim(t);
-    const x = !c ? `<button class="bn-go" data-claim="${t.id}" type="button">ביצעתי!</button>`
+    const x = !c ? `<button class="bn-go" data-claim="${t.id}" type="button">${t.requires_photo ? '📷 ביצעתי! (מצלמים)' : 'ביצעתי!'}</button>`
       : c.status === 'pending' ? '<span class="bn-chip bn-wait">⏳ ממתין לאישור של הורה</span>' : '<span class="bn-chip bn-ok">✓ אושר, קיבלת את הנקודות</span>';
     return card(t, x);
-  }).join('') : empty(isAdmin ? 'עוד אין משימות בונוס. צרו אחת בכפתור למעלה' : 'עוד אין משימות בונוס. כשהורה יוסיף אחת, היא תופיע כאן');
+  }).join('') : empty(isAdmin ? 'עוד אין משימות כאלה. צרו אחת בכפתור למעלה' : 'עוד אין משימות כאלה. כשהורה יוסיף אחת, היא תופיע כאן');
 
-  const pend = showAdmin ? claims.filter(c => c.status === 'pending' && c.user_id !== me) : [];
+  const pend = allPend.filter(c => claimKind(c) === tab);
   $('pendBox').classList.toggle('hidden', !pend.length);
   $('pendN').textContent = pend.length;
   $('pend').innerHTML = pend.map(c => `<div class="bn-card"><div class="bn-row">${avatar(byId[c.user_id], 48)}<div class="bn-t"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b><small>דיווח/ה: ${esc(c.title)}</small></div><span class="bn-pts" dir="ltr">⭐ +${c.points}</span></div>
+    ${c.photo_path && urls[c.photo_path] ? `<img class="bn-thumb" src="${urls[c.photo_path]}" alt="תמונת הוכחה" data-zoom="${urls[c.photo_path]}">` : ''}
     <div class="bn-act"><button class="btn" data-ok="${c.id}" type="button">אישור</button><button class="btn secondary" data-no="${c.id}" type="button">דחייה</button></div></div>`).join('');
   if (showAdmin) {
-    $('manage').innerHTML = tasks.length ? tasks.map(t => card(t, `<div class="bn-act"><button class="btn secondary" data-tog="${t.id}" type="button">${t.active ? 'השבתה' : 'הפעלה'}</button><button class="btn secondary" data-del="${t.id}" type="button">מחיקה</button></div>${t.active ? '' : '<div class="note" style="margin-top:8px">המשימה מושבתת ולא מוצגת לאחרים</div>'}`, !t.active)).join('') : empty('עוד לא יצרתם משימות בונוס');
+    const list = tasks.filter(t => kindOf(t) === tab);
+    $('manage').innerHTML = list.length ? list.map(t => card(t, `<div class="bn-act"><button class="btn secondary" data-tog="${t.id}" type="button">${t.active ? 'השבתה' : 'הפעלה'}</button><button class="btn secondary" data-del="${t.id}" type="button">מחיקה</button></div>${t.active ? '' : '<div class="note" style="margin-top:8px">המשימה מושבתת ולא מוצגת לאחרים</div>'}`, !t.active)).join('') : empty('עוד לא יצרתם משימות כאלה');
   }
-  const mine = kidView ? [] : claims.filter(c => c.user_id === me);
+  const mine = kidView ? [] : claims.filter(c => c.user_id === me && claimKind(c) === tab);
   const st = { pending: ['⏳ ממתין לאישור', 'bn-wait'], approved: ['✓ אושר', 'bn-ok'], rejected: ['נדחה', 'bn-no'] };
-  $('mine').innerHTML = mine.length ? mine.map(c => { const t = { title: c.title }; return `<div class="bn-min">${tile(t)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span></div>`; }).join('') : empty('עוד לא דיווחתם על משימות בונוס');
+  $('mine').innerHTML = mine.length ? mine.map(c => `<div class="bn-min">${tile(c.title, tasks.find(t => t.id === c.task_id)?.icon)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span></div>`).join('') : empty('עוד לא דיווחתם על משימות כאלה');
 }
+document.querySelectorAll('.bn-tabs [data-k]').forEach(b => b.onclick = () => { tab = b.dataset.k; try { localStorage.setItem('bonusTab', tab); } catch (_) {} render(); window.scrollTo(0, 0); });
 $('prevOn').onclick = () => { kidView = true; render(); window.scrollTo(0, 0); };
 $('prevOff').onclick = () => { kidView = false; render(); window.scrollTo(0, 0); };
+
+async function sendClaim(taskId, photoBlob) {
+  busy = true;
+  try {
+    let path = null;
+    if (photoBlob) {
+      showToast('מעלה תמונה...');
+      path = `reports/${me}/bonus-${crypto.randomUUID()}.jpg`;
+      const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', upsert: false });
+      if (up.error) throw new Error('upload');
+    }
+    const { error } = await supabase.rpc('claim_bonus', { p_task: taskId, p_photo: path });
+    if (error) throw error;
+    showToast('הדיווח נשלח להורים'); await load();
+  } catch (_) { showToast('לא הצלחנו לשלוח, אולי כבר דיווחת', true); }
+  busy = false;
+}
+const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.setAttribute('capture', 'environment'); file.hidden = true; document.body.append(file);
+file.addEventListener('change', async () => {
+  const f = file.files[0]; file.value = ''; const id = pendingTask; pendingTask = null;
+  if (!f || !id) return;
+  let blob; try { blob = await shrinkImage(f); } catch (_) { return showToast('לא הצלחנו לקרוא את התמונה', true); }
+  sendClaim(id, blob);
+});
 document.addEventListener('click', async e => {
+  const z = e.target.closest('[data-zoom]');
+  if (z) { $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 22)}</button><img class="zoom" src="${z.dataset.zoom}" alt="">`; $('modal').classList.remove('hidden'); $('mx').onclick = () => $('modal').classList.add('hidden'); return; }
   const b = e.target.closest('button'); if (!b || busy) return;
   const act = async (fn, okMsg, failMsg) => {
     busy = true; b.disabled = true;
@@ -139,7 +198,12 @@ document.addEventListener('click', async e => {
     catch (_) { showToast(failMsg, true); b.disabled = false; }
     busy = false;
   };
-  if (b.dataset.claim) { if (kidView) return showToast('זו תצוגה מקדימה, הדיווח לא נשלח'); return act(() => supabase.rpc('claim_bonus', { p_task: b.dataset.claim }), 'הדיווח נשלח להורים', 'לא הצלחנו לשלוח, אולי כבר דיווחת'); }
+  if (b.dataset.claim) {
+    if (kidView) return showToast('זו תצוגה מקדימה, הדיווח לא נשלח');
+    const t = tasks.find(x => x.id === b.dataset.claim);
+    if (t?.requires_photo) { pendingTask = t.id; return file.click(); }
+    busy = true; b.disabled = true; await sendClaim(b.dataset.claim, null); return;
+  }
   if (b.dataset.ok) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.ok, p_ok: true }), 'אושר. הנקודות נוספו', 'האישור נכשל');
   if (b.dataset.no) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.no, p_ok: false }), 'הדיווח נדחה', 'הפעולה נכשלה');
   if (b.dataset.tog) { const t = tasks.find(x => x.id === b.dataset.tog); return act(() => supabase.from('bonus_tasks').update({ active: !t.active }).eq('id', t.id).select('id').then(r => (!r.error && !r.data?.length) ? { error: 1 } : r), null, 'העדכון נכשל'); }
@@ -157,22 +221,36 @@ document.addEventListener('click', async e => {
   }
 });
 $('add').addEventListener('click', () => {
-  $('modalCard').innerHTML = `<h3 style="margin:0 0 8px">משימת בונוס חדשה</h3>
+  let kind = tab, photo = false, ic = 'trophy', icTouched = false;
+  const draw = () => {
+    $('kSeg').innerHTML = `<button type="button" data-kk="bonus" aria-pressed="${kind === 'bonus'}">⭐ בונוס</button><button type="button" data-kk="enrichment" aria-pressed="${kind === 'enrichment'}">📚 העשרה</button>`;
+    $('pSeg').innerHTML = `<button type="button" data-pp="1" aria-pressed="${photo}">📷 צריך צילום</button><button type="button" data-pp="0" aria-pressed="${!photo}">בלי צילום</button>`;
+    $('icG').innerHTML = ICONS.map(n => `<button type="button" data-ic="${n}" aria-pressed="${ic === n}" aria-label="${n}"><img src="icons/task/${n}.png" alt=""></button>`).join('');
+  };
+  $('modalCard').innerHTML = `<div style="max-height:84vh;overflow:auto"><h3 style="margin:0 0 8px">משימה חדשה</h3>
+    <label>סוג</label><div class="bn-seg" id="kSeg"></div>
     <label for="bt">שם המשימה</label><input id="bt" type="text" maxlength="80" placeholder="למשל: לשטוף את האוטו">
     <label for="bd">פרטים (לא חובה)</label><input id="bd" type="text" maxlength="200">
     <label for="bp">נקודות</label><input id="bp" type="number" min="1" inputmode="numeric" value="10">
+    <label>הוכחה</label><div class="bn-seg" id="pSeg"></div>
+    <label>אייקון</label><div class="bn-icons" id="icG"></div>
     <p class="err" id="be" style="color:#C2410C;margin:6px 0 0"></p>
-    <button type="button" class="btn" id="bs">יצירה</button><button type="button" class="btn secondary" id="bc">ביטול</button>`;
-  $('modal').classList.remove('hidden');
-  $('bc').onclick = () => $('modal').classList.add('hidden');
+    <button type="button" class="btn" id="bs">יצירה</button><button type="button" class="btn secondary" id="bc">ביטול</button></div>`;
+  draw(); $('modal').classList.remove('hidden');
+  $('modalCard').onclick = e => {
+    const k = e.target.closest('[data-kk]'), p = e.target.closest('[data-pp]'), i = e.target.closest('[data-ic]');
+    if (k) { kind = k.dataset.kk; draw(); } else if (p) { photo = p.dataset.pp === '1'; draw(); } else if (i) { ic = i.dataset.ic; icTouched = true; draw(); }
+  };
+  $('bt').addEventListener('input', () => { if (!icTouched) { ic = guessIcon($('bt').value); draw(); } });
+  $('bc').onclick = () => { $('modalCard').onclick = null; $('modal').classList.add('hidden'); };
   $('bs').onclick = async () => {
     const title = $('bt').value.trim(), points = parseInt($('bp').value);
     if (!title) { $('be').textContent = 'צריך שם למשימה'; return; }
     if (!(points > 0)) { $('be').textContent = 'צריך מספר נקודות גדול מאפס'; return; }
     $('bs').disabled = true;
-    const { error } = await supabase.from('bonus_tasks').insert({ title, description: $('bd').value.trim() || null, points });
+    const { error } = await supabase.from('bonus_tasks').insert({ title, description: $('bd').value.trim() || null, points, kind, requires_photo: photo, icon: ic });
     if (error) { $('bs').disabled = false; $('be').textContent = 'היצירה נכשלה, אפשר לנסות שוב'; return; }
-    $('modal').classList.add('hidden'); showToast('משימת הבונוס נוצרה'); load();
+    $('modalCard').onclick = null; $('modal').classList.add('hidden'); tab = kind; showToast('המשימה נוצרה'); load();
   };
 });
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
