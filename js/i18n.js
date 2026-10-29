@@ -712,6 +712,7 @@ const D = {
   "השולחן לא נמצא": "Table not found",
   "ייתכן שהשולחן נסגר.": "The table may have been closed.",
   "חזרה לרשימה": "Back to list",
+  ": מי ובאיזו שעה": ": who and at what time",
   "שעה שונה ביום מסוים:": "A different time on a specific day:",
   "בחר יום...": "Choose a day...",
   "בשעה": "at",
