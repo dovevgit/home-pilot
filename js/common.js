@@ -163,6 +163,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   }
   const me = (profiles || []).find(p => p.id === session.user.id) || null;
   const isAdmin = me?.role === 'admin';
+  try { if (me?.name) localStorage.setItem('myName', me.name); } catch (_) {}
 
   // יצירה אוטומטית של משימות חוזרות: כשהורה פותח את האפליקציה (לכל היותר פעם ב-30 דקות במכשיר)
   if (isAdmin) {
@@ -230,7 +231,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       });
       draw();
     }).catch(() => {});
-    drawer.querySelector('#logout').addEventListener('click', async () => { try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {} try { Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('pabwxpounvashuoyhwte')).forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch (_) {} location.replace('login.html'); });
+    drawer.querySelector('#logout').addEventListener('click', async () => { try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {} try { Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.includes('pabwxpounvashuoyhwte')).forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); localStorage.removeItem('myName'); } catch (_) {} location.replace('login.html'); });
 
   }
   if (!back) {

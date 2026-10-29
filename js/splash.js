@@ -18,6 +18,9 @@
     '#splash.go .glint:after{animation:spglint 1s ease-in-out 2.1s both}' +
     '#splash .sp{position:absolute;color:#fff;text-shadow:0 0 8px #fff,0 0 14px #FFD84D;font-size:22px;line-height:1;opacity:0;pointer-events:none}' +
     '#splash.go .sp{animation:sptw 1.3s ease-in-out both}' +
+    '#splash .greet{position:absolute;left:50%;transform:translateX(-50%);width:max-content;max-width:90%;bottom:calc(8% + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-size:30px;font-weight:700;padding:8px 22px;border-radius:30px;background:rgba(0,0,0,.4);text-shadow:0 2px 10px rgba(0,0,0,.55);opacity:0;z-index:2}' +
+    '#splash.go .greet{animation:spgreet .8s ease 1.6s both}' +
+    '@keyframes spgreet{0%{opacity:0}100%{opacity:1}}' +
     '@keyframes spcam{0%{transform:scale(1.9);transform-origin:50% 94%}100%{transform:scale(1);transform-origin:50% 50%}}' +
     '@keyframes spglint{0%{left:-40%}100%{left:120%}}' +
     '@keyframes sptw{0%{opacity:0;transform:scale(.2) rotate(0)}40%{opacity:1;transform:scale(1.15) rotate(40deg)}100%{opacity:0;transform:scale(.4) rotate(90deg)}}';
@@ -37,6 +40,17 @@
     .forEach(function (p) { var s = document.createElement('span'); s.className = 'sp'; s.textContent = '✦';
       s.style.left = p[0] + '%'; s.style.top = p[1] + '%'; s.style.animationDelay = p[2] + 's'; stage.appendChild(s); });
   cam.appendChild(stage); d.appendChild(bg); d.appendChild(cam);
+  // ברכה לפי השעה (שעון המכשיר) עם שם המחובר: בוקר 5-11:59, צהריים 12-16:59, ערב 17-20:59, לילה 21-4:59
+  try {
+    var nm = localStorage.getItem('myName');
+    if (nm) {
+      var en = localStorage.getItem('lang') === 'en', h = new Date().getHours();
+      var k = h >= 5 && h < 12 ? 0 : h >= 12 && h < 17 ? 1 : h >= 17 && h < 21 ? 2 : 3;
+      var txt = (en ? ['Good morning', 'Good afternoon', 'Good evening', 'Good night'] : ['בוקר טוב', 'צהריים טובים', 'ערב טוב', 'לילה טוב'])[k] + ' ' + nm;
+      var gr = document.createElement('div'); gr.className = 'greet'; gr.textContent = txt; gr.setAttribute('dir', en ? 'ltr' : 'rtl');
+      d.appendChild(gr);
+    }
+  } catch (e) {}
   document.documentElement.appendChild(d);
 
   var started = false;
