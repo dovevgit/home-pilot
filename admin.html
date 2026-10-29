@@ -99,34 +99,35 @@ async function openOnce(t) {
     const { count } = await supabase.from('feed').select('id', { count: 'exact', head: true }).eq('task_id', o.id).eq('type', 'report');
     const done = count || 0;
     const slots = o.slots || [];
+    const sel = slots.map(sl => [...slotUsers(sl)]);
     m.innerHTML = `<div class="modal-card"><button class="modal-x" id="ox" aria-label="סגירה">${icon('x', 20)}</button>
       <h3 style="margin:0 0 4px" data-user>${esc(t.title)}</h3>
       <small style="display:block;color:var(--muted);margin-bottom:10px">שינוי ליום אחד בלבד. ההגדרה הקבועה של המשימה לא משתנה, ולמחרת הכול חוזר כרגיל.</small>
       <label>איזה יום?</label>
       <select class="sel" id="oday">${list.map(x => `<option value="${x.id}" ${x.id === o.id ? 'selected' : ''}>${esc(dayLabel(x.occurrence_date))}</option>`).join('')}</select>
       ${slots.map((sl, i) => { const locked = i < done; const cur = sl.due_at ? ilTime(new Date(sl.due_at)) : '';
-        return `<div class="slotrow" style="margin-top:10px"><select class="sel" data-oa="${i}" ${locked ? 'disabled' : ''}>${people.map(u => `<option value="${u.id}" ${sl.assignee_id === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select>
-        <input type="time" data-ot="${i}" value="${cur}" dir="ltr" ${locked ? 'disabled' : ''}></div>${locked ? '<small style="color:#92400E">כבר דווח, אי אפשר לשנות</small>' : ''}`; }).join('')}
+        return `<div style="margin-top:12px;padding-top:10px;border-top:2px solid var(--field)"><small style="display:block;margin-bottom:4px">${slots.length > 1 ? `חזרה ${i + 1}: ` : ''}<b data-user>${esc(slotUsers(sl).map(id => byId[id]?.name || '?').join(' + '))}</b> <span dir="ltr" style="display:inline-block">${esc(cur)}</span></small>
+        <div class="avrow"><small>מי עושה ביום הזה (אפשר כמה):</small>${people.map(u => `<button type="button" class="avchip free ${sel[i].includes(u.id) ? 'on' : ''}" data-op="${i}" data-ou="${u.id}" ${locked ? 'disabled' : ''}><b data-user>${esc(u.name)}</b></button>`).join('')}</div>
+        <div class="slotrow"><input type="time" data-ot="${i}" value="${cur}" dir="ltr" ${locked ? 'disabled' : ''}></div>${locked ? '<small style="color:#92400E">כבר דווח, אי אפשר לשנות</small>' : ''}</div>`; }).join('')}
       <div class="err" id="oerr" style="margin-top:8px"></div>
       <button class="btn" id="osave" style="margin-top:12px;width:100%">שמירה ליום הזה בלבד</button></div>`;
     m.querySelector('#ox').onclick = close;
     m.querySelector('#oday').onchange = e => draw(e.target.value);
+    m.querySelectorAll('[data-op]').forEach(b => b.onclick = () => { const i = +b.dataset.op, u = b.dataset.ou; sel[i] = sel[i].includes(u) ? sel[i].filter(x => x !== u) : [...sel[i], u]; b.classList.toggle('on', sel[i].includes(u)); });
     m.querySelector('#osave').onclick = async () => {
       const err = x => { m.querySelector('#oerr').textContent = x; };
       const next = slots.map((sl, i) => {
         if (i < done) return sl;
-        const tm = m.querySelector(`[data-ot="${i}"]`).value, who = m.querySelector(`[data-oa="${i}"]`).value;
-        if (!tm) return null;
+        const tm = m.querySelector(`[data-ot="${i}"]`).value, grp = sel[i], who = grp[0];
+        if (!tm || !who) return null;
         const due = toIsraelDate(o.occurrence_date, tm).toISOString();
-        const grp = Array.isArray(sl.assignees) && sl.assignees.length > 1 ? [who, ...sl.assignees.filter(x => x !== sl.assignee_id && x !== who)] : [];
-        const asg = grp.length > 1 ? { assignees: grp } : {};
         const { assignees: _a, ...rest } = sl;
-        const changed = due !== sl.due_at || who !== sl.assignee_id;
-        return { ...rest, ...asg, assignee_id: who, due_at: due, ...(changed ? { reminded: false, overdue_notified: false, penalized: false } : {}) };
+        const changed = due !== sl.due_at || grp.join() !== slotUsers(sl).join();
+        return { ...rest, ...(grp.length > 1 ? { assignees: grp } : {}), assignee_id: who, due_at: due, ...(changed ? { reminded: false, overdue_notified: false, penalized: false } : {}) };
       });
-      if (next.some(x => !x)) return err('צריך להזין שעה בכל שורה');
+      if (next.some(x => !x)) return err('צריך לבחור מי עושה ולהזין שעה בכל שורה');
       if (next.some((x, i) => i >= done && x.due_at !== slots[i].due_at && new Date(x.due_at) < new Date())) return err('השעה כבר עברה');
-      const ab = next.map(x => absentOn(x.assignee_id, o.occurrence_date) && byId[x.assignee_id]?.name).find(Boolean);
+      const ab = next.flatMap(x => slotUsers(x)).map(id => absentOn(id, o.occurrence_date) && byId[id]?.name).find(Boolean);
       if (ab && !confirm(`${ab} רשום/ה כנעדר/ת ביום הזה. לשמור בכל זאת?`)) return;
       if (done === 0) next.sort((a, b) => a.due_at.localeCompare(b.due_at));
       next.forEach((x, i) => { x.n = i + 1; });

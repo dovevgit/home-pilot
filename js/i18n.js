@@ -725,6 +725,8 @@ const D = {
   "השעה כבר עברה": "That time has already passed",
   "נשמר ליום הזה בלבד": "Saved for this day only",
   "שינוי ליום אחד": "Change for one day",
+  "מי עושה ביום הזה (אפשר כמה):": "Who does it on this day (you can pick several):",
+  "צריך לבחור מי עושה ולהזין שעה בכל שורה": "Choose who does it and enter a time in every row",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
@@ -1092,6 +1094,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^חזרה (\d+): $/, 'Round $1: '],
   [/^(.+) רשום\/ה כנעדר\/ת ביום הזה\. לשמור בכל זאת\?$/, '$1 is listed as absent on this day. Save anyway?'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => WD[d]],
   [/^(\d+) מתוך (\d+) נלקחו היום$/, "$1 of $2 taken today"],
