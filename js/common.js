@@ -204,7 +204,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="games.html">${icon('star')} משחקים</a>
       <a href="chat.html">${icon('message-circle')} הודעות משפחתיות</a>
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
-      <a href="outing.html">${icon('house')} אני לא בבית</a>
+      <a href="outing.html">${icon('house')} היעדרויות</a>
       <a href="info.html">${icon('info')} מידע משפחתי</a>
       <a href="guide.html">${icon('info')} הוראות שימוש</a>
       <a href="feedback.html">${icon('message-circle')} ספרו לנו</a>

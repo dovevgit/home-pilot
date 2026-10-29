@@ -53,14 +53,14 @@ const todayStr = ilDate(new Date());
 const dm = d => d.split('-').reverse().slice(0, 2).join('.');
 let absences = [];
 async function loadAbsences() {
-  const { data } = await supabase.from('absences').select('*').gte('end_date', todayStr).order('start_date');
+  const { data } = await supabase.from('outings').select('*').eq('excused', true).is('returned_at', null).gte('end_date', todayStr).order('start_date');
   absences = data || [];
 }
 const absentOn = (uid, date) => absences.find(a => a.user_id === uid && a.start_date <= date && date <= a.end_date);
-const tabsHtml = on => `<div class="tabs"><button id="tList" class="${on === 'list' ? 'on' : ''}">משימות</button><button id="tAdd" class="${on === 'form' ? 'on' : ''}">הוספה</button><button id="tAbs" class="${on === 'abs' ? 'on' : ''}">העדרויות</button><button id="tMem" class="${on === 'mem' ? 'on' : ''}">בני משפחה</button></div>`;
+const tabsHtml = on => `<div class="tabs"><button id="tList" class="${on === 'list' ? 'on' : ''}">משימות</button><button id="tAdd" class="${on === 'form' ? 'on' : ''}">הוספה</button><button id="tMem" class="${on === 'mem' ? 'on' : ''}">בני משפחה</button></div>`;
 const wireTabs = () => {
-  const l = document.getElementById('tList'), a = document.getElementById('tAdd'), b = document.getElementById('tAbs');
-  if (l) l.onclick = showList; if (a) a.onclick = () => showForm(null); if (b) b.onclick = showAbsences;
+  const l = document.getElementById('tList'), a = document.getElementById('tAdd');
+  if (l) l.onclick = showList; if (a) a.onclick = () => showForm(null);
   const m = document.getElementById('tMem'); if (m) m.onclick = showMembers;
 };
 // משימות שעדיין משויכות לנעדר בתקופת ההעדרות
@@ -653,54 +653,6 @@ async function showMembers() {
 }
 
 /* ============ העדרויות ============ */
-async function showAbsences(editAb) {
-  view = 'abs';
-  await loadAbsences();
-  const a = editAb && editAb.id ? editAb : { user_id: users[0]?.id, start_date: todayStr, end_date: todayStr, reason: '' };
-  main.innerHTML = `${tabsHtml('abs')}
-    <div class="sec-title" style="margin-top:0">העדרויות פעילות ועתידיות</div>
-    <div id="absRows">${absences.length ? absences.map(x => `<div class="row-item">${avatar(byId[x.user_id], 44)}
-      <div class="tmain"><b>${esc(byId[x.user_id]?.name || '')} · ${esc(x.reason)}</b><small>${x.start_date === x.end_date ? dm(x.start_date) : `${dm(x.start_date)} עד ${dm(x.end_date)}`}${x.start_date <= todayStr ? ' · כעת' : ''}</small></div>
-      <button class="sqbtn edit" data-e="${x.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
-      <button class="sqbtn del" data-d="${x.id}" aria-label="מחיקה">${icon('trash-2', 20)}</button></div>`).join('') : '<p class="empty">אין העדרויות</p>'}</div>
-    <form class="card flat" id="af" novalidate style="margin-top:12px">
-      <div class="sec-title" style="margin-top:0">${a.id ? 'עריכת העדרות' : 'העדרות חדשה'}</div>
-      <label for="aUser">מי נעדר/ת</label>
-      <select class="sel" id="aUser" style="width:100%">${users.map(u => `<option value="${u.id}" ${a.user_id === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select>
-      <div class="grid2"><div><label for="aFrom">מתאריך</label><input id="aFrom" type="date" value="${a.start_date}" dir="ltr"></div>
-      <div><label for="aTo">עד תאריך (כולל)</label><input id="aTo" type="date" value="${a.end_date}" dir="ltr"></div></div>
-      <label for="aReason">סיבה</label>
-      <input id="aReason" maxlength="80" list="aReasons" value="${esc(a.reason)}" placeholder="למשל: חולה, טיול, אצל סבתא">
-      <datalist id="aReasons"><option value="חולה"><option value="טיול"><option value="אצל סבתא"><option value="נסיעה"><option value="מחנה"></datalist>
-      <p class="error" id="aErr" role="alert"></p>
-      <button class="btn" id="aSave" type="submit">שמירה</button>
-      ${a.id ? '<button class="btn secondary" id="aCancel" type="button">ביטול עריכה</button>' : ''}
-    </form>
-    <p class="note">בזמן העדרות אי אפשר לשייך לאדם משימות. אם כבר יש לו משימות בתקופה, תוצג רשימה כדי שתשנו אחראי.</p>`;
-  wireTabs();
-  if (a.id) document.getElementById('aCancel').onclick = () => showAbsences();
-  document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { showAbsences(absences.find(x => x.id === b.dataset.e)); window.scrollTo(0, document.body.scrollHeight); });
-  document.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
-    if (!confirm('למחוק את ההעדרות?')) return;
-    const { error } = await supabase.from('absences').delete().eq('id', b.dataset.d);
-    toast(error ? 'המחיקה נכשלה' : 'ההעדרות נמחקה', !!error); showAbsences();
-  });
-  document.getElementById('af').onsubmit = async (e) => {
-    e.preventDefault();
-    const err = m => { document.getElementById('aErr').textContent = m; return false; };
-    const row = { user_id: document.getElementById('aUser').value, start_date: document.getElementById('aFrom').value, end_date: document.getElementById('aTo').value, reason: document.getElementById('aReason').value.trim() };
-    if (!row.start_date || !row.end_date) return err('צריך לבחור תאריכים');
-    if (row.end_date < row.start_date) return err('תאריך הסיום לפני תאריך ההתחלה');
-    if (!row.reason) return err('צריך להזין סיבה');
-    const btn = document.getElementById('aSave'); btn.disabled = true;
-    const res = a.id ? await supabase.from('absences').update(row).eq('id', a.id) : await supabase.from('absences').insert(row);
-    if (res.error) { btn.disabled = false; return err('השמירה נכשלה: ' + res.error.message); }
-    toast('ההעדרות נשמרה');
-    let aff = []; try { aff = await affectedTasks(row); } catch (ex) { console.error("affected", ex); }
-    await showAbsences();
-    if (aff.length) showAffected(row, aff);
-  };
-}
 function showAffected(ab, list) {
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = `<div class="modal-card"><button type="button" class="modal-x" aria-label="סגירה">${icon('x', 20)}</button>
@@ -720,6 +672,7 @@ function showAffected(ab, list) {
 
 await loadAbsences();
 if (location.hash === '#members') showMembers(); else showList();
+if (location.hash.startsWith('#aff=')) { try { const id = location.hash.slice(5); const { data: ab } = await supabase.from('outings').select('*').eq('id', id).maybeSingle(); history.replaceState(null, '', 'admin.html'); if (ab) { const aff = await affectedTasks(ab); if (aff.length) showAffected(ab, aff); else toast('אין לו משימות שצריך להעביר בתקופה הזאת'); } } catch (e) { console.error(e); } }
 document.addEventListener('click', e => { const b = e.target.closest('.icob'); if (!b) return; const h = document.getElementById('icon'); if (!h) return; h.value = b.dataset.ic; document.querySelectorAll('.icob').forEach(x => { const on = x === b; x.style.borderColor = on ? '#F97316' : 'var(--field)'; x.style.background = on ? '#FFE7CC' : '#fff'; }); });
 </script>
 </body>

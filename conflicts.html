@@ -46,7 +46,7 @@ let events = [], absences = [];
 async function load() {
   const [ev, ab, op, dn] = await Promise.all([
     supabase.from('events').select('*'),
-    supabase.from('absences').select('*').gte('end_date', today),
+    supabase.from('outings').select('*').eq('excused', true).is('returned_at', null).gte('end_date', today),
     supabase.from('task_conflicts').select('*').eq('status', 'open').order('date').order('time'),
     supabase.from('task_conflicts').select('*').in('status', ['resolved', 'dismissed']).order('resolved_at', { ascending: false }).limit(8)
   ]);

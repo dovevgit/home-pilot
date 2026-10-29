@@ -68,7 +68,7 @@ document.getElementById('leader').innerHTML = leaders.length ? `
     <div style="flex:1"><div class="lsub">המוביל השבועי</div><div class="ltitle">${leaders.map(l => esc(l.name)).join(' ו')}</div>
     <div class="lsub"><span dir="ltr">${best}</span> נקודות</div></div>
     <span class="crown">${icon('crown', 26)}</span></div>` : '';
-const { data: awayRows } = await supabase.from('absences').select('user_id,reason').lte('start_date', today).gte('end_date', today);
+const { data: awayRows } = await supabase.from('outings').select('user_id,reason').eq('excused', true).is('returned_at', null).lte('start_date', today).gte('end_date', today);
 const away = Object.fromEntries((awayRows || []).map(r => [r.user_id, r.reason]));
 document.getElementById('family').innerHTML = users.map(p => `
   <button type="button" class="avn ${away[p.id] ? 'away' : ''}" data-uid="${p.id}" aria-label="הכרטיס של ${esc(p.name)}">${avatar(p, 54)}<span class="avname">${esc(p.name)}</span>${away[p.id] ? `<span class="abs-tag">נעדר/ת</span><span class="apts abs-why">${esc(away[p.id])}</span>` : `<span class="apts" dir="ltr">${pointsByUser[p.id] || 0}</span>`}</button>`).join('');
@@ -155,7 +155,7 @@ async function loadOuts() {
 document.getElementById('outBar').addEventListener('click', e => {
   const b = e.target.closest('[data-oid]'); if (!b) return;
   const o = outs.find(x => x.id === b.dataset.oid);
-  if (o) showOutDetails(outHost, o, { host: outHost, me, today, isAdmin: me?.role === 'admin', byId, onDone: loadOuts });
+  if (o) showOutDetails(outHost, o, { host: outHost, me, today, isAdmin: me?.role === 'admin', byId, onDone: loadOuts, users: profiles.filter(p => p.is_user && p.active !== false) });
 });
 loadOuts();
 // מנהלים: התראה על בקשות מימוש מהחנות שממתינות לאישור
