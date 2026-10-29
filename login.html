@@ -37,9 +37,10 @@ import { supabase } from './js/supabase.js';
 const { data } = await supabase.auth.getSession();
 if (data.session) {
   try {
-    if (!localStorage.getItem('myName')) {
-      const { data: pr } = await supabase.from('profiles').select('name').eq('id', data.session.user.id).maybeSingle();
+    if (!localStorage.getItem('myName') || !localStorage.getItem('myFam')) {
+      const { data: pr } = await supabase.from('profiles').select('name,family_id').eq('id', data.session.user.id).maybeSingle();
       if (pr?.name) localStorage.setItem('myName', pr.name);
+      if (pr?.family_id) localStorage.setItem('myFam', pr.family_id);
     }
   } catch (_) {}
   location.replace('index.html');
@@ -63,8 +64,9 @@ form.addEventListener('submit', async (e) => {
     saveCode(code);
     try {
       const { data: u } = await supabase.auth.getUser();
-      const { data: pr } = await supabase.from('profiles').select('name').eq('id', u.user.id).maybeSingle();
+      const { data: pr } = await supabase.from('profiles').select('name,family_id').eq('id', u.user.id).maybeSingle();
       if (pr?.name) localStorage.setItem('myName', pr.name);
+      if (pr?.family_id) localStorage.setItem('myFam', pr.family_id);
     } catch (_) {}
     location.replace('index.html');
   }

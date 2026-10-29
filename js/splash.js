@@ -27,7 +27,8 @@
   var st = document.createElement('style'); st.textContent = css;
   (document.head || document.documentElement).appendChild(st);
 
-  var SP = 'splash.jpg'; try { if (localStorage.getItem('lang') === 'en') SP = 'splash-en.jpg'; } catch (e) {}
+  // התמונה עם תמונות המשפחה האמיתיות מוצגת רק בבית של הבעלים (בעברית). בכל בית אחר: התמונה הכללית.
+  var SP = 'splash.jpg'; try { if (localStorage.getItem('lang') === 'en') SP = 'splash-en.jpg'; else if (localStorage.getItem('myFam') === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80') SP = 'splash-family.jpg'; } catch (e) {}
   var d = document.createElement('div');
   d.id = 'splash'; d.setAttribute('role', 'img'); d.setAttribute('aria-label', 'הבית שלנו');
   var bg = document.createElement('div'); bg.className = 'bg'; bg.style.backgroundImage = 'url(' + SP + ')';
