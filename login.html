@@ -35,7 +35,15 @@
 <script type="module">
 import { supabase } from './js/supabase.js';
 const { data } = await supabase.auth.getSession();
-if (data.session) location.replace('index.html');
+if (data.session) {
+  try {
+    if (!localStorage.getItem('myName')) {
+      const { data: pr } = await supabase.from('profiles').select('name').eq('id', data.session.user.id).maybeSingle();
+      if (pr?.name) localStorage.setItem('myName', pr.name);
+    }
+  } catch (_) {}
+  location.replace('index.html');
+}
 
 import { signIn, savedCode, saveCode } from './js/family.js';
 document.getElementById('code').value = savedCode();
@@ -53,6 +61,11 @@ form.addEventListener('submit', async (e) => {
     btn.disabled = false; btn.textContent = 'התחברות';
   } else {
     saveCode(code);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const { data: pr } = await supabase.from('profiles').select('name').eq('id', u.user.id).maybeSingle();
+      if (pr?.name) localStorage.setItem('myName', pr.name);
+    } catch (_) {}
     location.replace('index.html');
   }
 });
