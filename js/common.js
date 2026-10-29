@@ -209,10 +209,18 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="guide.html">${icon('info')} הוראות שימוש</a>
       <a href="feedback.html">${icon('message-circle')} ספרו לנו</a>
       <button id="pushBtn" type="button" style="display:none">${icon('bell')} <span>התראות</span></button>
+      <button id="refreshBtn" type="button">🔄 <span>רענון האפליקציה</span></button>
+      <div id="verTxt" class="note" style="text-align:center;margin:6px 0 0"></div>
       <button id="langBtn" type="button">🌐 <span>${getLang() === 'en' ? 'עברית' : 'English'}</span></button>
       <button id="logout" type="button">${icon('log-out')} התנתקות</button></nav>`;
     drawer.querySelector('#langBtn').addEventListener('click', () => { setLang(getLang() === 'en' ? 'he' : 'en'); location.reload(); });
     document.body.append(drawer);
+    try { caches.keys().then(k => { const v = (k.find(x => x.startsWith('habayit-')) || '').replace('habayit-', ''); if (v) drawer.querySelector('#verTxt').textContent = 'גרסה ' + v; }); } catch (_) {}
+    drawer.querySelector('#refreshBtn').addEventListener('click', async () => {
+      try { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister())); } catch (_) {}
+      try { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch (_) {}
+      location.reload();
+    });
     document.getElementById('menuBtn')?.addEventListener('click', () => drawer.classList.remove('hidden'));
     drawer.querySelector('.drawer-bg').addEventListener('click', () => drawer.classList.add('hidden'));
     import('./push.js').then(async P => {
