@@ -570,6 +570,7 @@ async function showMembers() {
     <div class="sec-title">בני המשפחה</div>
     <div id="memRows">${list.map(p => `<div class="row-item">${avatar(p, 44)}
       <div class="tmain"><b>${esc(p.name)}${p.role === 'admin' ? ' · הורה' : ''}</b><small>${p.is_user ? 'שם משתמש: ' + esc(p.username || '') : 'דמות (ללא כניסה)'}</small></div>
+      <button class="sqbtn edit" data-nm="${p.id}" aria-label="שינוי שם" title="שינוי שם">${icon('pencil', 20)}</button>
       <button class="sqbtn edit" data-ph="${p.id}" aria-label="תמונה" title="תמונה">${icon('camera', 20)}</button>
       ${p.is_user ? `<button class="sqbtn edit" data-pw="${p.id}" aria-label="איפוס סיסמה" title="איפוס סיסמה">${icon('settings', 20)}</button>` : ''}
       ${p.id === me.id ? '' : `<button class="sqbtn del" data-rm="${p.id}" aria-label="הסרה">${icon('trash-2', 20)}</button>`}</div>`).join('')}</div>
@@ -616,6 +617,14 @@ async function showMembers() {
     const f = ev.target.files[0]; if (!f || !phFor) return;
     try { await callFamily('member_update', { id: phFor, avatar: await imageToDataUrl(f) }); done('התמונה עודכנה'); } catch (e) { toast(e.message, true); }
   };
+  document.querySelectorAll('[data-nm]').forEach(b => b.onclick = async () => {
+    const p = byId[b.dataset.nm];
+    const nn = prompt('שם חדש (עד 20 תווים). שם המשתמש לכניסה לא ישתנה:', p?.name || ''); if (nn === null) return;
+    const v = nn.trim();
+    if (!v || v.length > 20) return toast('השם חייב להיות בין תו אחד ל-20 תווים', true);
+    if (v === p?.name) return;
+    try { await callFamily('member_update', { id: b.dataset.nm, name: v }); done('השם עודכן'); } catch (e) { toast(e.message, true); }
+  });
   document.querySelectorAll('[data-pw]').forEach(b => b.onclick = async () => {
     const pw = prompt('סיסמה חדשה (לפחות 6 תווים):'); if (!pw) return;
     try { await callFamily('member_update', { id: b.dataset.pw, password: pw }); toast('הסיסמה שונתה'); } catch (e) { toast(e.message, true); }
