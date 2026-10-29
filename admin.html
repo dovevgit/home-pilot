@@ -329,7 +329,7 @@ async function showList() {
 /* ============ טופס הוספה / עריכה ============ */
 function showForm(t) {
   view = 'form'; editing = t;
-  const v = t || { title: '', description: '', tips: '', icon: 'sparkles', color: 'blue', points: 10, requires_photo: false,
+  const v = t || { title: '', description: '', tips: '', icon: 'sparkles', color: 'blue', points: 10, requires_photo: false, assignee_only: false,
     late_fraction: 0.5, penalty_points: 10, times_required: 1, repeat: 'daily', weekday: 5, remind_before_minutes: 15,
     reminder_text: '', overdue_text: '', slots: [], subject_id: null };
   const once = t?.kind === 'occurrence';
@@ -352,6 +352,7 @@ function showForm(t) {
       <label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" placeholder="0" value="${v.points}"><small class="note" style="display:block;text-align:start;margin:4px 0 0">אפשר להשאיר 0 או ריק: משימה בלי נקודות (למשל פגישה)</small>
       <input type="hidden" id="penalty" value="${v.penalty_points ?? 10}"><input type="hidden" id="late" value="${v.late_fraction ?? 0.5}">
       <div class="switch"><span><b>חובה לצלם</b></span><input id="photo" type="checkbox" ${v.requires_photo ? 'checked' : ''}></div>
+      <div class="switch"><span><b>רק האחראי יכול לבצע</b><small style="display:block;color:var(--muted)">אחרים לא יוכלו לדווח על המשימה במקומו</small></span><input id="aonly" type="checkbox" ${v.assignee_only ? 'checked' : ''}></div>
       <label for="repeat">סוג משימה</label>
       <select class="sel" id="repeat" style="width:100%" ${t && !isTpl ? 'disabled' : ''}>
         <option value="daily" ${v.repeat === 'daily' ? 'selected' : ''}>יומית (חוזרת כל יום)</option>
@@ -510,7 +511,7 @@ function showForm(t) {
       title, description: $('desc').value.trim() || null, tips: $('tips').value.trim() || null,
       icon: $('icon').value, color: $('color').value, subject_id: $('subject').value || null, room: $('room').value || null,
       points, penalty_points: points === 0 ? 0 : (parseInt($('penalty').value) || 0), late_fraction: Number($('late').value),
-      requires_photo: $('photo').checked, times_required: slots.length,
+      requires_photo: $('photo').checked, assignee_only: $('aonly').checked, times_required: slots.length,
       remind_before_minutes: $('remind').value === '' ? null : parseInt($('remind').value),
       reminder_text: $('rtext').value.trim() || null, overdue_text: $('otext').value.trim() || null
     };

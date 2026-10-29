@@ -64,7 +64,7 @@ export async function generateOccurrences(createdBy) {
       if (!slots.length) { past++; continue; }
       const row = {
         kind: 'occurrence', template_id: t.id, subject_id: t.subject_id, title: t.title, description: t.description,
-        tips: t.tips, room: t.room, icon: t.icon, color: t.color, points: t.points, requires_photo: t.requires_photo,
+        tips: t.tips, room: t.room, icon: t.icon, color: t.color, points: t.points, requires_photo: t.requires_photo, assignee_only: !!t.assignee_only,
         times_required: (t.repeat === 'daily' || slots.length < all.length) ? slots.length : t.times_required, repeat: t.repeat, weekday: t.weekday, late_fraction: t.late_fraction,
         penalty_points: t.penalty_points, remind_before_minutes: t.remind_before_minutes,
         reminder_text: t.reminder_text, overdue_text: t.overdue_text, slots, occurrence_date: date, created_by: createdBy
@@ -82,7 +82,7 @@ export function buildSlots(t, date, ws) {
   return makeSlots(t, date, ws);
 }
 
-const COPY = ['subject_id','room','title','description','tips','icon','color','points','requires_photo','times_required','late_fraction',
+const COPY = ['subject_id','room','title','description','tips','icon','color','points','requires_photo','assignee_only','times_required','late_fraction',
   'penalty_points','remind_before_minutes','reminder_text','overdue_text'];
 
 // אחרי עריכת הגדרה: מעדכן את המשימות של היום/השבוע שנוצרו ממנה.

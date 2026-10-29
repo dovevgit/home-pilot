@@ -34,6 +34,14 @@ const { data: t } = id ? await supabase.from('tasks').select('*').eq('id', id).m
 if (!t) { main.innerHTML = '<p class="empty">המשימה לא נמצאה</p>'; throw new Error('no task'); }
 const done = (await reportCounts([t.id]))[t.id] || 0;
 const extra = done >= (t.times_required || 1);
+{
+  const sl = (t.slots || [])[done], ids = sl ? slotUsers(sl) : (t.slots || []).flatMap(slotUsers);
+  if (t.assignee_only && me?.role !== 'admin' && ids.length && !ids.includes(me?.id)) {
+    const nm = ids.map(i => (profiles || []).find(p => p.id === i)?.name).filter(Boolean).join(' ו') || 'האחראי';
+    main.innerHTML = `<div class="card flat" style="border:3px solid #9CA3AF;background:#F3F4F6;text-align:center"><b style="font-size:20px">🔒 המשימה הזאת רק של ${esc(nm)}</b><p style="margin:8px 0 0">רק מי שרשום עליה יכול לדווח.</p></div><a class="btn" href="tasks.html">חזרה למשימות</a>`;
+    throw new Error('assignee only');
+  }
+}
 
 let blob = null, previewUrl = null, sending = false;
 const photoRequired = !!t.requires_photo;
