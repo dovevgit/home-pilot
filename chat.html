@@ -45,6 +45,9 @@
 .aud-panel audio{width:100%}.aud-timer{font-size:28px;font-weight:800;color:#E5484D}
 .maud{width:min(240px,62vw);height:40px;display:block;margin:4px 0}
 .mdel{border:0;background:none;color:var(--muted,#667);font-size:20px;line-height:1;padding:0 8px;cursor:pointer}
+.emo-tabs{grid-column:1/-1;display:flex;gap:6px;margin-bottom:4px}.emo-tabs button{flex:1;font-size:16px;font-weight:700;padding:8px;border:2px solid var(--border,#ddd);background:#fff;border-radius:12px}.emo-tabs button[aria-pressed=true]{border-color:var(--blue,#0D6EFD);background:var(--bg)}
+.emo-panel.stk{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}.emo-panel .stkb{padding:4px}.emo-panel .stkb img{width:100%;height:auto;display:block}
+.mstk{width:min(170px,46vw);height:auto;display:block;margin:4px 0}
 .aemo{width:1.5em;height:1.5em;vertical-align:-.35em;display:inline-block}
 .aemo.big{width:64px;height:64px;vertical-align:middle}
 </style>
@@ -70,6 +73,10 @@ function bodyHtml(t) {
   return esc(t).replace(aeRe, c => aeImg(c, only));
 }
 let list = [], urls = {}, busy = false;
+// מדבקות: תמונות קטנות בתיקיית stickers. מוצגות להוספה רק בבית של הבעלים (OWNER_FAMILY). הודעת מדבקה נשמרת ב-payload.sticker בלי טקסט.
+const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+const STICKERS = ['s1'];
+const canStickers = profiles.find(p => p.id === me)?.family_id === OWNER_FAMILY;
 
 const dayLabel = d => d === today ? 'היום' : d === addDays(today, -1) ? 'אתמול' : d.split('-').reverse().join('.');
 
@@ -90,9 +97,10 @@ function render(scroll) {
     if (m.type === 'system') return `${sep}<div class="sysmsg"><small>הודעת מערכת</small>${esc(m.body)} ${time}</div>`;
     const mine = m.user_id === me; const who = byId[m.user_id];
     const aud = m.photo_path && m.payload?.audio && urls[m.photo_path] ? `<audio class="maud" controls preload="metadata" src="${urls[m.photo_path]}"></audio>` : '';
+    const stk = m.payload?.sticker && STICKERS.includes(m.payload.sticker) ? `<img class="mstk" src="stickers/${m.payload.sticker}.webp" alt="מדבקה">` : '';
     const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
-      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}${mine ? `<button type="button" class="mdel" data-del="${m.id}" aria-label="מחיקת הודעה">⋮</button>` : ''}</div></div>`;
+      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${stk}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}${mine ? `<button type="button" class="mdel" data-del="${m.id}" aria-label="מחיקת הודעה">⋮</button>` : ''}</div></div>`;
   }).join('');
   if (nearEnd) window.scrollTo(0, document.body.scrollHeight);
 }
@@ -108,15 +116,24 @@ async function load(scroll) {
   try { localStorage.setItem('chatSeen', new Date().toISOString()); } catch (_) {}
 }
 
-$('emoPanel').innerHTML = AEMO.map(c => `<button type="button" data-e="${c}">${c}</button>`).join('');
+let emoTab = 'e';
+function drawEmo() {
+  const tabs = canStickers ? `<div class="emo-tabs"><button type="button" data-tab="e" aria-pressed="${emoTab === 'e'}">😊 אימוג'ים</button><button type="button" data-tab="s" aria-pressed="${emoTab === 's'}">🖼️ מדבקות</button></div>` : '';
+  $('emoPanel').classList.toggle('stk', canStickers && emoTab === 's');
+  $('emoPanel').innerHTML = tabs + (canStickers && emoTab === 's' ? STICKERS.map(n => `<button type="button" class="stkb" data-s="${n}"><img src="stickers/${n}.webp" alt="מדבקה"></button>`).join('') : AEMO.map(c => `<button type="button" data-e="${c}">${c}</button>`).join(''));
+}
+drawEmo();
 $('emoBtn').addEventListener('click', () => $('emoPanel').classList.toggle('hidden'));
 $('emoPanel').addEventListener('click', e => {
+  const tb = e.target.closest('[data-tab]'); if (tb) { emoTab = tb.dataset.tab; drawEmo(); return; }
+  const sb = e.target.closest('[data-s]');
+  if (sb) { if (!canStickers || busy) return; $('emoPanel').classList.add('hidden'); post({ body: null, payload: { sticker: sb.dataset.s } }); return; }
   const b = e.target.closest('[data-e]'); if (!b) return;
   const t = $('text');
   if ((t.value + b.dataset.e).length > 500) return;
   t.value += b.dataset.e;
 });
-document.addEventListener('click', e => { if (!e.target.closest('#emoPanel') && !e.target.closest('#emoBtn')) $('emoPanel').classList.add('hidden'); });
+document.addEventListener('click', e => { if (!e.composedPath().includes($('emoPanel')) && !e.target.closest('#emoBtn')) $('emoPanel').classList.add('hidden'); });
 function askDelete(id) {
   const m = list.find(x => x.id === id); if (!m || m.user_id !== me) return;
   $('modalCard').innerHTML = `<h3 style="margin:0 0 8px">למחוק את ההודעה?</h3><p class="note" style="text-align:start">ההודעה תימחק לכולם ולא ניתן לשחזר אותה.</p><button type="button" class="btn" id="delYes" style="background:#E5484D">מחיקה לכולם</button><button type="button" class="btn secondary" id="delNo">ביטול</button>`;
