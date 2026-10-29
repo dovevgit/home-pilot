@@ -23,9 +23,20 @@
   <input type="file" id="photo" accept="image/*" hidden>
   <label class="cbtn" for="camera" aria-label="צילום תמונה" id="cameraBtn"></label>
   <input type="file" id="camera" accept="image/*" capture="environment" hidden>
+  <button class="cbtn" id="emoBtn" type="button" aria-label="אימוג'ים זזים">😊</button>
   <input id="text" type="text" placeholder="כתבו הודעה..." maxlength="500" enterkeyhint="send">
   <button class="cbtn send" id="send" type="submit" aria-label="שליחה"></button>
 </form>
+<div id="emoPanel" class="emo-panel hidden" role="dialog" aria-label="אימוג'ים זזים"></div>
+<style>
+.emo-panel{position:fixed;inset-inline:8px;bottom:calc(72px + env(safe-area-inset-bottom));background:#fff;border:1px solid var(--border,#ddd);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px;max-height:42vh;overflow:auto;z-index:50}
+.emo-panel.hidden{display:none}
+#emoBtn{font-size:26px;line-height:1}
+.emo-panel button{border:0;background:none;font-size:32px;line-height:1;padding:6px;border-radius:12px;cursor:pointer}
+.emo-panel button:active{background:var(--bg)}
+.aemo{width:1.5em;height:1.5em;vertical-align:-.35em;display:inline-block}
+.aemo.big{width:64px;height:64px;vertical-align:middle}
+</style>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
 import { initPage, supabase, esc, icon, avatar, ilDate, ilTime, addDays, flashToast, showToast, shrinkImage, signedUrls, playChime } from './js/common.js';
@@ -37,6 +48,15 @@ const $ = id => document.getElementById(id);
 $('photoBtn').innerHTML = icon('image', 24);
 $('cameraBtn').innerHTML = icon('camera', 24);
 const today = ilDate(new Date());
+// אימוג'ים זזים (Google Noto Animated Emoji, רישיון CC BY 4.0): בהודעה נשמר תו האימוג'י הרגיל, ובתצוגה מוחלף בתמונה זזה. אם התמונה לא נטענת, נשאר האימוג'י הרגיל.
+const AEMO = ['😀','😂','🥰','😍','😎','🤩','😉','😋','😜','🤔','😴','😭','😡','🥳','😱','🤗','🙏','👍','👏','🙌','💪','👋','❤️','🔥','✨','🎉','🎂','🎈','⭐','💯','☀️','🌈','🍕','🍦','⚽','🎮','🏆','🐶','🐱'];
+const aeCode = c => [...c].map(x => x.codePointAt(0).toString(16)).join('_');
+const aeRe = new RegExp(AEMO.slice().sort((a, b) => b.length - a.length).join('|'), 'g');
+const aeImg = (c, big) => `<img class="aemo${big ? ' big' : ''}" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${aeCode(c)}/512.webp" alt="${c}" loading="lazy" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
+function bodyHtml(t) {
+  const only = t.replace(aeRe, '').trim() === '' && (t.match(aeRe) || []).length <= 3;
+  return esc(t).replace(aeRe, c => aeImg(c, only));
+}
 let list = [], urls = {}, busy = false;
 
 const dayLabel = d => d === today ? 'היום' : d === addDays(today, -1) ? 'אתמול' : d.split('-').reverse().join('.');
@@ -59,7 +79,7 @@ function render(scroll) {
     const mine = m.user_id === me; const who = byId[m.user_id];
     const img = m.photo_path && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
-      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${m.body ? `<div>${esc(m.body)}</div>` : ''}${time}</div></div>`;
+      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
   }).join('');
   if (nearEnd) window.scrollTo(0, document.body.scrollHeight);
 }
@@ -75,6 +95,15 @@ async function load(scroll) {
   try { localStorage.setItem('chatSeen', new Date().toISOString()); } catch (_) {}
 }
 
+$('emoPanel').innerHTML = AEMO.map(c => `<button type="button" data-e="${c}">${c}</button>`).join('');
+$('emoBtn').addEventListener('click', () => $('emoPanel').classList.toggle('hidden'));
+$('emoPanel').addEventListener('click', e => {
+  const b = e.target.closest('[data-e]'); if (!b) return;
+  const t = $('text');
+  if ((t.value + b.dataset.e).length > 500) return;
+  t.value += b.dataset.e;
+});
+document.addEventListener('click', e => { if (!e.target.closest('#emoPanel') && !e.target.closest('#emoBtn')) $('emoPanel').classList.add('hidden'); });
 $('msgs').addEventListener('click', e => {
   const i = e.target.closest('.mimg'); if (!i) return;
   $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 22)}</button><img class="zoom" src="${i.dataset.src}" alt="">`;
