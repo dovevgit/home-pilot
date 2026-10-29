@@ -115,7 +115,7 @@ const guessIcon = title => (KEYS.find(([r]) => r.test(title)) || [0, 'trophy'])[
 const kindOf = t => t?.kind === 'enrichment' ? 'enrichment' : 'bonus';
 const tile = (title, ic) => `<div class="bn-tile" style="background:${TILES[hash(title) % TILES.length]}"><img src="icons/task/${ic || guessIcon(title)}.png" alt=""></div>`;
 const claimKind = c => kindOf(tasks.find(t => t.id === c.task_id));
-const myClaim = t => claims.find(c => c.task_id === t.id && c.user_id === me && (c.status === 'pending' || c.status === 'approved'));
+const myClaim = t => claims.find(c => c.task_id === t.id && c.user_id === me && ['requested', 'ready', 'pending', 'approved'].includes(c.status));
 
 async function load() {
   const [t, c] = await Promise.all([
@@ -139,12 +139,15 @@ function render() {
   $('prevBar').classList.toggle('hidden', !kidView);
   $('adminBar').classList.toggle('hidden', !showAdmin);
   $('adminBox').classList.toggle('hidden', !showAdmin);
-  const allPend = showAdmin ? claims.filter(c => c.status === 'pending' && c.user_id !== me) : [];
+  const allPend = showAdmin ? claims.filter(c => (c.status === 'pending' || c.status === 'requested') && c.user_id !== me) : [];
   [['nB', 'bonus'], ['nE', 'enrichment']].forEach(([id, k]) => { const n = allPend.filter(c => claimKind(c) === k).length; $(id).textContent = n; $(id).classList.toggle('hidden', !n); });
   const act = tasks.filter(t => t.active && kindOf(t) === tab);
   $('open').innerHTML = act.length ? act.map(t => {
     const c = kidView ? null : myClaim(t);
-    const x = !c ? `<button class="bn-go" data-claim="${t.id}" type="button">${t.requires_photo ? '📷 ביצעתי! (מצלמים)' : 'ביצעתי!'}</button>`
+    const isB = kindOf(t) === 'bonus';
+    const x = !c ? (isB ? `<button class="bn-go" data-req="${t.id}" type="button">🙋 אני רוצה לבצע</button>` : `<button class="bn-go" data-claim="${t.id}" type="button">${t.requires_photo ? '📷 ביצעתי! (מצלמים)' : 'ביצעתי!'}</button>`)
+      : c.status === 'requested' ? '<span class="bn-chip bn-wait">⏳ ממתין לאישור הורה לפני שמתחילים</span>'
+      : c.status === 'ready' ? `<button class="bn-go" data-do="${t.id}" type="button">✅ אושר! לחצו כשסיימתם</button>`
       : c.status === 'pending' ? '<span class="bn-chip bn-wait">⏳ ממתין לאישור של הורה</span>' : '<span class="bn-chip bn-ok">✓ אושר, קיבלת את הנקודות</span>';
     return card(t, x);
   }).join('') : empty(isAdmin ? 'עוד אין משימות כאלה. צרו אחת בכפתור למעלה' : 'עוד אין משימות כאלה. כשהורה יוסיף אחת, היא תופיע כאן');
@@ -152,15 +155,15 @@ function render() {
   const pend = allPend.filter(c => claimKind(c) === tab);
   $('pendBox').classList.toggle('hidden', !pend.length);
   $('pendN').textContent = pend.length;
-  $('pend').innerHTML = pend.map(c => `<div class="bn-card"><div class="bn-row">${avatar(byId[c.user_id], 48)}<div class="bn-t"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b><small>דיווח/ה: ${esc(c.title)}</small></div><span class="bn-pts" dir="ltr">⭐ +${c.points}</span></div>
+  $('pend').innerHTML = pend.map(c => `<div class="bn-card"><div class="bn-row">${avatar(byId[c.user_id], 48)}<div class="bn-t"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b><small>${c.status === 'requested' ? 'מבקש/ת לבצע' : 'דיווח/ה'}: ${esc(c.title)}</small></div><span class="bn-pts" dir="ltr">⭐ +${c.points}</span></div>
     ${c.photo_path && urls[c.photo_path] ? `<img class="bn-thumb" src="${urls[c.photo_path]}" alt="תמונת הוכחה" data-zoom="${urls[c.photo_path]}">` : ''}
-    <div class="bn-act"><button class="btn" data-ok="${c.id}" type="button">אישור</button><button class="btn secondary" data-no="${c.id}" type="button">דחייה</button></div></div>`).join('');
+    <div class="bn-act">${c.status === 'requested' ? `<button class="btn" data-rok="${c.id}" type="button">אישור לבצע</button><button class="btn secondary" data-rno="${c.id}" type="button">דחייה</button>` : `<button class="btn" data-ok="${c.id}" type="button">אישור</button><button class="btn secondary" data-no="${c.id}" type="button">דחייה</button>`}</div></div>`).join('');
   if (showAdmin) {
     const list = tasks.filter(t => kindOf(t) === tab);
     $('manage').innerHTML = list.length ? list.map(t => card(t, `<div class="bn-act"><button class="btn secondary" data-tog="${t.id}" type="button">${t.active ? 'השבתה' : 'הפעלה'}</button><button class="btn secondary" data-del="${t.id}" type="button">מחיקה</button></div>${t.active ? '' : '<div class="note" style="margin-top:8px">המשימה מושבתת ולא מוצגת לאחרים</div>'}`, !t.active)).join('') : empty('עוד לא יצרתם משימות כאלה');
   }
   const mine = kidView ? [] : claims.filter(c => c.user_id === me && claimKind(c) === tab);
-  const st = { pending: ['⏳ ממתין לאישור', 'bn-wait'], approved: ['✓ אושר', 'bn-ok'], rejected: ['נדחה', 'bn-no'] };
+  const st = { requested: ['⏳ ממתין לאישור לפני ביצוע', 'bn-wait'], ready: ['✅ אושר, אפשר לבצע', 'bn-ok'], pending: ['⏳ ממתין לאישור', 'bn-wait'], approved: ['✓ אושר', 'bn-ok'], rejected: ['נדחה', 'bn-no'] };
   $('mine').innerHTML = mine.length ? mine.map(c => `<div class="bn-min">${tile(c.title, tasks.find(t => t.id === c.task_id)?.icon)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span>${showAdmin ? `<button class="btn secondary" data-delc="${c.id}" type="button" style="width:auto;padding:6px 12px;min-height:0;margin:0" aria-label="מחיקה">🗑</button>` : ''}</div>`).join('') : empty('עוד לא דיווחתם על משימות כאלה');
 }
 document.querySelectorAll('.bn-tabs [data-k]').forEach(b => b.onclick = () => { tab = b.dataset.k; try { localStorage.setItem('bonusTab', tab); } catch (_) {} render(); window.scrollTo(0, 0); });
@@ -190,6 +193,16 @@ file.addEventListener('change', async () => {
   let blob; try { blob = await shrinkImage(f); } catch (_) { return showToast('לא הצלחנו לקרוא את התמונה', true); }
   sendClaim(id, blob);
 });
+function openDo(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t || !claims.some(c => c.task_id === id && c.user_id === me && c.status === 'ready')) return;
+  $('modalCard').innerHTML = `<div style="text-align:center"><h3 style="margin:0 0 6px">✅ המשימה אושרה</h3>${tile(t.title, t.icon)}<div class="bn-t" style="margin:8px 0"><b>${esc(t.title)}</b>${t.description ? `<small>${esc(t.description)}</small>` : ''}${photoChip(t)}</div><span class="bn-pts" dir="ltr">⭐ +${t.points}</span></div><button type="button" class="btn" id="dDone">${t.requires_photo ? '📷 ביצעתי! (מצלמים)' : 'ביצעתי!'}</button><button type="button" class="btn secondary" id="dX">סגירה</button>`;
+  $('modal').classList.remove('hidden');
+  $('dX').onclick = () => $('modal').classList.add('hidden');
+  $('dDone').onclick = () => { $('modal').classList.add('hidden'); if (busy) return; if (t.requires_photo) { pendingTask = t.id; file.click(); } else sendClaim(t.id, null); };
+}
+window.addEventListener('bonus-reload', () => load());
+window.addEventListener('bonus-open-do', async e => { await load(); openDo(e.detail); });
 document.addEventListener('click', async e => {
   const z = e.target.closest('[data-zoom]');
   if (z) { $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 22)}</button><img class="zoom" src="${z.dataset.zoom}" alt="">`; $('modal').classList.remove('hidden'); $('mx').onclick = () => $('modal').classList.add('hidden'); return; }
@@ -206,6 +219,13 @@ document.addEventListener('click', async e => {
     if (t?.requires_photo) { pendingTask = t.id; return file.click(); }
     busy = true; b.disabled = true; await sendClaim(b.dataset.claim, null); return;
   }
+  if (b.dataset.req) {
+    if (kidView) return showToast('זו תצוגה מקדימה, הבקשה לא נשלחה');
+    return act(() => supabase.rpc('request_bonus', { p_task: b.dataset.req }), 'הבקשה נשלחה להורים. מחכים לאישור', 'לא הצלחנו לשלוח, אולי כבר ביקשת');
+  }
+  if (b.dataset.do) { if (kidView) return showToast('זו תצוגה מקדימה'); return openDo(b.dataset.do); }
+  if (b.dataset.rok) return act(() => supabase.rpc('decide_bonus_request', { p_claim: b.dataset.rok, p_ok: true }), 'אושר. הילד יקבל הודעה', 'האישור נכשל');
+  if (b.dataset.rno) return act(() => supabase.rpc('decide_bonus_request', { p_claim: b.dataset.rno, p_ok: false }), 'הבקשה נדחתה', 'הפעולה נכשלה');
   if (b.dataset.ok) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.ok, p_ok: true }), 'אושר. הנקודות נוספו', 'האישור נכשל');
   if (b.dataset.no) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.no, p_ok: false }), 'הדיווח נדחה', 'הפעולה נכשלה');
   if (b.dataset.tog) { const t = tasks.find(x => x.id === b.dataset.tog); return act(() => supabase.from('bonus_tasks').update({ active: !t.active }).eq('id', t.id).select('id').then(r => (!r.error && !r.data?.length) ? { error: 1 } : r), null, 'העדכון נכשל'); }
@@ -270,6 +290,7 @@ $('add').addEventListener('click', () => {
 });
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
 await load();
+const doHash = /#do=([\w-]+)/.exec(location.hash); if (doHash) { history.replaceState(null, '', location.pathname); openDo(doHash[1]); }
 setInterval(() => { if (!document.hidden && $('modal').classList.contains('hidden')) load(); }, 30000);
 </script>
 </body>
