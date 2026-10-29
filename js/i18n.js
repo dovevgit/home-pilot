@@ -716,6 +716,15 @@ const D = {
   "בחר יום...": "Choose a day...",
   "בשעה": "at",
   "הסר": "Remove",
+  "שינוי ליום אחד בלבד. ההגדרה הקבועה של המשימה לא משתנה, ולמחרת הכול חוזר כרגיל.": "For one day only. The task's regular setting does not change, and tomorrow everything goes back to normal.",
+  "איזה יום?": "Which day?",
+  "שמירה ליום הזה בלבד": "Save for this day only",
+  "כבר דווח, אי אפשר לשנות": "Already reported, cannot be changed",
+  "אין עדיין משימות מוכנות לימים הקרובים": "No tasks are ready for the coming days yet",
+  "צריך להזין שעה בכל שורה": "Enter a time in every row",
+  "השעה כבר עברה": "That time has already passed",
+  "נשמר ליום הזה בלבד": "Saved for this day only",
+  "שינוי ליום אחד": "Change for one day",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
@@ -1083,6 +1092,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(.+) רשום\/ה כנעדר\/ת ביום הזה\. לשמור בכל זאת\?$/, '$1 is listed as absent on this day. Save anyway?'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => WD[d]],
   [/^(\d+) מתוך (\d+) נלקחו היום$/, "$1 of $2 taken today"],
   [/^הוזמנת לשחק (.+) איתנו! הקישור למשחק:\n(.+)$/s, 'You are invited to play $1 with us! Link to the game:\n$2'],

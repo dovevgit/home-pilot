@@ -82,6 +82,65 @@ async function affectedTasks(ab) {
 }
 
 /* ============ רשימה ============ */
+/* ============ שינוי חד-פעמי ליום אחד של משימה יומית (בלי לגעת בהגדרה הקבועה) ============ */
+async function openOnce(t) {
+  await loadAbsences();
+  const { data: occs } = await supabase.from('tasks').select('*').eq('template_id', t.id).eq('kind', 'occurrence').eq('active', true)
+    .gte('occurrence_date', ilDate(new Date())).order('occurrence_date').limit(10);
+  const list = occs || [];
+  const m = document.createElement('div'); m.className = 'modal';
+  const close = () => m.remove();
+  m.onclick = e => { if (e.target === m) close(); };
+  const dayLabel = d => d === todayStr ? 'היום' : d === addDays(todayStr, 1) ? 'מחר' : `יום ${WEEKDAYS[dow(d)]} ${dm(d)}`;
+  const people = users.filter(u => u.active !== false);
+  const draw = async (id) => {
+    const o = list.find(x => x.id === id) || list[0];
+    if (!o) { m.innerHTML = `<div class="modal-card"><button class="modal-x" id="ox" aria-label="סגירה">${icon('x', 20)}</button><h3 style="margin:0 0 8px" data-user>${esc(t.title)}</h3><p class="empty">אין עדיין משימות מוכנות לימים הקרובים</p></div>`; m.querySelector('#ox').onclick = close; return; }
+    const { count } = await supabase.from('feed').select('id', { count: 'exact', head: true }).eq('task_id', o.id).eq('type', 'report');
+    const done = count || 0;
+    const slots = o.slots || [];
+    m.innerHTML = `<div class="modal-card"><button class="modal-x" id="ox" aria-label="סגירה">${icon('x', 20)}</button>
+      <h3 style="margin:0 0 4px" data-user>${esc(t.title)}</h3>
+      <small style="display:block;color:var(--muted);margin-bottom:10px">שינוי ליום אחד בלבד. ההגדרה הקבועה של המשימה לא משתנה, ולמחרת הכול חוזר כרגיל.</small>
+      <label>איזה יום?</label>
+      <select class="sel" id="oday">${list.map(x => `<option value="${x.id}" ${x.id === o.id ? 'selected' : ''}>${esc(dayLabel(x.occurrence_date))}</option>`).join('')}</select>
+      ${slots.map((sl, i) => { const locked = i < done; const cur = sl.due_at ? ilTime(new Date(sl.due_at)) : '';
+        return `<div class="slotrow" style="margin-top:10px"><select class="sel" data-oa="${i}" ${locked ? 'disabled' : ''}>${people.map(u => `<option value="${u.id}" ${sl.assignee_id === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select>
+        <input type="time" data-ot="${i}" value="${cur}" dir="ltr" ${locked ? 'disabled' : ''}></div>${locked ? '<small style="color:#92400E">כבר דווח, אי אפשר לשנות</small>' : ''}`; }).join('')}
+      <div class="err" id="oerr" style="margin-top:8px"></div>
+      <button class="btn" id="osave" style="margin-top:12px;width:100%">שמירה ליום הזה בלבד</button></div>`;
+    m.querySelector('#ox').onclick = close;
+    m.querySelector('#oday').onchange = e => draw(e.target.value);
+    m.querySelector('#osave').onclick = async () => {
+      const err = x => { m.querySelector('#oerr').textContent = x; };
+      const next = slots.map((sl, i) => {
+        if (i < done) return sl;
+        const tm = m.querySelector(`[data-ot="${i}"]`).value, who = m.querySelector(`[data-oa="${i}"]`).value;
+        if (!tm) return null;
+        const due = toIsraelDate(o.occurrence_date, tm).toISOString();
+        const grp = Array.isArray(sl.assignees) && sl.assignees.length > 1 ? [who, ...sl.assignees.filter(x => x !== sl.assignee_id && x !== who)] : [];
+        const asg = grp.length > 1 ? { assignees: grp } : {};
+        const { assignees: _a, ...rest } = sl;
+        const changed = due !== sl.due_at || who !== sl.assignee_id;
+        return { ...rest, ...asg, assignee_id: who, due_at: due, ...(changed ? { reminded: false, overdue_notified: false, penalized: false } : {}) };
+      });
+      if (next.some(x => !x)) return err('צריך להזין שעה בכל שורה');
+      if (next.some((x, i) => i >= done && x.due_at !== slots[i].due_at && new Date(x.due_at) < new Date())) return err('השעה כבר עברה');
+      const ab = next.map(x => absentOn(x.assignee_id, o.occurrence_date) && byId[x.assignee_id]?.name).find(Boolean);
+      if (ab && !confirm(`${ab} רשום/ה כנעדר/ת ביום הזה. לשמור בכל זאת?`)) return;
+      if (done === 0) next.sort((a, b) => a.due_at.localeCompare(b.due_at));
+      next.forEach((x, i) => { x.n = i + 1; });
+      m.querySelector('#osave').disabled = true;
+      const { error } = await supabase.from('tasks').update({ slots: next }).eq('id', o.id);
+      if (error) { m.querySelector('#osave').disabled = false; return err('השמירה נכשלה'); }
+      o.slots = next;
+      toast('נשמר ליום הזה בלבד'); close();
+    };
+  };
+  document.body.append(m);
+  await draw();
+}
+
 async function showList() {
   view = 'list'; editing = null;
   main.innerHTML = `
@@ -213,10 +272,12 @@ async function showList() {
     const list = data.filter(t => (!m || (t.slots || []).some(s => slotUsers(s).includes(m) || Object.values(s.exc || {}).some(v => (typeof v === 'string' ? v : v?.u) === m))) && (!r || t.repeat === r));
     el.innerHTML = list.length ? list.map(t => `<div class="row-item">${iconBox(t, 44)}
       <div class="tmain"><b data-user>${esc(t.title)}</b><small>${esc(repeatLabel(t))}</small>${slotsLine(t)}</div>
+      ${t.kind === 'template' && t.repeat === 'daily' ? `<button class="sqbtn edit" data-once="${t.id}" aria-label="שינוי ליום אחד" title="שינוי ליום אחד">${icon('clock', 20)}</button>` : ''}
       <button class="sqbtn edit" data-edit="${t.id}" aria-label="עריכה">${icon('pencil', 20)}</button>
       <button class="sqbtn del" data-del="${t.id}" aria-label="מחיקה">${icon('trash-2', 20)}</button></div>`).join('')
       : '<p class="empty">אין משימות</p>';
     el.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => showForm(data.find(t => t.id === b.dataset.edit)));
+    el.querySelectorAll('[data-once]').forEach(b => b.onclick = () => openOnce(data.find(t => t.id === b.dataset.once)));
     el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
       const t = data.find(x => x.id === b.dataset.del);
       if (!confirm(`למחוק את "${t.title}"? ההיסטוריה נשמרת.`)) return;
