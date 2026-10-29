@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'game', 'guide']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'game', 'guide', 'status']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -737,6 +737,16 @@ const D = {
   "מחיקה מלאה (גם הנקודות)": "Delete completely (points too)",
   "ההסתרה נכשלה": "Hiding failed",
   "להסתיר את הדיווח הזה מההיסטוריה?\n\nהנקודות לא משתנות.": "Hide this report from history?\n\nPoints do not change.",
+  "דוח סטטוס": "Status report",
+  "שליחת סיכום לכל המשפחה": "Send a summary to the whole family",
+  "החודש": "This month",
+  "אין משימות בתקופה הזאת": "No tasks in this period",
+  "אין בני משפחה להצגה": "No family members to show",
+  "הדוח מציג משימות שכבר נוצרו באפליקציה. משימות של חודשים קדימה יופיעו רק כשיגיע זמנן.": "The report shows tasks that were already created in the app. Tasks for months ahead appear only when their time comes.",
+  "בהמתנה": "waiting",
+  "לשלוח את הסיכום לכל בני המשפחה? זו הודעה חשובה שקופצת עד שעונים לה.": "Send the summary to the whole family? It is an important message that pops up until answered.",
+  "אין למי לשלוח": "No one to send to",
+  "הדוח נשלח": "The report was sent",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
@@ -1104,6 +1114,12 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(\d+) מתוך (\d+) בוצעו$/, '$1 of $2 done'],
+  [/^(\d+) באיחור$/, '$1 overdue'],
+  [/^(\d+) בהמתנה$/, '$1 waiting'],
+  [/^(\d+) בוצעו$/, '$1 done'],
+  [/^שליחת הדוח אל (.+)$/, 'Send the report to $1'],
+  [/^לשלוח את הדוח של (.+) אליו\/אליה\? זו הודעה חשובה שקופצת עד שעונים לה\.$/, 'Send the report of $1 to them? It is an important message that pops up until answered.'],
   [/^הסתרת (\d+) הדיווחים המוצגים מההיסטוריה$/, 'Hide the $1 reports shown from history'],
   [/^להסתיר מההיסטוריה את (\d+) הדיווחים המוצגים עכשיו\?\s+הנקודות לא משתנות, והמשימות נשארות מסומנות כבוצעו\. הדיווחים רק לא יופיעו ברשימה\.$/, 'Hide the $1 reports shown now from history?\n\nPoints do not change, and tasks stay marked as done. The reports just will not appear in the list.'],
   [/^(\d+) דיווחים לא הוסתרו$/, '$1 reports were not hidden'],

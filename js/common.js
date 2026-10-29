@@ -192,6 +192,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       ${isAdmin ? `<a href="admin.html" class="admin-link">${icon('settings')} ניהול</a><hr class="drawer-sep">` : ''}
       <a href="index.html">${icon('house')} בית</a>
       <a href="tasks.html?me=1">${icon('list-checks')} המשימות שלי</a>
+      <a href="status.html">${icon('list-checks')} דוח סטטוס</a>
       <a href="calendar.html">${icon('calendar-days')} לוח שנה</a>
       <a href="history.html">${icon('chart-column')} היסטוריה ודיווחים</a>
       <a href="shop.html">${icon('gift')} חנות</a>

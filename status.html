@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | דוח סטטוס</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<style>
+.sp{margin-bottom:12px;border:2px solid var(--field);border-radius:20px;background:#fff;overflow:hidden}
+.sp>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.sp>summary::-webkit-details-marker{display:none}
+.sp .who{flex:1;min-width:0}
+.sp .who b{font-size:19px;display:block}
+.sp .who small{color:var(--muted);font-weight:700}
+.sp .chev{flex:none;transition:transform .2s}.sp[open] .chev{transform:rotate(180deg)}
+.pbar{height:10px;border-radius:99px;background:#E3EAF3;overflow:hidden;margin-top:6px}
+.pbar div{height:100%;background:linear-gradient(90deg,#34D399,#10B981);border-radius:99px}
+.sp .body{padding:0 14px 14px}
+.dayh{font-weight:800;color:#0A58CA;margin:12px 0 4px;font-size:15px}
+.it{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EEF2F7}
+.it .m{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.it.done .m{background:#DDF7E8;color:#0F7A4B}.it.over .m{background:#FFE3E3;color:#B91C1C}.it.wait .m{background:#EEF2F7;color:#6B7280}
+.it .t{flex:1;min-width:0}.it .t b{display:block}.it .t small{color:var(--muted)}
+.it.done .t b{color:#6B7280;text-decoration:line-through}
+.send{margin-top:10px;width:100%}
+.sumrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.sumrow span{font-size:13px;font-weight:800;border-radius:99px;padding:2px 10px}
+.s-over{background:#FFE3E3;color:#B91C1C}.s-wait{background:#EEF2F7;color:#4B5563}.s-done{background:#DDF7E8;color:#0F7A4B}
+</style>
+<main>
+  <div class="tabs" id="tabs">
+    <button data-p="day" class="on">היום</button>
+    <button data-p="week">השבוע</button>
+    <button data-p="month">החודש</button>
+  </div>
+  <div class="filters"><select id="fMember" aria-label="בן משפחה"><option value="">כל המשפחה</option></select></div>
+  <div id="sendAll"></div>
+  <div id="list"><p class="empty">טוען...</p></div>
+  <p class="note">הדוח מציג משימות שכבר נוצרו באפליקציה. משימות של חודשים קדימה יופיעו רק כשיגיע זמנן.</p>
+</main>
+<script type="module">
+import { initPage, supabase, esc, iconBox, avatar, ilDate, ilTime, addDays, dow, weekStart, toIsraelDate, loadReports, slotUsers, showToast } from './js/common.js';
+const { me, profiles } = await initPage({ active: 'status', title: 'דוח סטטוס', back: 'index.html' });
+const $ = id => document.getElementById(id);
+const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
+const people = profiles.filter(p => p.is_user && p.active !== false);
+const WD = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const NAMES = { day: 'היום', week: 'השבוע', month: 'החודש' };
+people.forEach(p => $('fMember').insertAdjacentHTML('beforeend', `<option value="${p.id}">${esc(p.name)}</option>`));
+let period = 'day', seq = 0, data = null;
+
+function range() {
+  const today = ilDate(new Date());
+  if (period === 'day') return { a: toIsraelDate(today, '00:00'), b: toIsraelDate(addDays(today, 1), '00:00'), from: addDays(today, -8) };
+  if (period === 'week') { const w = weekStart(); return { a: w.start, b: w.end, from: addDays(w.dateStr, -8) }; }
+  const [y, m] = today.split('-').map(Number);
+  const first = `${y}-${String(m).padStart(2, '0')}-01`, next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  return { a: toIsraelDate(first, '00:00'), b: toIsraelDate(next, '00:00'), from: addDays(first, -8) };
+}
+const dayLabel = d => { const t = ilDate(new Date()); return d === t ? 'היום' : d === addDays(t, 1) ? 'מחר' : d === addDays(t, -1) ? 'אתמול' : `יום ${WD[dow(d)]} ${d.split('-').reverse().slice(0, 2).join('.')}`; };
+
+// בונה לכל אדם: רשימת פריטים {t, slot, i, status, when(date), time}
+function build(tasks, counts) {
+  const R = range(), now = new Date(), out = Object.fromEntries(people.map(p => [p.id, []]));
+  for (const t of tasks) {
+    const c = counts[t.id] || 0;
+    (t.slots || []).forEach((sl, i) => {
+      if (!sl.due_at) return;
+      const due = new Date(sl.due_at);
+      if (due < R.a || due >= R.b) return;
+      const status = i < c ? 'done' : due < now ? 'over' : 'wait';
+      for (const uid of slotUsers(sl)) if (out[uid]) out[uid].push({ t, i, status, due, date: ilDate(due), time: ilTime(due) });
+    });
+  }
+  for (const k of Object.keys(out)) out[k].sort((x, y) => x.due - y.due);
+  return out;
+}
+const tally = items => ({ total: items.length, done: items.filter(x => x.status === 'done').length, over: items.filter(x => x.status === 'over').length, wait: items.filter(x => x.status === 'wait').length });
+
+function personText(p, items) {
+  const k = tally(items), cap = (arr, n = 15) => arr.slice(0, n).map(x => `• ${x.t.title} (${dayLabel(x.date)} ${x.time})`).join('\n') + (arr.length > n ? `\nועוד ${arr.length - n}...` : '');
+  const grp = (s, title) => { const a = items.filter(x => x.status === s); return a.length ? `\n${title}\n${cap(a)}` : ''; };
+  return `📋 דוח סטטוס · ${NAMES[period]}\n${p.name}: ${k.done} מתוך ${k.total} בוצעו${grp('over', '❗ באיחור:')}${grp('wait', '⏳ ממתין:')}${grp('done', '✅ בוצע:')}`;
+}
+function familyText(all) {
+  const lines = people.map(p => { const k = tally(all[p.id] || []); const ov = (all[p.id] || []).filter(x => x.status === 'over').slice(0, 5).map(x => x.t.title); return `${p.name}: ${k.done} מתוך ${k.total} בוצעו${k.over ? ` · ${k.over} באיחור (${ov.join(', ')}${k.over > 5 ? '...' : ''})` : ''}`; });
+  return `📋 דוח סטטוס · ${NAMES[period]}\n\n${lines.join('\n')}`;
+}
+async function send(to, body) {
+  const ids = to.filter(id => id !== me.id);
+  if (!ids.length) return showToast('אין למי לשלוח', true);
+  const r = await supabase.from('important_msgs').insert({ to_users: ids, body: body.slice(0, 3500) });
+  if (r.error) return showToast('השליחה נכשלה, נסו שוב', true);
+  showToast('הדוח נשלח');
+}
+
+function render() {
+  if (!data) return;
+  const only = $('fMember').value, list = people.filter(p => !only || p.id === only);
+  $('list').innerHTML = list.map(p => {
+    const items = data[p.id] || [], k = tally(items), pct = k.total ? Math.round(k.done * 100 / k.total) : 0;
+    let body = '';
+    if (!items.length) body = '<p class="empty">אין משימות בתקופה הזאת</p>';
+    else { let last = ''; for (const x of items) {
+      if (period !== 'day' && x.date !== last) { body += `<div class="dayh">${esc(dayLabel(x.date))}</div>`; last = x.date; }
+      body += `<div class="it ${x.status}"><span class="m">${x.status === 'done' ? '✓' : x.status === 'over' ? '!' : '○'}</span>${iconBox(x.t, 34)}<div class="t"><b data-user>${esc(x.t.title)}</b><small dir="ltr" style="display:inline-block">${esc(x.time)}</small></div></div>`; } }
+    return `<details class="sp" ${period === 'day' || only ? 'open' : ''}><summary>${avatar(p, 44)}<div class="who"><b data-user>${esc(p.name)}</b><small>${k.done} מתוך ${k.total} בוצעו</small>
+      <div class="pbar"><div style="width:${pct}%"></div></div>
+      <div class="sumrow">${k.over ? `<span class="s-over">${k.over} באיחור</span>` : ''}${k.wait ? `<span class="s-wait">${k.wait} בהמתנה</span>` : ''}${k.done ? `<span class="s-done">${k.done} בוצעו</span>` : ''}</div></div>
+      <svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="body">${body}${items.length && p.id !== me.id ? `<button type="button" class="btn secondary send" data-send="${p.id}">שליחת הדוח אל ${esc(p.name)}</button>` : ''}</div></details>`;
+  }).join('') || '<p class="empty">אין בני משפחה להצגה</p>';
+  $('sendAll').innerHTML = people.filter(p => p.id !== me.id).length ? '<button type="button" class="btn" id="sendFam" style="width:100%;margin-bottom:12px">שליחת סיכום לכל המשפחה</button>' : '';
+  const sf = $('sendFam'); if (sf) sf.onclick = () => { if (confirm('לשלוח את הסיכום לכל בני המשפחה? זו הודעה חשובה שקופצת עד שעונים לה.')) send(people.map(p => p.id), familyText(data)); };
+  $('list').querySelectorAll('[data-send]').forEach(b => b.onclick = () => { const p = byId[b.dataset.send]; if (confirm(`לשלוח את הדוח של ${p.name} אליו/אליה? זו הודעה חשובה שקופצת עד שעונים לה.`)) send([p.id], personText(p, data[p.id] || [])); });
+}
+
+async function load() {
+  const my = ++seq; $('list').innerHTML = '<p class="empty">טוען...</p>';
+  const R = range();
+  const { data: tasks, error } = await supabase.from('tasks').select('*').eq('kind', 'occurrence').eq('active', true).gte('occurrence_date', R.from);
+  if (my !== seq) return;
+  if (error) { $('list').innerHTML = '<p class="empty">לא הצלחנו לטעון</p>'; return; }
+  const reps = await loadReports((tasks || []).map(t => t.id));
+  if (my !== seq) return;
+  const counts = {}; for (const r of reps) counts[r.task_id] = (counts[r.task_id] || 0) + 1;
+  data = build(tasks || [], counts); render();
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; period = b.dataset.p; document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); load(); });
+$('fMember').onchange = render;
+load();
+</script>
+</body>
+</html>
