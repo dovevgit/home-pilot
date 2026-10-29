@@ -44,6 +44,7 @@
 .aud-panel .abtn.red{background:#E5484D;color:#fff}.aud-panel .abtn.green{background:var(--blue);color:#fff}
 .aud-panel audio{width:100%}.aud-timer{font-size:28px;font-weight:800;color:#E5484D}
 .maud{width:min(240px,62vw);height:40px;display:block;margin:4px 0}
+.mdel{border:0;background:none;color:var(--muted,#667);font-size:20px;line-height:1;padding:0 8px;cursor:pointer}
 .aemo{width:1.5em;height:1.5em;vertical-align:-.35em;display:inline-block}
 .aemo.big{width:64px;height:64px;vertical-align:middle}
 </style>
@@ -91,7 +92,7 @@ function render(scroll) {
     const aud = m.photo_path && m.payload?.audio && urls[m.photo_path] ? `<audio class="maud" controls preload="metadata" src="${urls[m.photo_path]}"></audio>` : '';
     const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
-      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
+      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}${mine ? `<button type="button" class="mdel" data-del="${m.id}" aria-label="מחיקת הודעה">⋮</button>` : ''}</div></div>`;
   }).join('');
   if (nearEnd) window.scrollTo(0, document.body.scrollHeight);
 }
@@ -116,6 +117,25 @@ $('emoPanel').addEventListener('click', e => {
   t.value += b.dataset.e;
 });
 document.addEventListener('click', e => { if (!e.target.closest('#emoPanel') && !e.target.closest('#emoBtn')) $('emoPanel').classList.add('hidden'); });
+function askDelete(id) {
+  const m = list.find(x => x.id === id); if (!m || m.user_id !== me) return;
+  $('modalCard').innerHTML = `<h3 style="margin:0 0 8px">למחוק את ההודעה?</h3><p class="note" style="text-align:start">ההודעה תימחק לכולם ולא ניתן לשחזר אותה.</p><button type="button" class="btn" id="delYes" style="background:#E5484D">מחיקה לכולם</button><button type="button" class="btn secondary" id="delNo">ביטול</button>`;
+  $('modal').classList.remove('hidden');
+  $('delNo').onclick = () => $('modal').classList.add('hidden');
+  $('delYes').onclick = async () => {
+    $('delYes').disabled = true;
+    try {
+      if (m.photo_path) { try { await supabase.storage.from('photos').remove([m.photo_path]); } catch (_) {} }
+      const { data, error } = await supabase.from('feed').delete().eq('id', id).eq('user_id', me).eq('type', 'chat').select('id');
+      if (error || !data?.length) throw new Error('del');
+      $('modal').classList.add('hidden'); showToast('ההודעה נמחקה'); await load(false); render(false);
+    } catch (_) { $('delYes').disabled = false; showToast('המחיקה נכשלה, אפשר לנסות שוב', true); }
+  };
+}
+$('msgs').addEventListener('click', e => { const d = e.target.closest('[data-del]'); if (d) askDelete(d.dataset.del); });
+{ let lp = null;
+  $('msgs').addEventListener('touchstart', e => { const b = e.target.closest('.msg.mine .bubble'); if (!b) return; const d = b.querySelector('[data-del]'); if (d) lp = setTimeout(() => askDelete(d.dataset.del), 600); }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach(t => $('msgs').addEventListener(t, () => clearTimeout(lp), { passive: true })); }
 $('msgs').addEventListener('click', e => {
   const i = e.target.closest('.mimg'); if (!i) return;
   $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 22)}</button><img class="zoom" src="${i.dataset.src}" alt="">`;
