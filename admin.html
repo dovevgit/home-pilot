@@ -334,6 +334,15 @@ function showForm(t) {
     const all = others.every(u => s.with.includes(u.id));
     return `<div class="avrow"><small>משימה משותפת, גם:</small><button type="button" class="avchip free ${all ? 'on' : ''}" data-wi="${i}" data-wall="1"><b>כולם</b></button>${others.map(u => `<button type="button" class="avchip free ${s.with.includes(u.id) ? 'on' : ''}" data-wi="${i}" data-w="${u.id}"><b>${esc(u.name)}</b></button>`).join('')}</div>`;
   };
+  // שעה שונה ביום מסוים בשבוע (משימה יומית): נשמר ב-exc כ-{u, t}. לא תלוי בפעילות בלוח השנה.
+  const timeExcHtml = (i, s) => {
+    if ($('repeat').value !== 'daily') return '';
+    const used = Object.keys(s.exc || {}).filter(k => normExc(s.exc[k])?.t);
+    const rest = [0, 1, 2, 3, 4, 5, 6].filter(wd => !used.includes(String(wd)));
+    const rows = used.map(k => `<div class="avrow exc"><small><b>יום ${WEEKDAYS[k]}</b> בשעה</small><input type="time" dir="ltr" value="${normExc(s.exc[k]).t}" data-xt="${i}" data-xwd="${k}"><button type="button" class="avchip busy" data-xdel="${i}" data-xwd="${k}"><b>הסר</b></button></div>`).join('');
+    const add = rest.length ? `<div class="avrow"><small>שעה שונה ביום מסוים:</small><select class="sel" data-xadd="${i}"><option value="">בחר יום...</option>${rest.map(wd => `<option value="${wd}">יום ${WEEKDAYS[wd]}</option>`).join('')}</select></div>` : '';
+    return add + rows;
+  };
   const drawSlots = () => {
     const n = Math.max(1, Math.min(10, parseInt($('times').value) || 1));
     const allowed = allowedUsers();
@@ -345,17 +354,21 @@ function showForm(t) {
     slots.forEach(s => { s.with = (s.with || []).filter(id => id !== s.assignee_id && allowed.some(u => u.id === id)); });
     slots.forEach(s => {
       s.exc = s.exc || {};
-      for (const k of Object.keys(s.exc)) { const x = normExc(s.exc[k]); if ($('repeat').value !== 'daily' || !busyWd(s.assignee_id, +k, s.time) || !x || (x.u === s.assignee_id && !x.t) || !allowed.some(u => u.id === x.u)) delete s.exc[k]; }
+      for (const k of Object.keys(s.exc)) { const x = normExc(s.exc[k]); if ($('repeat').value !== 'daily' || !x || !allowed.some(u => u.id === x.u) || (!x.t && (x.u === s.assignee_id || !busyWd(s.assignee_id, +k, s.time)))) delete s.exc[k]; }
     });
     $('slots').innerHTML = slots.map((s, i) => `<div class="slotrow">
       <select class="sel" data-a="${i}" ${allowed.length === 1 ? 'disabled' : ''}>${allowed.map(u => { const ab = absentOn(u.id, cd); return `<option value="${u.id}" ${s.assignee_id === u.id ? 'selected' : ''} ${ab && s.assignee_id !== u.id ? 'disabled' : ''}>${esc(u.name)}${ab ? ` (נעדר/ת: ${esc(ab.reason)})` : ''}</option>`; }).join('')}</select>
-      <input type="time" data-t="${i}" value="${s.time}" dir="ltr"></div>${withHtml(i, s, allowed, cd)}${availHtml(i, s, allowed, cd)}${excHtml(i, s, allowed)}`).join('');
-    $('slots').querySelectorAll('[data-a]').forEach(el => el.onchange = () => slots[el.dataset.a].assignee_id = el.value);
+      <input type="time" data-t="${i}" value="${s.time}" dir="ltr"></div>${withHtml(i, s, allowed, cd)}${availHtml(i, s, allowed, cd)}${excHtml(i, s, allowed)}${timeExcHtml(i, s)}`).join('');
+    const setAssignee = (sl, id) => { for (const k of Object.keys(sl.exc || {})) { const x = normExc(sl.exc[k]); if (x && x.u === sl.assignee_id && x.t) sl.exc[k] = { u: id, t: x.t }; } sl.assignee_id = id; };
+    $('slots').querySelectorAll('[data-a]').forEach(el => el.onchange = () => { setAssignee(slots[el.dataset.a], el.value); drawSlots(); });
     $('slots').querySelectorAll('[data-t]').forEach(el => el.onchange = () => { slots[el.dataset.t].time = el.value; drawSlots(); });
-    $('slots').querySelectorAll('[data-eu]').forEach(el => el.onclick = () => { slots[el.dataset.ei].exc[el.dataset.ewd] = el.dataset.et ? { u: el.dataset.eu, t: el.dataset.et } : el.dataset.eu; drawSlots(); });
+    $('slots').querySelectorAll('[data-eu]').forEach(el => el.onclick = () => { { const sl = slots[el.dataset.ei], t = el.dataset.et || normExc(sl.exc[el.dataset.ewd])?.t; sl.exc[el.dataset.ewd] = t ? { u: el.dataset.eu, t } : el.dataset.eu; drawSlots(); } });
+    $('slots').querySelectorAll('[data-xadd]').forEach(el => el.onchange = () => { if (el.value === '') return; const sl = slots[el.dataset.xadd], cur = normExc(sl.exc[el.value]); sl.exc[el.value] = { u: cur?.u || sl.assignee_id, t: sl.time }; drawSlots(); });
+    $('slots').querySelectorAll('[data-xt]').forEach(el => el.onchange = () => { const sl = slots[el.dataset.xt], cur = normExc(sl.exc[el.dataset.xwd]); if (!cur) return; sl.exc[el.dataset.xwd] = el.value ? { u: cur.u, t: el.value } : (cur.u === sl.assignee_id ? undefined : cur.u); if (!sl.exc[el.dataset.xwd]) delete sl.exc[el.dataset.xwd]; drawSlots(); });
+    $('slots').querySelectorAll('[data-xdel]').forEach(el => el.onclick = () => { const sl = slots[el.dataset.xdel], cur = normExc(sl.exc[el.dataset.xwd]); if (!cur) return; if (cur.u === sl.assignee_id) delete sl.exc[el.dataset.xwd]; else sl.exc[el.dataset.xwd] = cur.u; drawSlots(); });
     $('slots').querySelectorAll('[data-w]').forEach(el => el.onclick = () => { const s = slots[el.dataset.wi], id = el.dataset.w; s.with = s.with.includes(id) ? s.with.filter(x => x !== id) : [...s.with, id]; drawSlots(); });
     $('slots').querySelectorAll('[data-wall]').forEach(el => el.onclick = () => { const s = slots[el.dataset.wi]; const others = allowed.filter(u => u.id !== s.assignee_id && !absentOn(u.id, cd)).map(u => u.id); s.with = others.every(id => s.with.includes(id)) ? [] : others; drawSlots(); });
-    $('slots').querySelectorAll('[data-pick]').forEach(el => el.onclick = () => { slots[el.dataset.i].assignee_id = el.dataset.pick; drawSlots(); });
+    $('slots').querySelectorAll('[data-pick]').forEach(el => el.onclick = () => { setAssignee(slots[el.dataset.i], el.dataset.pick); drawSlots(); });
   };
   const toggle = () => { $('weekdayBox').classList.toggle('hidden', $('repeat').value !== 'weekly'); $('dateBox').classList.toggle('hidden', $('repeat').value !== 'once'); };
   $('times').oninput = drawSlots; $('room').onchange = drawSlots; $('date').onchange = drawSlots; $('weekday').onchange = drawSlots; $('repeat').onchange = () => { toggle(); drawSlots(); }; toggle(); drawSlots();
