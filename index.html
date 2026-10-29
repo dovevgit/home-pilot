@@ -68,10 +68,12 @@ document.getElementById('leader').innerHTML = leaders.length ? `
     <div style="flex:1"><div class="lsub">המוביל השבועי</div><div class="ltitle">${leaders.map(l => esc(l.name)).join(' ו')}</div>
     <div class="lsub"><span dir="ltr">${best}</span> נקודות</div></div>
     <span class="crown">${icon('crown', 26)}</span></div>` : '';
-const { data: awayRows } = await supabase.from('outings').select('user_id,reason').eq('excused', true).is('returned_at', null).lte('start_date', today).gte('end_date', today);
+const { data: awayRows } = await supabase.from('outings').select('user_id,reason,excused').is('returned_at', null).lte('start_date', today).gte('end_date', today);
 const away = Object.fromEntries((awayRows || []).map(r => [r.user_id, r.reason]));
+const awayEx = Object.fromEntries((awayRows || []).map(r => [r.user_id, !!r.excused]));
+const awayTag = id => awayEx[id] ? '<span class="abs-tag">נעדר/ת</span>' : '<span class="abs-tag out">לא בבית</span>';
 document.getElementById('family').innerHTML = users.map(p => `
-  <button type="button" class="avn ${away[p.id] ? 'away' : ''}" data-uid="${p.id}" aria-label="הכרטיס של ${esc(p.name)}">${avatar(p, 54)}<span class="avname">${esc(p.name)}</span>${away[p.id] ? `<span class="abs-tag">נעדר/ת</span><span class="apts abs-why">${esc(away[p.id])}</span>` : `<span class="apts" dir="ltr">${pointsByUser[p.id] || 0}</span>`}</button>`).join('');
+  <button type="button" class="avn ${away[p.id] ? 'away' : ''}" data-uid="${p.id}" aria-label="הכרטיס של ${esc(p.name)}">${avatar(p, 54)}<span class="avname">${esc(p.name)}</span>${away[p.id] ? `${awayTag(p.id)}<span class="apts abs-why">${esc(away[p.id])}</span>` : `<span class="apts" dir="ltr">${pointsByUser[p.id] || 0}</span>`}</button>`).join('');
 
 /* --- כרטיס משתמש --- */
 const dmy = d => d.split('-').reverse().join('.');
@@ -127,7 +129,7 @@ function openCard(uid, editMode = false) {
     };
   } else {
     pc.innerHTML = `${x}${head}
-      ${away[uid] ? `<div class="pline"><span class="abs-tag">נעדר/ת</span> ${esc(away[uid])}</div>` : ''}
+      ${away[uid] ? `<div class="pline">${awayTag(uid)} ${esc(away[uid])}</div>` : ''}
       <div class="pline">${p.birthday ? `<b>🎂 נולד/ה ב-${dmy(p.birthday)}</b><br><small>${esc(bdayText(bi))}</small>` : '<small>עוד לא הוזן תאריך לידה</small>'}</div>
       <div class="pline"><b>מה כדאי לדעת</b><br>${p.about ? esc(p.about).replace(/\n/g, '<br>') : '<small>עוד לא נכתב</small>'}</div>
       <div class="pline"><b>נקודות השבוע:</b> <span dir="ltr">${pointsByUser[uid] || 0}</span></div>

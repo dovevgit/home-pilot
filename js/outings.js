@@ -100,8 +100,11 @@ export function openOutForm(host, { me, existing, today, onDone, isAdmin = false
     if (isAdmin) row.excused = c.querySelector('#oExc').checked;
     const who = isAdmin ? c.querySelector('#oWho').value : me.id;
     c.querySelector('#oSave').disabled = true;
-    const res = o ? await supabase.from('outings').update(isAdmin ? { ...row, user_id: who } : row).eq('id', o.id) : await supabase.from('outings').insert({ ...row, user_id: who });
+    const res = o ? await supabase.from('outings').update(isAdmin ? { ...row, user_id: who } : row).eq('id', o.id).select('id') : await supabase.from('outings').insert({ ...row, user_id: who }).select('id');
     if (res.error) { c.querySelector('#oSave').disabled = false; return err('השמירה נכשלה: ' + res.error.message); }
     host.modal.classList.add('hidden'); await onDone();
+    // פטור ממשימות שנשמר מהטופס: מציעים לבדוק מיד אם יש משימות בתקופה שצריך להעביר
+    const savedId = res.data?.[0]?.id || (o && o.id);
+    if (isAdmin && row.excused && savedId && row.end_date >= (today || '') && confirm('הפטור נשמר. לבדוק אם יש לו משימות בתקופה הזאת שצריך להעביר למישהו אחר?')) location.href = 'admin.html#aff=' + savedId;
   };
 }
