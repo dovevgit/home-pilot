@@ -49,19 +49,6 @@ import { showOutDetails } from './js/outings.js';
 document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
 
-// כפתור צף: כתום עם קונטור ירוק זוהר, פותח את דף ההודעה החשובה
-{
-  const st = document.createElement('style');
-  st.textContent = '@keyframes impglow{0%,100%{box-shadow:0 0 8px 2px rgba(34,197,94,.65),0 0 18px 4px rgba(34,197,94,.35),0 4px 12px rgba(0,0,0,.3)}50%{box-shadow:0 0 14px 5px rgba(34,197,94,.95),0 0 30px 10px rgba(34,197,94,.55),0 4px 12px rgba(0,0,0,.3)}}' +
-    '#impFab{position:fixed;bottom:calc(92px + env(safe-area-inset-bottom));inset-inline-end:16px;width:60px;height:60px;border-radius:50%;background:#FF8A00;border:4px solid #22C55E;color:#fff;display:flex;align-items:center;justify-content:center;z-index:40;text-decoration:none;animation:impglow 2s ease-in-out infinite}' +
-    '@media (prefers-reduced-motion:reduce){#impFab{animation:none;box-shadow:0 0 14px 4px rgba(34,197,94,.8)}}';
-  document.head.append(st);
-  const a = document.createElement('a');
-  a.id = 'impFab'; a.href = 'important.html'; a.setAttribute('aria-label', 'הודעה חשובה'); a.title = 'הודעה חשובה';
-  a.innerHTML = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.9-5.2A8.4 8.4 0 1 1 21 11.5z"/><path d="M12 8v4M12 15.2v.1"/></svg>';
-  document.body.append(a);
-}
-
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const today = ilDate(new Date());
 if (me?.role === 'admin') {
