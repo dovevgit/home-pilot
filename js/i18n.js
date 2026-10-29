@@ -747,6 +747,7 @@ const D = {
   "לשלוח את הסיכום לכל בני המשפחה? זו הודעה חשובה שקופצת עד שעונים לה.": "Send the summary to the whole family? It is an important message that pops up until answered.",
   "אין למי לשלוח": "No one to send to",
   "הדוח נשלח": "The report was sent",
+  "דבר עם Claude": "Talk to Claude",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
