@@ -75,7 +75,7 @@ function bodyHtml(t) {
 let list = [], urls = {}, busy = false;
 // מדבקות: תמונות קטנות בתיקיית stickers. מוצגות להוספה רק בבית של הבעלים (OWNER_FAMILY). הודעת מדבקה נשמרת ב-payload.sticker בלי טקסט.
 const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
-const STICKERS = ['s1'];
+const STICKERS = ['s1', 's2'];
 const canStickers = profiles.find(p => p.id === me)?.family_id === OWNER_FAMILY;
 
 const dayLabel = d => d === today ? 'היום' : d === addDays(today, -1) ? 'אתמול' : d.split('-').reverse().join('.');
