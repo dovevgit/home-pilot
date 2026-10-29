@@ -406,7 +406,7 @@ function showForm(t) {
   const busyWd = (uid, wd, time) => { const e = evs.find(x => x.user_id === uid && x.repeat === 'weekly' && x.weekday === wd && hm(x.start_time) <= time && time < hm(x.end_time)); return e ? e.title : null; };
   const excHtml = (i, s, allowed) => {
     if ($('repeat').value !== 'daily' || allowed.length < 2 || !s.time) return '';
-    const days = [0,1,2,3,4,5,6].filter(wd => busyWd(s.assignee_id, wd, s.time));
+    const days = [0,1,2,3,4,5,6].filter(wd => busyWd(s.assignee_id, wd, s.time) && !(normExc(s.exc[wd])?.t && !busyWd(normExc(s.exc[wd]).u || s.assignee_id, wd, normExc(s.exc[wd]).t)));
     if (!days.length) return '';
     const who = byId[s.assignee_id]?.name || '';
     const chip = (wd, u, cls, note, attrs) => `<button type="button" class="avchip ${cls}" ${attrs}><b>${esc(u.name)}</b><span>${note}</span></button>`;
@@ -520,7 +520,7 @@ function showForm(t) {
         slots: slots.map(s => ({ assignee_id: s.assignee_id, ...(s.with?.length ? { assignees: [s.assignee_id, ...s.with] } : {}), due_time: s.time, ...(Object.keys(s.exc || {}).length ? { exc: s.exc } : {}) })) };
     }
     try {
-      const conflicts = await findConflicts({ repeat, weekday: parseInt($('weekday').value), date: $('date').value, slots: slots.flatMap(s => [s, ...(s.with || []).map(u => ({ ...s, assignee_id: u }))]) }, profiles);
+      const conflicts = await findConflicts({ repeat, weekday: parseInt($('weekday').value), date: $('date').value, slots: slots.flatMap(s => [s, ...(s.with || []).map(u => ({ ...s, exc: {}, assignee_id: u }))]) }, profiles);
       if (conflicts.length && !confirm('שים לב להתנגשות עם לוח השנה:\n\n' + conflicts.join('\n') + '\n\nלשמור את המשימה בכל זאת?')) { toast('השמירה בוטלה. המשימה לא נשמרה'); return; }
     } catch (_) {}
     const typeChanged = isTpl && repeat !== t.repeat;

@@ -40,18 +40,27 @@ export function availability(events, { repeat, weekday, date }, time, userIds) {
 
 // repeat: 'once' | 'weekly' | 'daily'. slots: [{assignee_id, time:'HH:MM'}]. מחזיר מערך הודעות (ריק = אין התנגשות).
 export async function findConflicts({ repeat, weekday, date, slots }, profiles) {
-  const ids = [...new Set(slots.map(s => s.assignee_id))];
+  // בונה רשימת בדיקות {uid, time, wd}. במשימה יומית כל יום בשבוע נבדק לפי מה שנקבע לו (מחליף/שעה שונה ביום מסוים).
+  const checks = [];
+  for (const s of slots) {
+    if (repeat === 'daily') {
+      for (let wd = 0; wd < 7; wd++) { const p = normExc(s.exc?.[wd]); checks.push({ uid: p?.u || s.assignee_id, time: p?.t || s.time, wd }); }
+    } else checks.push({ uid: s.assignee_id, time: s.time, wd: null });
+  }
+  const ids = [...new Set(checks.map(c => c.uid))];
   const { data, error } = await supabase.from('events').select('*').in('user_id', ids);
   if (error || !data) return [];
   const today = ilDate(new Date()), horizon = addDays(today, 7);
   const name = id => profiles.find(p => p.id === id)?.name || '';
   const out = new Set();
-  for (const s of slots) {
-    for (const e of data.filter(x => x.user_id === s.assignee_id)) {
-      if (!(hm(e.start_time) <= s.time && s.time < hm(e.end_time))) continue;
-      if (repeat === 'daily' && e.repeat === 'weekly' && s.exc && s.exc[e.weekday]) continue; // יש מחליף קבוע לאותו יום
-      const day = hitDay(e, { repeat, weekday, date }, today, horizon);
-      if (day) out.add(`${name(s.assignee_id)} בפעילות "${e.title}" (${day}, ${hm(e.start_time)}–${hm(e.end_time)}), והמשימה נקבעה ל-${s.time}`);
+  for (const c of checks) {
+    for (const e of data.filter(x => x.user_id === c.uid)) {
+      if (!(hm(e.start_time) <= c.time && c.time < hm(e.end_time))) continue;
+      let day = null;
+      if (c.wd === null) day = hitDay(e, { repeat, weekday, date }, today, horizon);
+      else if (e.repeat === 'weekly') day = e.weekday === c.wd ? `יום ${WEEKDAYS[c.wd]}` : null;
+      else if (e.event_date >= today && e.event_date <= horizon && dow(e.event_date) === c.wd) day = e.event_date.split('-').reverse().join('.');
+      if (day) out.add(`${name(c.uid)} בפעילות "${e.title}" (${day}, ${hm(e.start_time)}–${hm(e.end_time)}), והמשימה נקבעה ל-${c.time}`);
     }
   }
   return [...out];
