@@ -28,6 +28,7 @@
 .pbar{height:10px;border-radius:99px;background:#E3EAF3;overflow:hidden;margin-top:6px}
 .pbar div{height:100%;background:linear-gradient(90deg,#34D399,#10B981);border-radius:99px}
 .sp .body{padding:0 14px 14px}
+.sech{font-weight:800;font-size:16px;margin:14px 0 2px;padding-bottom:4px;border-bottom:2px solid #D6E6F5}
 .dayh{font-weight:800;color:#0A58CA;margin:12px 0 4px;font-size:15px}
 .it{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EEF2F7}
 .it .m{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
@@ -108,15 +109,15 @@ async function send(to, body) {
 
 function render() {
   if (!data) return;
-  const only = $('fMember').value, list = people.filter(p => !only || p.id === only);
+  const only = $('fMember').value, list = people.filter(p => !only || p.id === only).sort((a, b) => (b.id === me.id) - (a.id === me.id));
   $('list').innerHTML = list.map(p => {
     const items = data[p.id] || [], k = tally(items), pct = k.total ? Math.round(k.done * 100 / k.total) : 0;
     let body = '';
+    const row = x => `<div class="it ${x.status}"><span class="m">${x.status === 'done' ? '✓' : x.status === 'over' ? '!' : '○'}</span>${iconBox(x.t, 34)}<div class="t"><b data-user>${esc(x.t.title)}</b><small dir="ltr" style="display:inline-block">${esc(x.time)}</small></div></div>`;
+    const sect = (title, arr) => { if (!arr.length) return ''; let h = `<div class="sech">${title} (${arr.length})</div>`, last = ''; for (const x of arr) { if (period !== 'day' && x.date !== last) { h += `<div class="dayh">${esc(dayLabel(x.date))}</div>`; last = x.date; } h += row(x); } return h; };
     if (!items.length) body = '<p class="empty">אין משימות בתקופה הזאת</p>';
-    else { let last = ''; for (const x of items) {
-      if (period !== 'day' && x.date !== last) { body += `<div class="dayh">${esc(dayLabel(x.date))}</div>`; last = x.date; }
-      body += `<div class="it ${x.status}"><span class="m">${x.status === 'done' ? '✓' : x.status === 'over' ? '!' : '○'}</span>${iconBox(x.t, 34)}<div class="t"><b data-user>${esc(x.t.title)}</b><small dir="ltr" style="display:inline-block">${esc(x.time)}</small></div></div>`; } }
-    return `<details class="sp" ${period === 'day' || only ? 'open' : ''}><summary>${avatar(p, 44)}<div class="who"><b data-user>${esc(p.name)}</b><small>${k.done} מתוך ${k.total} בוצעו</small>
+    else body = sect('נשאר לעשות', items.filter(x => x.status !== 'done')) + sect(p.id === me.id ? 'מה עשיתי' : 'בוצע', items.filter(x => x.status === 'done'));
+    return `<details class="sp" ${period === 'day' || only || p.id === me.id ? 'open' : ''}><summary>${avatar(p, 44)}<div class="who"><b data-user>${esc(p.name)}</b><small>${k.done} מתוך ${k.total} בוצעו</small>
       <div class="pbar"><div style="width:${pct}%"></div></div>
       <div class="sumrow">${k.over ? `<span class="s-over">${k.over} באיחור</span>` : ''}${k.wait ? `<span class="s-wait">${k.wait} בהמתנה</span>` : ''}${k.done ? `<span class="s-done">${k.done} בוצעו</span>` : ''}</div></div>
       <svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>

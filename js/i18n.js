@@ -1114,6 +1114,9 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^נשאר לעשות \((\d+)\)$/, 'Still to do ($1)'],
+  [/^מה עשיתי \((\d+)\)$/, 'What I did ($1)'],
+  [/^בוצע \((\d+)\)$/, 'Done ($1)'],
   [/^(\d+) מתוך (\d+) בוצעו$/, '$1 of $2 done'],
   [/^(\d+) באיחור$/, '$1 overdue'],
   [/^(\d+) בהמתנה$/, '$1 waiting'],
