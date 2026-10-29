@@ -91,7 +91,7 @@ function render(scroll) {
     const aud = m.photo_path && m.payload?.audio && urls[m.photo_path] ? `<audio class="maud" controls preload="metadata" src="${urls[m.photo_path]}"></audio>` : '';
     const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
-      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
+      <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}</div></div>`;
   }).join('');
   if (nearEnd) window.scrollTo(0, document.body.scrollHeight);
 }
