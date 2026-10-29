@@ -370,6 +370,7 @@ function showForm(t) {
   const $ = id => document.getElementById(id);
   if ($('editBack')) $('editBack').onclick = showList;
   let slots = slotsInit;
+  let openSlot = 0;
   let evs = [];
   loadEvents().then(d => { evs = d; if ($('slots')) drawSlots(); });
   const allowedUsers = () => {
@@ -444,17 +445,32 @@ function showForm(t) {
     const allowed = allowedUsers();
     const cd = checkDate();
     const free = allowed.filter(u => !absentOn(u.id, cd));
+    const prevLen = slots.length;
     while (slots.length < n) slots.push({ assignee_id: (free[0] || allowed[0])?.id || '', with: [], time: '18:00', exc: {} });
     slots.length = n;
+    if (n > prevLen) openSlot = prevLen;
     slots.forEach(s => { if (!allowed.some(u => u.id === s.assignee_id)) s.assignee_id = (free[0] || allowed[0])?.id || ''; });
     slots.forEach(s => { s.with = (s.with || []).filter(id => id !== s.assignee_id && allowed.some(u => u.id === id)); });
     slots.forEach(s => {
       s.exc = s.exc || {};
       for (const k of Object.keys(s.exc)) { const x = normExc(s.exc[k]); if ($('repeat').value !== 'daily' || !x || !allowed.some(u => u.id === x.u) || (!x.t && (x.u === s.assignee_id || !busyWd(s.assignee_id, +k, s.time)))) delete s.exc[k]; }
     });
-    $('slots').innerHTML = slots.map((s, i) => `<div class="slotrow">
+    if (openSlot >= slots.length) openSlot = slots.length - 1;
+    const slotBody = (s, i) => `<div class="slotrow">
       <select class="sel" data-a="${i}" ${allowed.length === 1 ? 'disabled' : ''}>${allowed.map(u => { const ab = absentOn(u.id, cd); return `<option value="${u.id}" ${s.assignee_id === u.id ? 'selected' : ''} ${ab && s.assignee_id !== u.id ? 'disabled' : ''}>${esc(u.name)}${ab ? ` (נעדר/ת: ${esc(ab.reason)})` : ''}</option>`; }).join('')}</select>
-      <input type="time" data-t="${i}" value="${s.time}" dir="ltr"></div>${withHtml(i, s, allowed, cd)}${availHtml(i, s, allowed, cd)}${excHtml(i, s, allowed)}${timeExcHtml(i, s, allowed)}`).join('');
+      <input type="time" data-t="${i}" value="${s.time}" dir="ltr"></div>${withHtml(i, s, allowed, cd)}${availHtml(i, s, allowed, cd)}${excHtml(i, s, allowed)}${timeExcHtml(i, s, allowed)}`;
+    const names = s => slotUsers({ assignee_id: s.assignee_id, assignees: s.with?.length ? [s.assignee_id, ...s.with] : null }).map(id => byId[id]?.name || '?').join(' + ');
+    const excCount = s => Object.keys(s.exc || {}).length;
+    $('slots').innerHTML = slots.length === 1 ? slotBody(slots[0], 0) : slots.map((s, i) => {
+      const on = i === openSlot;
+      return `<div style="border:2px solid ${on ? 'var(--blue,#0D6EFD)' : 'var(--field)'};border-radius:16px;margin-bottom:10px;overflow:hidden;background:#fff">
+        <button type="button" data-sh="${i}" aria-expanded="${on}" style="all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:${on ? '#E3EFFF' : '#F4F8FD'}">
+          <b style="flex:none">חזרה ${i + 1}</b>
+          <span style="flex:1;min-width:0;color:var(--muted);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span data-user>${esc(names(s))}</span> · <span dir="ltr" style="display:inline-block">${esc(s.time || '')}</span>${excCount(s) ? ` · ${excCount(s)} שינויים` : ''}</span>
+          <span style="flex:none;transition:transform .2s;transform:rotate(${on ? 180 : 0}deg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+        ${on ? `<div style="padding:4px 14px 14px">${slotBody(s, i)}</div>` : ''}</div>`;
+    }).join('');
+    $('slots').querySelectorAll('[data-sh]').forEach(el => el.onclick = () => { openSlot = openSlot === +el.dataset.sh ? -1 : +el.dataset.sh; drawSlots(); });
     const setAssignee = (sl, id) => { for (const k of Object.keys(sl.exc || {})) { const x = normExc(sl.exc[k]); if (x && x.u === sl.assignee_id && x.t) sl.exc[k] = { u: id, t: x.t }; } sl.assignee_id = id; };
     $('slots').querySelectorAll('[data-a]').forEach(el => el.onchange = () => { setAssignee(slots[el.dataset.a], el.value); drawSlots(); });
     $('slots').querySelectorAll('[data-t]').forEach(el => el.onchange = () => { slots[el.dataset.t].time = el.value; drawSlots(); });
