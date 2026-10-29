@@ -18,8 +18,8 @@
     '#splash.go .glint:after{animation:spglint 1s ease-in-out 2.1s both}' +
     '#splash .sp{position:absolute;color:#fff;text-shadow:0 0 8px #fff,0 0 14px #FFD84D;font-size:22px;line-height:1;opacity:0;pointer-events:none}' +
     '#splash.go .sp{animation:sptw 1.3s ease-in-out both}' +
-    '#splash .greet{position:absolute;left:50%;transform:translateX(-50%);width:max-content;max-width:90%;bottom:calc(8% + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-size:30px;font-weight:700;padding:8px 22px;border-radius:30px;background:rgba(0,0,0,.4);text-shadow:0 2px 10px rgba(0,0,0,.55);opacity:0;z-index:2}' +
-    '#splash.go .greet{animation:spgreet .8s ease 1.6s both}' +
+    '#splash .greet{position:absolute;left:50%;top:67.5%;transform:translateX(-50%);width:max-content;max-width:78%;text-align:center;color:#fff;font-size:34px;line-height:1.2;font-weight:800;padding:10px 26px;border-radius:34px;background:linear-gradient(180deg,rgba(22,52,130,.92),rgba(14,34,92,.92));border:3px solid #FFD84D;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 16px rgba(255,216,77,.6);text-shadow:0 2px 4px rgba(0,0,0,.5);opacity:0;z-index:3}' +
+    '#splash.go .greet{animation:spgreet .7s ease 2.2s both}' +
     '@keyframes spgreet{0%{opacity:0}100%{opacity:1}}' +
     '@keyframes spcam{0%{transform:scale(1.9);transform-origin:50% 94%}100%{transform:scale(1);transform-origin:50% 50%}}' +
     '@keyframes spglint{0%{left:-40%}100%{left:120%}}' +
@@ -48,7 +48,7 @@
       var k = h >= 5 && h < 12 ? 0 : h >= 12 && h < 17 ? 1 : h >= 17 && h < 21 ? 2 : 3;
       var txt = (en ? ['Good morning', 'Good afternoon', 'Good evening', 'Good night'] : ['בוקר טוב', 'צהריים טובים', 'ערב טוב', 'לילה טוב'])[k] + ' ' + nm;
       var gr = document.createElement('div'); gr.className = 'greet'; gr.textContent = txt; gr.setAttribute('dir', en ? 'ltr' : 'rtl');
-      d.appendChild(gr);
+      stage.appendChild(gr);
     }
   } catch (e) {}
   document.documentElement.appendChild(d);
