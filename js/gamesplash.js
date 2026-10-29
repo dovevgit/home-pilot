@@ -1,8 +1,8 @@
 // מסך פתיחה למשחק: מופיע בכל כניסה, נסגר בלחיצה או אחרי 3.5 שניות.
 // שימוש: import { gameSplash } from './gamesplash.js'; gameSplash('blackjack-splash.jpg');
 import { getLang } from './i18n.js';
-const EN_IMG = { 'game-splash.jpg': 'game-splash-en.jpg', 'backgammon-splash.jpg': 'backgammon-splash-en.jpg' };
-export function gameSplash(img) {
+const EN_IMG = { 'game-splash.jpg': 'game-splash-en.jpg', 'backgammon-splash.jpg': 'backgammon-splash-en.jpg', 'bonus-splash.jpg': 'bonus-splash-en.jpg' };
+export function gameSplash(img, ms = 3500) {
   if (getLang() === 'en' && EN_IMG[img]) img = EN_IMG[img];
   if (document.getElementById('splash') || document.getElementById('gsplash')) return; // מסך הפתיחה של האפליקציה כבר מוצג
   const st = document.createElement('style');
@@ -25,5 +25,5 @@ export function gameSplash(img) {
   const hide = () => { if (done) return; done = true; sp.classList.add('gsp-out'); setTimeout(() => { sp.hidden = true; }, 650); };
   sp.addEventListener('click', hide);
   sp.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); hide(); } });
-  setTimeout(hide, 3500);
+  setTimeout(hide, ms);
 }
