@@ -728,6 +728,11 @@ const D = {
   "שינוי ליום אחד": "Change for one day",
   "מי עושה ביום הזה (אפשר כמה):": "Who does it on this day (you can pick several):",
   "צריך לבחור מי עושה ולהזין שעה בכל שורה": "Choose who does it and enter a time in every row",
+  "המשימה נקבעה": "The task is set",
+  "המשימה עודכנה": "The task was updated",
+  "ימים עם שינוי:": "Days with a change:",
+  "ביום": "On",
+  "חובה לצלם": "Photo required",
   "עריכת משימה": "Edit task",
   "התרופות": "Medications",
   "הכול נלקח היום ✓": "All taken today ✓",
@@ -1095,6 +1100,14 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^בכל יום ב-(\d\d:\d\d)$/, 'Every day at $1'],
+  [/^ביום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת) ב-(\d\d:\d\d)$/, (_, d, t) => `Every ${WD[d]} at ${t}`],
+  [/^ב-(\d+)\.(\d+) \(יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)\) ב-(\d\d:\d\d)$/, (_, a, b, d, t) => `${WD[d]}, ${a}/${b} at ${t}`],
+  [/^(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => WD[d]],
+  [/^: (.+) ב-(\d\d:\d\d)$/, ': $1 at $2'],
+  [/^\(במקום (.+)\)$/, '(instead of $1)'],
+  [/^חזרה (\d+)$/, 'Round $1'],
+  [/^(יומי|חד-פעמי|שבועי · יום (?:ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת))(?: · (\d+) פעמים ביום)? · (\d+) נקודות( · חובה לצלם)?$/, (_, r, n, pts, ph) => `${r === 'יומי' ? 'Daily' : r === 'חד-פעמי' ? 'One-time' : 'Weekly · ' + WD[r.split(' ').pop()]}${n ? ` · ${n} times a day` : ''} · ${pts} points${ph ? ' · Photo required' : ''}`],
   [/^חזרה (\d+): $/, 'Round $1: '],
   [/^(.+) רשום\/ה כנעדר\/ת ביום הזה\. לשמור בכל זאת\?$/, '$1 is listed as absent on this day. Save anyway?'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)$/, (_, d) => WD[d]],

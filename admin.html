@@ -82,6 +82,40 @@ async function affectedTasks(ab) {
 }
 
 /* ============ רשימה ============ */
+/* ============ סיכום אחרי שמירת משימה ============ */
+function showSummary(row, isNew) {
+  const nm = ids => ids.map(id => byId[id]?.name || '?').join(' + ');
+  const who = sl => nm(slotUsers(sl));
+  const tmOf = sl => sl.due_time ? String(sl.due_time).slice(0, 5) : (sl.due_at ? ilTime(new Date(sl.due_at)) : '');
+  const many = (row.slots || []).length > 1;
+  const blocks = (row.slots || []).map((sl, i) => {
+    const t0 = tmOf(sl);
+    let main;
+    if (row.repeat === 'daily') main = `בכל יום ב-${t0}`;
+    else if (row.repeat === 'weekly') main = `ביום ${WEEKDAYS[row.weekday ?? 0]} ב-${t0}`;
+    else main = `ב-${dm(row.occurrence_date)} (יום ${WEEKDAYS[dow(row.occurrence_date)]}) ב-${t0}`;
+    const ex = Object.entries(sl.exc || {}).sort((a, b) => a[0] - b[0]).map(([wd, v]) => {
+      const e = normExc(v); if (!e) return '';
+      const same = e.u === sl.assignee_id;
+      return `<li>ביום <b>${WEEKDAYS[wd]}</b>: ${esc(byId[e.u]?.name || '?')} ב-${esc(e.t || t0)}${!same ? ` <small>(במקום ${esc(nm([sl.assignee_id]))})</small>` : ''}</li>`;
+    }).join('');
+    return `<div style="margin-top:12px;padding-top:10px;border-top:2px solid var(--field)">
+      ${many ? `<small style="color:var(--muted)">חזרה ${i + 1}</small>` : ''}
+      <div style="font-size:1.05rem"><b data-user>${esc(who(sl))}</b><br>${esc(main)}</div>
+      ${ex ? `<small style="display:block;margin-top:6px;color:#92400E;font-weight:800">ימים עם שינוי:</small><ul style="margin:2px 0 0;padding-inline-start:20px;line-height:1.7">${ex}</ul>` : ''}</div>`;
+  }).join('');
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="modal-card">
+    <div style="text-align:center;margin-bottom:6px"><span style="display:inline-flex;width:52px;height:52px;border-radius:50%;background:#DDF7E8;color:#0F7A4B;align-items:center;justify-content:center;font-size:28px;font-weight:800">✓</span></div>
+    <h3 style="margin:0;text-align:center">${isNew ? 'המשימה נקבעה' : 'המשימה עודכנה'}</h3>
+    <div style="text-align:center;margin:4px 0 2px;font-size:1.15rem"><b data-user>${esc(row.title)}</b></div>
+    <small style="display:block;text-align:center;color:var(--muted)">${esc(repeatLabel(row))} · ${row.points} נקודות${row.requires_photo ? ' · חובה לצלם' : ''}</small>
+    ${blocks}
+    <button class="btn" id="sumOk" style="margin-top:16px;width:100%">אישור</button></div>`;
+  document.body.append(m);
+  return new Promise(res => { const done = () => { m.remove(); res(); }; m.querySelector('#sumOk').onclick = done; m.onclick = e => { if (e.target === m) done(); }; });
+}
+
 /* ============ שינוי חד-פעמי ליום אחד של משימה יומית (בלי לגעת בהגדרה הקבועה) ============ */
 async function openOnce(t) {
   await loadAbsences();
@@ -490,6 +524,7 @@ function showForm(t) {
     }
     if (t && row.kind === 'template') { try { await syncOccurrences({ ...row, id: t.id }); } catch (_) {} }
     if (row.kind === 'template') { try { await generateOccurrences(session.user.id); } catch (_) {} }
+    await showSummary(row, !t);
     if (t) { toast('המשימה נשמרה'); showList(); }
     else { toast('המשימה נשמרה. אפשר להוסיף עוד אחת'); showForm(null); window.scrollTo(0, 0); }
   };
