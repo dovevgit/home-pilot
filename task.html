@@ -48,7 +48,7 @@ else {
       <div style="flex:1;min-width:0"><b>${esc(who?.name || 'מישהו')}</b>
         <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> <span>${ilDate(new Date(r.created_at)) === ilDate(new Date()) ? 'היום' : ilDate(new Date(r.created_at))}</span>${pr.late ? ' <span>· באיחור</span>' : ''}${r.body ? ' <span data-user>· ' + esc(r.body) + '</span>' : ''}</div></div>
       ${urls[r.photo_path] ? `<img src="${urls[r.photo_path]}" alt="" style="width:52px;height:46px;border-radius:10px;object-fit:cover">` : ''}
-      <span class="pts" dir="ltr">+${pr.points}</span></div>`;
+      ${pr.points > 0 ? `<span class="pts" dir="ltr">+${pr.points}</span>` : ''}</div>`;
   }).join('')}</div>` : '';
   main.innerHTML = `
     <div class="card flat dhead" style="background:${tintOf(t)}">${iconBox(t, 56)}
@@ -59,7 +59,7 @@ else {
       <div class="kv"><span>${icon('user', 18)} אחראי/ת</span><span>${slot ? `${esc(slotUsers(slot).map(id => byId[id]?.name || '').filter(Boolean).join(' ו'))} ${avatarGroup(byId, slotUsers(slot), 28)}` : '—'}</span></div>
       <div class="kv"><span>${icon('clock', 18)} מועד</span><span>${due}</span></div>
       <div class="kv"><span>${icon('repeat', 18)} חזרה</span><span>${esc(repeatTxt)}</span></div>
-      <div class="kv"><span>${icon('star', 18)} נקודות</span><span class="pts" dir="ltr">${t.points}</span></div>
+      ${t.points > 0 ? `<div class="kv"><span>${icon('star', 18)} נקודות</span><span class="pts" dir="ltr">${t.points}</span></div>` : ''}
       <div class="kv"><span>${icon('camera', 18)} חובה לצלם</span><span>${t.requires_photo ? 'כן' : 'לא'}</span></div>
     </div>
     ${t.description ? `<div class="card flat"><h3>תיאור</h3><p data-user>${esc(t.description)}</p></div>` : ''}

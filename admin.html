@@ -109,7 +109,7 @@ function showSummary(row, isNew) {
     <div style="text-align:center;margin-bottom:6px"><span style="display:inline-flex;width:52px;height:52px;border-radius:50%;background:#DDF7E8;color:#0F7A4B;align-items:center;justify-content:center;font-size:28px;font-weight:800">✓</span></div>
     <h3 style="margin:0;text-align:center">${isNew ? 'המשימה נקבעה' : 'המשימה עודכנה'}</h3>
     <div style="text-align:center;margin:4px 0 2px;font-size:1.15rem"><b data-user>${esc(row.title)}</b></div>
-    <small style="display:block;text-align:center;color:var(--muted)">${esc(repeatLabel(row))} · ${row.points} נקודות${row.requires_photo ? ' · חובה לצלם' : ''}</small>
+    <small style="display:block;text-align:center;color:var(--muted)">${esc(repeatLabel(row))} · ${row.points > 0 ? row.points + ' נקודות' : 'בלי נקודות'}${row.requires_photo ? ' · חובה לצלם' : ''}</small>
     ${blocks}
     <button class="btn" id="sumOk" style="margin-top:16px;width:100%">אישור</button></div>`;
   document.body.append(m);
@@ -349,7 +349,7 @@ function showForm(t) {
       <input type="hidden" id="color" value="${esc(v.color || 'blue')}">
       <input type="hidden" id="subject" value="${esc(v.subject_id || '')}">
       <input type="hidden" id="room" value="${esc(v.room || '')}">
-      <label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" value="${v.points}">
+      <label for="points">נקודות</label><input id="points" type="number" min="0" inputmode="numeric" placeholder="0" value="${v.points}"><small class="note" style="display:block;text-align:start;margin:4px 0 0">אפשר להשאיר 0 או ריק: משימה בלי נקודות (למשל פגישה)</small>
       <input type="hidden" id="penalty" value="${v.penalty_points ?? 10}"><input type="hidden" id="late" value="${v.late_fraction ?? 0.5}">
       <div class="switch"><span><b>חובה לצלם</b></span><input id="photo" type="checkbox" ${v.requires_photo ? 'checked' : ''}></div>
       <label for="repeat">סוג משימה</label>
@@ -491,10 +491,10 @@ function showForm(t) {
     const err = msg => { $('err').textContent = msg; $('err').scrollIntoView({ block: 'center', behavior: 'smooth' }); return false; };
     $('err').textContent = '';
     const title = $('title').value.trim();
-    const points = parseInt($('points').value);
+    const points = $('points').value.trim() === '' ? 0 : parseInt($('points').value);
     const repeat = $('repeat').value;
     if (!title) return err('צריך להזין שם למשימה');
-    if (Number.isNaN(points) || points < 0) return err('צריך להזין נקודות');
+    if (Number.isNaN(points) || points < 0) return err('מספר הנקודות לא תקין (אפשר להשאיר ריק או 0, בלי נקודות)');
     if (!users.length) return err('אין משתמשים לשיוך');
     if (slots.some(s => !s.assignee_id || !s.time)) return err('צריך אחראי ושעה לכל חזרה');
     if (repeat === 'once' && !$('date').value) return err('צריך לבחור תאריך');
@@ -503,7 +503,7 @@ function showForm(t) {
     const base = {
       title, description: $('desc').value.trim() || null, tips: $('tips').value.trim() || null,
       icon: $('icon').value, color: $('color').value, subject_id: $('subject').value || null, room: $('room').value || null,
-      points, penalty_points: parseInt($('penalty').value) || 0, late_fraction: Number($('late').value),
+      points, penalty_points: points === 0 ? 0 : (parseInt($('penalty').value) || 0), late_fraction: Number($('late').value),
       requires_photo: $('photo').checked, times_required: slots.length,
       remind_before_minutes: $('remind').value === '' ? null : parseInt($('remind').value),
       reminder_text: $('rtext').value.trim() || null, overdue_text: $('otext').value.trim() || null

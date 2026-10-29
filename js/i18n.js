@@ -25,7 +25,7 @@ const D = {
   'סה"כ משימות': 'Total tasks', 'בוצעו': 'Done', 'נשארו': 'Left',
   'אין משימות להיום': 'No tasks today', 'כל משימות היום בוצעו': "All of today's tasks are done", 'לא הצלחנו לטעון משימות': 'Could not load tasks',
   'עוד לא דווחו משימות': 'No tasks reported yet', 'אין הודעות עדיין. כתבו הודעה ראשונה!': 'No messages yet. Write the first one!',
-  'לא הצלחנו לטעון הודעות': 'Could not load messages', 'המוביל השבועי': 'Weekly leader', 'נקודות': 'points', 'נעדר/ת': 'Away',
+  'לא הצלחנו לטעון הודעות': 'Could not load messages', 'המוביל השבועי': 'Weekly leader', 'נקודות': 'points', 'אפשר להשאיר 0 או ריק: משימה בלי נקודות (למשל פגישה)': 'You can leave 0 or empty: a task without points (e.g. a meeting)', 'מספר הנקודות לא תקין (אפשר להשאיר ריק או 0, בלי נקודות)': 'Invalid number of points (leave empty or 0 for no points)', 'הדיווח נשלח': 'Report sent', 'בלי נקודות': 'No points', 'נעדר/ת': 'Away',
   'ממתין': 'Waiting', 'בתהליך': 'In progress', 'בוצע': 'Done', 'באיחור': 'Overdue',
   'היום': 'Today', 'מישהו': 'Someone', '📷 תמונה': '📷 Photo',
   'תאריך לידה (יום/חודש/שנה)': 'Birth date (day/month/year)', '📅 בחירה מלוח שנה': '📅 Pick from calendar',
@@ -1115,6 +1115,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^בלי נקודות$/, () => 'No points'],
   [/^נשאר לעשות \((\d+)\)$/, 'Still to do ($1)'],
   [/^מה עשיתי \((\d+)\)$/, 'What I did ($1)'],
   [/^בוצע \((\d+)\)$/, 'Done ($1)'],
