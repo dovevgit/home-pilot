@@ -15,21 +15,64 @@
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
 <link rel="stylesheet" href="css/style.css">
+<style>
+.bn-hero{position:relative;overflow:hidden;border-radius:26px;padding:20px 18px;padding-inline-end:128px;margin-bottom:16px;color:#4A2A00;background:radial-gradient(circle at 18% 30%,#FFE27A 0,#FFC233 38%,#FF9A1F 100%);box-shadow:0 8px 22px rgba(255,138,0,.35)}
+.bn-hero img{position:absolute;inset-inline-end:8px;bottom:-6px;width:116px;height:116px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(120,60,0,.35))}
+.bn-hero h1{margin:0;font-size:28px;font-weight:800;line-height:1.1}
+.bn-hero p{margin:6px 0 0;font-size:16px;font-weight:600;line-height:1.35;max-width:20ch}
+.bn-spark{position:absolute;color:#fff;opacity:.85;font-size:18px;pointer-events:none}
+.bn-tools{display:flex;gap:8px;margin:0 0 14px}
+.bn-tools button{flex:1;margin:0}
+.bn-preview{background:#1F2A44;color:#fff;border-radius:18px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.bn-preview b{flex:1;font-size:15px;line-height:1.3}
+.bn-preview button{width:auto;margin:0;padding:0 16px;height:40px}
+.bn-sec{display:flex;align-items:center;gap:8px;margin:20px 0 10px;font-size:19px;font-weight:800;color:#1F2A44}
+.bn-sec .bn-count{background:#FF7A1A;color:#fff;border-radius:12px;font-size:14px;padding:1px 9px}
+.bn-card{background:#fff;border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(31,42,68,.1);border:2px solid #FFE6B0}
+.bn-row{display:flex;align-items:center;gap:12px}
+.bn-tile{flex:none;width:68px;height:68px;border-radius:20px;display:grid;place-items:center}
+.bn-tile img{width:50px;height:50px;object-fit:contain}
+.bn-t{flex:1;min-width:0}.bn-t b{display:block;font-size:19px;line-height:1.2;color:#1F2A44}
+.bn-t small{display:block;margin-top:3px;font-size:14px;color:#5B6478;line-height:1.3}
+.bn-pts{flex:none;background:linear-gradient(180deg,#FFD84D,#FFB020);color:#5A3200;font-weight:800;font-size:19px;padding:6px 12px;border-radius:16px;box-shadow:inset 0 -3px 0 rgba(150,80,0,.25)}
+.bn-go{display:block;width:100%;height:52px;margin:12px 0 0;border:0;border-radius:26px;font:inherit;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(180deg,#FF9A3D,#FF6A00);box-shadow:0 4px 0 #C95000;cursor:pointer}
+.bn-go:active{transform:translateY(2px);box-shadow:0 2px 0 #C95000}
+.bn-go[disabled]{opacity:.6}
+.bn-chip{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:8px 14px;border-radius:20px;font-weight:800;font-size:15px}
+.bn-wait{background:#FFF3D1;color:#8A5A00}.bn-ok{background:#DCFCE7;color:#166534}.bn-no{background:#FEE2E2;color:#991B1B}
+.bn-act{display:flex;gap:8px;margin-top:12px}.bn-act button{flex:1;margin:0}
+.bn-off{opacity:.65}
+.bn-empty{text-align:center;padding:22px 12px;color:#5B6478;font-weight:600;background:#fff;border-radius:22px;border:2px dashed #FFD27A}
+.bn-empty img{width:72px;height:72px;display:block;margin:0 auto 6px;opacity:.9}
+.bn-min{display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:10px 12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(31,42,68,.08)}
+.bn-min .bn-tile{width:44px;height:44px;border-radius:14px}.bn-min .bn-tile img{width:32px;height:32px}
+.bn-min .bn-chip{margin:0;padding:4px 10px;font-size:13px}
+</style>
 </head>
 <body>
 <main>
+  <div id="prevBar" class="bn-preview hidden"><b>כך הילד רואה את העמוד. הדיווח כאן לא נשלח באמת.</b><button class="btn" id="prevOff" type="button">חזרה</button></div>
+  <section class="bn-hero" aria-label="משימות בונוס">
+    <span class="bn-spark" style="top:12px;inset-inline-end:132px">✦</span><span class="bn-spark" style="top:70px;inset-inline-end:150px;font-size:12px">✦</span><span class="bn-spark" style="bottom:12px;inset-inline-end:122px;font-size:14px">✦</span>
+    <img src="icons/task/trophy.png" alt="">
+    <h1>משימות בונוס</h1>
+    <p>עשו משהו מיוחד וקבלו עוד נקודות</p>
+  </section>
+  <div id="adminBar" class="bn-tools hidden">
+    <button class="btn" id="add" type="button">משימת בונוס חדשה</button>
+    <button class="btn secondary" id="prevOn" type="button">איך הילד רואה</button>
+  </div>
   <div id="pendBox" class="hidden">
-    <div class="sec-title" style="margin-top:0">ממתינים לאישור</div>
+    <div class="bn-sec">ממתינים לאישור <span class="bn-count" id="pendN"></span></div>
     <div id="pend"></div>
   </div>
-  <div class="sec-title" id="openTitle" style="margin-top:0">משימות בונוס פתוחות</div>
+  <div class="bn-sec">משימות פתוחות</div>
   <div id="open"><p class="empty">טוען...</p></div>
   <div id="adminBox" class="hidden">
-    <button class="btn" id="add" type="button">משימת בונוס חדשה</button>
-    <div class="sec-title" style="margin-top:22px">ניהול משימות בונוס</div>
+    <div class="bn-sec">ניהול משימות בונוס</div>
     <div id="manage"></div>
   </div>
-  <div class="sec-title" style="margin-top:22px">הבונוסים שלי</div>
+  <div class="bn-sec">הבונוסים שלי</div>
   <div id="mine"></div>
 </main>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
@@ -39,7 +82,15 @@ const { session, profiles, isAdmin } = await initPage({ active: 'bonus', title: 
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 const me = session.user.id;
 const $ = id => document.getElementById(id);
-let tasks = [], claims = [], busy = false;
+let tasks = [], claims = [], busy = false, kidView = false;
+
+// אייקון וצבע למשימה: לפי מילה בשם, ואם אין התאמה לפי חישוב קבוע מהשם
+const ICONS = ['trophy', 'soccer', 'broom', 'car', 'flower', 'dog', 'cat', 'bicycle', 'book-open', 'music', 'heart', 'wrench', 'shopping-bag', 'cooking-pot', 'recycle', 'washing-machine'];
+const KEYS = [[/אוטו|רכב/, 'car'], [/כלב|טיול/, 'dog'], [/חתול/, 'cat'], [/כביס|בגד/, 'washing-machine'], [/מטבח|בישול|אוכל|ארוח/, 'cooking-pot'], [/ניקי|שטיפ|רצפ|מטאטא|אבק|שואב/, 'broom'], [/חצר|גינה|פרח|עציץ|להשק/, 'flower'], [/קניות|סופר/, 'shopping-bag'], [/ספר|לימוד|שיעור|קריאה/, 'book-open'], [/כדור|ספורט|משחק/, 'soccer'], [/אופניים/, 'bicycle'], [/מוזיק|שיר|פסנתר/, 'music'], [/מחזור|זבל|אשפה/, 'recycle'], [/תיקון|מברג|לתקן/, 'wrench']];
+const TILES = ['#FFE3C2', '#FFD3E1', '#D6F5E3', '#E2DAFF', '#D4EBFF'];
+const hash = t => [...t].reduce((a, c) => a + c.charCodeAt(0), 0);
+const iconOf = t => (KEYS.find(([r]) => r.test(t.title)) || [0, ICONS[hash(t.title) % ICONS.length]])[1];
+const tile = t => `<div class="bn-tile" style="background:${TILES[hash(t.title) % TILES.length]}"><img src="icons/task/${iconOf(t)}.png" alt=""></div>`;
 
 const myClaim = t => claims.find(c => c.task_id === t.id && c.user_id === me && (c.status === 'pending' || c.status === 'approved'));
 async function load() {
@@ -51,28 +102,35 @@ async function load() {
   tasks = t.data || []; claims = c.data || [];
   render();
 }
-const taskCard = (t, extra) => `<div class="card" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><b style="font-size:18px">${esc(t.title)}</b>${t.description ? `<div class="note" style="text-align:start;margin:2px 0 0">${esc(t.description)}</div>` : ''}</div><span class="pts" dir="ltr">+${t.points}</span></div>${extra || ''}</div>`;
+const card = (t, extra, off) => `<div class="bn-card${off ? ' bn-off' : ''}"><div class="bn-row">${tile(t)}<div class="bn-t"><b>${esc(t.title)}</b>${t.description ? `<small>${esc(t.description)}</small>` : ''}</div><span class="bn-pts" dir="ltr">⭐ +${t.points}</span></div>${extra || ''}</div>`;
+const empty = (txt) => `<div class="bn-empty"><img src="icons/task/trophy.png" alt="">${txt}</div>`;
 function render() {
+  const showAdmin = isAdmin && !kidView;
+  $('prevBar').classList.toggle('hidden', !kidView);
+  $('adminBar').classList.toggle('hidden', !showAdmin);
+  $('adminBox').classList.toggle('hidden', !showAdmin);
   const act = tasks.filter(t => t.active);
   $('open').innerHTML = act.length ? act.map(t => {
-    const c = myClaim(t);
-    const btn = !c ? `<button class="btn" data-claim="${t.id}" type="button" style="margin-top:10px">ביצעתי</button>`
-      : c.status === 'pending' ? '<div class="note" style="margin-top:10px">ממתין לאישור של הורה</div>' : '<div class="note" style="margin-top:10px;color:#15803D;font-weight:800">✓ אושר וקיבלת את הנקודות</div>';
-    return taskCard(t, btn);
-  }).join('') : '<p class="empty">אין כרגע משימות בונוס</p>';
+    const c = kidView ? null : myClaim(t);
+    const x = !c ? `<button class="bn-go" data-claim="${t.id}" type="button">ביצעתי!</button>`
+      : c.status === 'pending' ? '<span class="bn-chip bn-wait">⏳ ממתין לאישור של הורה</span>' : '<span class="bn-chip bn-ok">✓ אושר, קיבלת את הנקודות</span>';
+    return card(t, x);
+  }).join('') : empty(isAdmin ? 'עוד אין משימות בונוס. צרו אחת בכפתור למעלה' : 'עוד אין משימות בונוס. כשהורה יוסיף אחת, היא תופיע כאן');
 
-  if (isAdmin) {
-    $('adminBox').classList.remove('hidden');
-    const pend = claims.filter(c => c.status === 'pending' && c.user_id !== me);
-    $('pendBox').classList.toggle('hidden', !pend.length);
-    $('pend').innerHTML = pend.map(c => `<div class="card" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:10px">${avatar(byId[c.user_id], 40)}<div style="flex:1;min-width:0"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b> דיווח/ה: ${esc(c.title)}</div><span class="pts" dir="ltr">+${c.points}</span></div>
-      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-ok="${c.id}" type="button" style="flex:1;margin:0">אישור</button><button class="btn secondary" data-no="${c.id}" type="button" style="flex:1;margin:0">דחייה</button></div></div>`).join('');
-    $('manage').innerHTML = tasks.length ? tasks.map(t => taskCard(t, `<div style="display:flex;gap:8px;margin-top:10px"><button class="btn secondary" data-tog="${t.id}" type="button" style="flex:1;margin:0">${t.active ? 'השבתה' : 'הפעלה'}</button><button class="btn secondary" data-del="${t.id}" type="button" style="flex:1;margin:0">מחיקה</button></div>${t.active ? '' : '<div class="note" style="margin-top:6px">המשימה מושבתת ולא מוצגת לאחרים</div>'}`)).join('') : '<p class="empty">עוד לא יצרתם משימות בונוס</p>';
+  const pend = showAdmin ? claims.filter(c => c.status === 'pending' && c.user_id !== me) : [];
+  $('pendBox').classList.toggle('hidden', !pend.length);
+  $('pendN').textContent = pend.length;
+  $('pend').innerHTML = pend.map(c => `<div class="bn-card"><div class="bn-row">${avatar(byId[c.user_id], 48)}<div class="bn-t"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b><small>דיווח/ה: ${esc(c.title)}</small></div><span class="bn-pts" dir="ltr">⭐ +${c.points}</span></div>
+    <div class="bn-act"><button class="btn" data-ok="${c.id}" type="button">אישור</button><button class="btn secondary" data-no="${c.id}" type="button">דחייה</button></div></div>`).join('');
+  if (showAdmin) {
+    $('manage').innerHTML = tasks.length ? tasks.map(t => card(t, `<div class="bn-act"><button class="btn secondary" data-tog="${t.id}" type="button">${t.active ? 'השבתה' : 'הפעלה'}</button><button class="btn secondary" data-del="${t.id}" type="button">מחיקה</button></div>${t.active ? '' : '<div class="note" style="margin-top:8px">המשימה מושבתת ולא מוצגת לאחרים</div>'}`, !t.active)).join('') : empty('עוד לא יצרתם משימות בונוס');
   }
-  const mine = claims.filter(c => c.user_id === me);
-  const st = { pending: 'ממתין לאישור', approved: 'אושר', rejected: 'נדחה' };
-  $('mine').innerHTML = mine.length ? mine.map(c => `<div class="row-item" style="align-items:center"><div style="flex:1;min-width:0"><b>${esc(c.title)}</b><div class="note" style="text-align:start;margin:0">${st[c.status]}</div></div><span class="pts" dir="ltr">${c.status === 'approved' ? '+' + c.points : c.points}</span></div>`).join('') : '<p class="empty">עוד לא דיווחתם על משימות בונוס</p>';
+  const mine = kidView ? [] : claims.filter(c => c.user_id === me);
+  const st = { pending: ['⏳ ממתין לאישור', 'bn-wait'], approved: ['✓ אושר', 'bn-ok'], rejected: ['נדחה', 'bn-no'] };
+  $('mine').innerHTML = mine.length ? mine.map(c => { const t = { title: c.title }; return `<div class="bn-min">${tile(t)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span></div>`; }).join('') : empty('עוד לא דיווחתם על משימות בונוס');
 }
+$('prevOn').onclick = () => { kidView = true; render(); window.scrollTo(0, 0); };
+$('prevOff').onclick = () => { kidView = false; render(); window.scrollTo(0, 0); };
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b || busy) return;
   const act = async (fn, okMsg, failMsg) => {
@@ -81,7 +139,7 @@ document.addEventListener('click', async e => {
     catch (_) { showToast(failMsg, true); b.disabled = false; }
     busy = false;
   };
-  if (b.dataset.claim) return act(() => supabase.rpc('claim_bonus', { p_task: b.dataset.claim }), 'הדיווח נשלח להורים', 'לא הצלחנו לשלוח, אולי כבר דיווחת');
+  if (b.dataset.claim) { if (kidView) return showToast('זו תצוגה מקדימה, הדיווח לא נשלח'); return act(() => supabase.rpc('claim_bonus', { p_task: b.dataset.claim }), 'הדיווח נשלח להורים', 'לא הצלחנו לשלוח, אולי כבר דיווחת'); }
   if (b.dataset.ok) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.ok, p_ok: true }), 'אושר. הנקודות נוספו', 'האישור נכשל');
   if (b.dataset.no) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.no, p_ok: false }), 'הדיווח נדחה', 'הפעולה נכשלה');
   if (b.dataset.tog) { const t = tasks.find(x => x.id === b.dataset.tog); return act(() => supabase.from('bonus_tasks').update({ active: !t.active }).eq('id', t.id).select('id').then(r => (!r.error && !r.data?.length) ? { error: 1 } : r), null, 'העדכון נכשל'); }
