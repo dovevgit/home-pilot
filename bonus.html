@@ -159,7 +159,7 @@ function render() {
   }
   const mine = kidView ? [] : claims.filter(c => c.user_id === me && claimKind(c) === tab);
   const st = { pending: ['⏳ ממתין לאישור', 'bn-wait'], approved: ['✓ אושר', 'bn-ok'], rejected: ['נדחה', 'bn-no'] };
-  $('mine').innerHTML = mine.length ? mine.map(c => `<div class="bn-min">${tile(c.title, tasks.find(t => t.id === c.task_id)?.icon)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span></div>`).join('') : empty('עוד לא דיווחתם על משימות כאלה');
+  $('mine').innerHTML = mine.length ? mine.map(c => `<div class="bn-min">${tile(c.title, tasks.find(t => t.id === c.task_id)?.icon)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span>${showAdmin ? `<button class="btn secondary" data-delc="${c.id}" type="button" style="width:auto;padding:6px 12px;min-height:0;margin:0" aria-label="מחיקה">🗑</button>` : ''}</div>`).join('') : empty('עוד לא דיווחתם על משימות כאלה');
 }
 document.querySelectorAll('.bn-tabs [data-k]').forEach(b => b.onclick = () => { tab = b.dataset.k; try { localStorage.setItem('bonusTab', tab); } catch (_) {} render(); window.scrollTo(0, 0); });
 $('prevOn').onclick = () => { kidView = true; render(); window.scrollTo(0, 0); };
@@ -207,6 +207,19 @@ document.addEventListener('click', async e => {
   if (b.dataset.ok) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.ok, p_ok: true }), 'אושר. הנקודות נוספו', 'האישור נכשל');
   if (b.dataset.no) return act(() => supabase.rpc('decide_bonus_claim', { p_claim: b.dataset.no, p_ok: false }), 'הדיווח נדחה', 'הפעולה נכשלה');
   if (b.dataset.tog) { const t = tasks.find(x => x.id === b.dataset.tog); return act(() => supabase.from('bonus_tasks').update({ active: !t.active }).eq('id', t.id).select('id').then(r => (!r.error && !r.data?.length) ? { error: 1 } : r), null, 'העדכון נכשל'); }
+  if (b.dataset.delc) {
+    const c = claims.find(x => x.id === b.dataset.delc);
+    $('modalCard').innerHTML = `<h3 style="margin:0 0 8px">למחוק את הדיווח?</h3><p class="note" style="text-align:start">"${esc(c.title)}" יימחק מהרשימה.${c.status === 'approved' ? ' הנקודות שכבר ניתנו יישארו.' : ''}</p><button type="button" class="btn" id="dYes" style="background:#E5484D">מחיקה</button><button type="button" class="btn secondary" id="dNo">ביטול</button>`;
+    $('modal').classList.remove('hidden');
+    $('dNo').onclick = () => $('modal').classList.add('hidden');
+    $('dYes').onclick = async () => {
+      $('dYes').disabled = true;
+      const { data, error } = await supabase.from('bonus_claims').delete().eq('id', c.id).select('id');
+      if (error || !data?.length) { $('dYes').disabled = false; return showToast('המחיקה נכשלה', true); }
+      $('modal').classList.add('hidden'); showToast('הדיווח נמחק'); load();
+    };
+    return;
+  }
   if (b.dataset.del) {
     const t = tasks.find(x => x.id === b.dataset.del);
     $('modalCard').innerHTML = `<h3 style="margin:0 0 8px">למחוק את המשימה?</h3><p class="note" style="text-align:start">"${esc(t.title)}" תימחק. דיווחים שכבר נשלחו וממתינים לאישור יישארו.</p><button type="button" class="btn" id="dYes" style="background:#E5484D">מחיקה</button><button type="button" class="btn secondary" id="dNo">ביטול</button>`;
