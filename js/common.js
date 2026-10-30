@@ -203,6 +203,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="important.html" class="imp-link">${icon('bell')} הודעה חשובה</a>
       <a href="games.html">${icon('star')} משחקים</a>
       <a href="chat.html">${icon('message-circle')} הודעות משפחתיות</a>
+      ${(() => { try { return localStorage.getItem('myFam') === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80'; } catch (_) { return false; } })() ? `<a href="ai.html">${icon('message-circle')} עוזרים (שף ומורה)</a>` : ''}
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
       <a href="outing.html">${icon('house')} היעדרויות</a>
       <a href="info.html">${icon('info')} מידע משפחתי</a>

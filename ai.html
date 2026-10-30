@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | עוזרים</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.aitabs{display:flex;gap:8px;padding:10px 12px 0}
+.aitabs button{flex:1;border:2px solid var(--border,#ddd);background:#fff;border-radius:16px;padding:10px 6px;font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+.aitabs button[aria-pressed=true]{border-color:var(--blue,#0D6EFD);background:var(--bg)}
+.aihint{margin:8px 12px 0;color:var(--muted,#667);font-size:15px;text-align:center}
+#msgs{padding:12px}
+.msg.bot .bubble{background:#fff;white-space:pre-wrap}
+.msg.mine .bubble{white-space:pre-wrap}
+.aiav{width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;box-shadow:0 2px 6px rgba(31,41,55,.08)}
+.typing{opacity:.6}
+.aisug{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.aisug button{border:2px solid var(--blue,#0D6EFD);background:#fff;color:var(--blue-dark,#0A58CA);border-radius:999px;padding:8px 14px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body class="chatpage">
+<div class="aitabs" id="tabs">
+  <button type="button" data-h="chef" aria-pressed="true">👨‍🍳 השף</button>
+  <button type="button" data-h="english" aria-pressed="false">🇬🇧 מורה לאנגלית</button>
+</div>
+<div class="aihint" id="hint"></div>
+<main id="msgs"></main>
+<form class="composer" id="form" autocomplete="off">
+  <input id="text" type="text" placeholder="כתבו הודעה..." maxlength="500" enterkeyhint="send">
+  <button class="cbtn send" id="send" type="submit" aria-label="שליחה"></button>
+</form>
+<script type="module">
+import { initPage, supabase, esc, icon, showToast } from './js/common.js';
+document.getElementById('send').innerHTML = icon('send', 22);
+const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+const { session, profiles } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
+const meP = profiles.find(p => p.id === session.user.id);
+// תכונה ניסיונית: מוצגת רק בבית של הבעלים
+if (meP?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
+const $ = id => document.getElementById(id);
+const H = {
+  chef: { ico: '👨‍🍳', hint: 'שאלו את השף מה לבשל: ארוחות בוקר, צהריים, ערב וקינוחים', ph: 'מה בא לכם לבשל?',
+    hi: 'שלום! אני השף של הבית. ספרו לי כמה אנשים אוכלים, מה יש בבית ואם יש דברים שאי אפשר לאכול, ואציע תפריט או מתכון.',
+    sug: ['תפריט לארוחת ערב משפחתית', 'רעיון לארוחת בוקר מהירה', 'קינוח קל להכנה'] },
+  english: { ico: '🇬🇧', hint: 'תרגול אנגלית עם מורה סבלני. הוא שואל, מתקן ומסביר בעברית', ph: 'כתבו באנגלית או בעברית...',
+    hi: 'Hi! שלום, אני המורה לאנגלית. אפשר להתחיל ברמה קלה. תכתבו לי איזו רמה אתם, או פשוט תגידו Hello.',
+    sug: ['Hello', 'בוא נתרגל משפטים על המשפחה', 'תן לי תרגיל קטן'] },
+};
+let cur = 'chef', busy = false;
+const hist = { chef: [], english: [] };
+try { const s = JSON.parse(sessionStorage.getItem('aiHist') || 'null'); if (s) { hist.chef = s.chef || []; hist.english = s.english || []; } } catch (_) {}
+const save = () => { try { sessionStorage.setItem('aiHist', JSON.stringify(hist)); } catch (_) {} };
+
+function draw() {
+  const h = H[cur], list = hist[cur];
+  $('hint').textContent = h.hint; $('text').placeholder = h.ph;
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.h === cur)));
+  const bot = t => `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(t)}</div></div>`;
+  $('msgs').innerHTML = bot(h.hi) + list.map(m => m.role === 'user'
+    ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content)).join('')
+    + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
+    + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');
+  $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s));
+  window.scrollTo(0, document.body.scrollHeight);
+}
+async function send(text) {
+  text = (text || '').trim();
+  if (!text || busy) return;
+  const helper = cur;
+  hist[helper].push({ role: 'user', content: text }); save();
+  $('text').value = ''; busy = true; draw();
+  let reply = null, err = null;
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-helper', { body: { helper, messages: hist[helper].slice(-20) } });
+    if (error) { let c = null; try { c = (await error.context.json()).error; } catch (_) {} err = c || 'x'; }
+    else reply = data?.reply || null;
+  } catch (_) { err = 'x'; }
+  busy = false;
+  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); }
+  else {
+    hist[helper].pop(); save();
+    showToast(err === 'user_limit' ? 'הגעתם למגבלת השאלות להיום. נסו שוב מחר' : err === 'family_limit' ? 'הבית הגיע למגבלת השאלות להיום' : 'העוזר לא הצליח לענות, נסו שוב', true);
+    $('text').value = text;
+  }
+  draw();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { cur = b.dataset.h; draw(); });
+$('form').addEventListener('submit', e => { e.preventDefault(); send($('text').value); });
+draw();
+</script>
+</body>
+</html>
