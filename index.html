@@ -45,7 +45,7 @@
 <div class="modal hidden" id="pmodal"><div class="modal-card" id="pcard"></div></div>
 <script type="module">
 import { initPage, supabase, esc, icon, iconBox, tintOf, avatar, pointsFor, ilDate, ilTime, addDays, reportCounts, deriveStatus, nextSlot, STATUS, signedUrls, playChime, showToast, slotUsers, avatarGroup, t as tx } from './js/common.js';
-import { weeklyPoints } from './js/points.js';
+import { lifetimePoints } from './js/points.js';
 import { showOutDetails } from './js/outings.js';
 document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
@@ -58,14 +58,14 @@ if (me?.role === 'admin') {
   });
 }
 
-/* --- נקודות שבועיות, מוביל ובני משפחה --- */
-const { pointsByUser } = await weeklyPoints();
+/* --- נקודות מצטברות, מוביל ובני משפחה --- */
+const { earnedByUser: pointsByUser } = await lifetimePoints();
 const users = profiles.filter(p => p.is_user);
 const best = Math.max(0, ...users.map(u => pointsByUser[u.id] || 0));
 const leaders = best > 0 ? users.filter(u => (pointsByUser[u.id] || 0) === best) : [];
 document.getElementById('leader').innerHTML = leaders.length ? `
   <div class="card leader">${avatar(leaders[0], 52)}
-    <div style="flex:1"><div class="lsub">המוביל השבועי</div><div class="ltitle">${leaders.map(l => esc(l.name)).join(' ו')}</div>
+    <div style="flex:1"><div class="lsub">המוביל</div><div class="ltitle">${leaders.map(l => esc(l.name)).join(' ו')}</div>
     <div class="lsub"><span dir="ltr">${best}</span> נקודות</div></div>
     <span class="crown">${icon('crown', 26)}</span></div>` : '';
 const { data: awayRows } = await supabase.from('outings').select('user_id,reason,excused').is('returned_at', null).lte('start_date', today).gte('end_date', today);
@@ -132,7 +132,7 @@ function openCard(uid, editMode = false) {
       ${away[uid] ? `<div class="pline">${awayTag(uid)} ${esc(away[uid])}</div>` : ''}
       <div class="pline">${p.birthday ? `<b>🎂 נולד/ה ב-${dmy(p.birthday)}</b><br><small>${esc(bdayText(bi))}</small>` : '<small>עוד לא הוזן תאריך לידה</small>'}</div>
       <div class="pline"><b>מה כדאי לדעת</b><br>${p.about ? esc(p.about).replace(/\n/g, '<br>') : '<small>עוד לא נכתב</small>'}</div>
-      <div class="pline"><b>נקודות השבוע:</b> <span dir="ltr">${pointsByUser[uid] || 0}</span></div>
+      <div class="pline"><b>סך הנקודות:</b> <span dir="ltr">${pointsByUser[uid] || 0}</span></div>
       ${me?.role === 'admin' ? `<button class="btn secondary" id="pEdit" type="button">${icon('pencil', 18)} עריכה</button>` : ''}`;
     pc.querySelector('#pEdit')?.addEventListener('click', () => openCard(uid, true));
   }
