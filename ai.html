@@ -67,7 +67,6 @@ body.teacher #msgs{padding:12px 12px 0}
 .finno{background:#fff;color:#34425E;border:3px solid #B9C7DD!important;box-shadow:0 4px 0 #B9C7DD}
 .ainote{margin:10px 12px 0;padding:10px 14px;border-radius:14px;background:#FEF3C7;border:1px solid #FCD34D;color:#78350F;font-size:15px;font-weight:600;line-height:1.45;text-align:center}
 .ttyping{text-align:center;font-size:30px;opacity:.7}
-.chefhero{display:block;width:100%;max-width:300px;margin:0 auto 10px;border-radius:18px;box-shadow:0 4px 14px rgba(0,0,0,.15)}
 </style>
 </head>
 <body class="chatpage">
@@ -156,7 +155,7 @@ function draw() {
     const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
     return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}</div></div>`; };
-  $('msgs').innerHTML = (list.length || !EN || cur !== 'chef' ? '' : '<img class="chefhero" src="icons/chef-en.jpg" alt="What would you like to cook today?">') + (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map(m => m.role === 'user'
+  $('msgs').innerHTML = (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map(m => m.role === 'user'
     ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content))).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
     + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');

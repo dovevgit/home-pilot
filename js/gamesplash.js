@@ -1,7 +1,7 @@
 // מסך פתיחה למשחק: מופיע בכל כניסה, נסגר בלחיצה או אחרי 3.5 שניות.
 // שימוש: import { gameSplash } from './gamesplash.js'; gameSplash('blackjack-splash.jpg');
 import { getLang } from './i18n.js';
-const EN_IMG = { 'game-splash.jpg': 'game-splash-en.jpg', 'backgammon-splash.jpg': 'backgammon-splash-en.jpg', 'bonus-splash.jpg': 'bonus-splash-en.jpg' };
+const EN_IMG = { 'game-splash.jpg': 'game-splash-en.jpg', 'backgammon-splash.jpg': 'backgammon-splash-en.jpg', 'bonus-splash.jpg': 'bonus-splash-en.jpg', 'chef-splash.jpg': 'chef-splash-en.jpg' };
 export function gameSplash(img, ms = 3500) {
   if (getLang() === 'en' && EN_IMG[img]) img = EN_IMG[img];
   if (document.getElementById('splash') || document.getElementById('gsplash')) return; // מסך הפתיחה של האפליקציה כבר מוצג
