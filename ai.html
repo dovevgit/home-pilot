@@ -57,6 +57,8 @@ body.teacher #msgs{padding:12px 12px 0}
 .tbig .c4{background:linear-gradient(180deg,#4C9BFF,#0D6EFD);box-shadow:0 6px 0 #0A47A8}
 .tbig .c5{grid-column:1/-1;background:#fff;color:#34425E;border:3px solid #B9C7DD;box-shadow:0 5px 0 #B9C7DD;font-size:21px}
 .tboard.run .tin{min-height:calc(100dvh - 300px)}
+.tfinish{display:block;margin:6px auto 4px;border:0;border-radius:999px;padding:0 28px;height:54px;background:linear-gradient(180deg,#FFB05C,#FF8A1F);box-shadow:0 5px 0 #C4640A;color:#fff;font:inherit;font-size:20px;font-weight:800;cursor:pointer}
+.tfinish:active{transform:translateY(3px);box-shadow:0 2px 0 #C4640A}
 .ttyping{text-align:center;font-size:30px;opacity:.7}
 </style>
 </head>
@@ -130,7 +132,9 @@ function drawBoard() {
   const sug = list.length ? '' : `<div class="tbig">${h.sug.map((x, i) => `<button type="button" class="c${i + 1}" data-s="${esc(x)}">${T_ICONS[i] || ''}${esc(x.replace(/^[^\p{L}]+/u, ''))}</button>`).join('')}</div>`;
   $('msgs').innerHTML = `<div class="tboard${list.length ? ' run' : ''}"><div class="tin"><div class="ttitle"><div class="en">Let’s Learn English</div><div class="ln"></div></div><div class="tchalk">${esc(h.hi())}</div>`
     + list.map(m => m.role === 'user' ? `<div class="tnote">${esc(m.content)}</div>` : teacher(m.content)).join('')
-    + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug;
+    + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug
+    + (list.filter(m => m.role === 'user').length >= 2 && !busy ? '<div style="margin:16px 0 4px"><button type="button" class="tfinish" id="finishBtn">🏁 סיימתי שיעור</button></div>' : '');
+  const fb = $('finishBtn'); if (fb) fb.onclick = () => { if (confirm('לסיים את השיעור ולשלוח אותו להורים?')) finishLesson(); };
   $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
   $('msgs').querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
   window.scrollTo(0, list.length ? document.body.scrollHeight : 0);
@@ -161,6 +165,21 @@ function say(w) {
     sy.speak(u);
   } catch (_) { showToast('ההקראה לא הצליחה', true); }
 }
+async function finishLesson() {
+  if (busy) return;
+  const list = hist.english;
+  if (list.filter(m => m.role === 'user').length < 2) return;
+  busy = true; draw();
+  let ok = false;
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-helper', { body: { action: 'finish', helper: 'english', messages: list.slice(-200) } });
+    ok = !error && !!data?.ok;
+  } catch (_) {}
+  busy = false;
+  if (ok) { hist.english = []; save(); showToast('השיעור נשלח להורים. כל הכבוד! 👏'); }
+  else showToast('לא הצלחנו לשלוח את השיעור, נסו שוב', true);
+  draw();
+}
 async function send(text) {
   text = (text || '').trim();
   if (!text || busy) return;
@@ -175,7 +194,9 @@ async function send(text) {
     else reply = data?.reply || null;
   } catch (_) { err = 'x'; }
   busy = false;
-  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); const w = (reply.match(/\[\[say:([^\]]{1,60})\]\]/) || [])[1]; if (w && helper === 'english') setTimeout(() => say(w.trim()), 150); }
+  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); const w = (reply.match(/\[\[say:([^\]]{1,60})\]\]/) || [])[1]; if (w && helper === 'english') setTimeout(() => say(w.trim()), 150);
+    // המורה סיים 20 מילים ולא נתן מילה חדשה: השיעור מסתיים ונשלח להורים
+    if (helper === 'english' && !w && hist.english.filter(m => m.role === 'assistant').reduce((n, m) => n + (m.content.match(/\[\[say:/g) || []).length, 0) >= 20) { draw(); await finishLesson(); return; } }
   else {
     hist[helper].pop(); save();
     showToast(err === 'helper_limit' || err === 'user_limit' ? H[helper].full : err === 'family_limit' ? 'הבית הגיע למגבלת השאלות להיום' : 'העוזר לא הצליח לענות, נסו שוב', true);

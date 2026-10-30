@@ -204,6 +204,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="games.html">${icon('star')} משחקים</a>
       <a href="chat.html">${icon('message-circle')} הודעות משפחתיות</a>
       ${(() => { try { return localStorage.getItem('myFam') === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80'; } catch (_) { return false; } })() ? `<a href="ai.html#chef">${icon('utensils')} השף של הבית</a>` : ''}
+      ${isAdmin && (() => { try { return localStorage.getItem('myFam') === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80'; } catch (_) { return false; } })() ? `<a href="lessons.html">${icon('graduation-cap')} שיעורי אנגלית</a>` : ''}
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
       <a href="outing.html">${icon('house')} היעדרויות</a>
       <a href="info.html">${icon('info')} מידע משפחתי</a>
