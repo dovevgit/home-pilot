@@ -23,6 +23,8 @@
 .ls .acts{display:flex;gap:8px;flex-wrap:wrap}
 .ls .acts button{font:inherit;font-weight:700;border-radius:999px;padding:8px 16px;cursor:pointer;border:2px solid #0D6EFD;background:#fff;color:#0A58CA}
 .ls .acts .del{border-color:#DC2626;color:#B91C1C}
+.op{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:10px 14px;margin:0 0 10px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.op b{display:block;color:#166534;margin-bottom:2px}
 .tr{margin-top:12px;border-top:1px solid #E2E8F0;padding-top:8px}
 .tr .q,.tr .a{padding:8px 12px;border-radius:12px;margin:6px 0;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
 .tr .q{background:#E8F3FF}
@@ -54,7 +56,7 @@ function draw() {
     const isOpen = open.has(r.id);
     const tr = isOpen ? `<div class="tr">${(r.messages || []).map(m => `<div class="${m.role === 'user' ? 'a' : 'q'}"><span class="who">${m.role === 'user' ? 'תלמיד/ה' : 'מורה'}</span>${esc(clean(m.content))}</div>`).join('')}</div>` : '';
     return `<section class="card ls"><h3><span>${esc(r.user_name || '')} סיים שיעור אנגלית</span><span class="when">${esc(fmt(r.created_at))}</span></h3>
-      <p class="sum">${r.summary ? esc(r.summary) : 'אין סיכום לשיעור הזה'}</p>
+      <p class="sum">${r.summary ? esc(r.summary) : 'אין סיכום לשיעור הזה'}</p>${r.opinion ? `<div class="op"><b>חוות דעת של המורה</b>${esc(r.opinion)}</div>` : ''}
       <div class="acts"><button type="button" data-v="${r.id}">${isOpen ? 'הסתר שיעור' : 'הצג שיעור'}</button><button type="button" class="del" data-d="${r.id}">מחיקת השיעור</button></div>${tr}</section>`;
   }).join('');
   $('list').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { const id = b.dataset.v; open.has(id) ? open.delete(id) : open.add(id); draw(); });
@@ -66,7 +68,7 @@ function draw() {
   });
 }
 async function load() {
-  const { data, error } = await supabase.from('ai_lessons').select('id,user_name,messages,summary,created_at').order('created_at', { ascending: false }).limit(50);
+  const { data, error } = await supabase.from('ai_lessons').select('id,user_name,messages,summary,opinion,created_at').order('created_at', { ascending: false }).limit(50);
   if (error) { $('msg').textContent = 'לא הצלחנו לטעון'; return; }
   rows = data || []; draw();
 }

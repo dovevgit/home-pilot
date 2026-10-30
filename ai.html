@@ -59,6 +59,12 @@ body.teacher #msgs{padding:12px 12px 0}
 .tboard.run .tin{min-height:calc(100dvh - 300px)}
 .tfinish{display:block;margin:6px auto 4px;border:0;border-radius:999px;padding:0 28px;height:54px;background:linear-gradient(180deg,#FFB05C,#FF8A1F);box-shadow:0 5px 0 #C4640A;color:#fff;font:inherit;font-size:20px;font-weight:800;cursor:pointer}
 .tfinish:active{transform:translateY(3px);box-shadow:0 2px 0 #C4640A}
+.finask{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:24px}
+.finbox{background:#fff;border-radius:24px;padding:26px 20px 20px;width:100%;max-width:340px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.finq{font-size:24px;font-weight:800;line-height:1.35;margin-bottom:18px;color:#1F2A44}
+.finbox button{display:block;width:100%;border:0;border-radius:18px;height:58px;font:inherit;font-size:21px;font-weight:800;cursor:pointer;margin-top:10px}
+.finyes{background:linear-gradient(180deg,#52D87A,#22A84B);color:#fff;box-shadow:0 5px 0 #167532}
+.finno{background:#fff;color:#34425E;border:3px solid #B9C7DD!important;box-shadow:0 4px 0 #B9C7DD}
 .ttyping{text-align:center;font-size:30px;opacity:.7}
 </style>
 </head>
@@ -136,7 +142,7 @@ function drawBoard() {
     + list.map(m => m.role === 'user' ? `<div class="tnote">${esc(m.content)}</div>` : teacher(m.content)).join('')
     + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug
     + (list.filter(m => m.role === 'user').length >= 2 && !busy ? '<div style="margin:16px 0 4px"><button type="button" class="tfinish" id="finishBtn">🏁 סיימתי שיעור</button></div>' : '');
-  const fb = $('finishBtn'); if (fb) fb.onclick = () => { if (confirm('לסיים את השיעור ולשלוח אותו להורים?')) finishLesson(); };
+  const fb = $('finishBtn'); if (fb) fb.onclick = () => askFinish();
   $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
   $('msgs').querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
   window.scrollTo(0, list.length ? document.body.scrollHeight : 0);
@@ -167,6 +173,14 @@ function say(w) {
     sy.speak(u);
   } catch (_) { showToast('ההקראה לא הצליחה', true); }
 }
+function askFinish() {
+  if (document.getElementById('finAsk')) return;
+  const d = document.createElement('div'); d.id = 'finAsk'; d.className = 'finask';
+  d.innerHTML = '<div class="finbox"><div class="finq">בטוח שאתה רוצה לסיים את השיעור?</div><button type="button" class="finyes">כן, לסיים</button><button type="button" class="finno">להמשיך בשיעור</button></div>';
+  document.body.appendChild(d);
+  d.querySelector('.finno').onclick = () => d.remove();
+  d.querySelector('.finyes').onclick = () => { d.remove(); finishLesson(); };
+}
 async function finishLesson() {
   if (busy) return;
   const list = hist.english;
@@ -178,7 +192,7 @@ async function finishLesson() {
     ok = !error && !!data?.ok;
   } catch (_) {}
   busy = false;
-  if (ok) { hist.english = []; save(); showToast('השיעור נשלח להורים. כל הכבוד! 👏'); }
+  if (ok) { hist.english = []; save(); showToast('השיעור הסתיים. כל הכבוד! 👏'); }
   else showToast('לא הצלחנו לשלוח את השיעור, נסו שוב', true);
   draw();
 }
