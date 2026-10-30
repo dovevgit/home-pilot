@@ -120,6 +120,8 @@ const T_ICONS = [
   SV('<path d="M4 20l1-5L16.5 3.5a2.1 2.1 0 0 1 3 3L8 18zM14 6l3 3"/>'),
   SV('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>')];
 const SPK = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0A58CA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+// מתכון מלא: יש בו מצרכים ושלבי הכנה ממוספרים (לא רעיונות קצרים ולא שאלות)
+const isRecipe = t => /(מצרכים|מרכיבים)/.test(t) && /^\s*[1-9][.)]\s/m.test(t);
 function drawBoard() {
   const h = H[cur], list = hist[cur];
   const teacher = t => {
@@ -149,7 +151,7 @@ function draw() {
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
     return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}</div></div>`; };
   $('msgs').innerHTML = bot(h.hi()) + list.map(m => m.role === 'user'
-    ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef')).join('')
+    ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content))).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
     + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');
   $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
