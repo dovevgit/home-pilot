@@ -129,8 +129,9 @@ async function send(text) {
 window.addEventListener('hashchange', route);
 $('form').addEventListener('submit', e => { e.preventDefault(); send($('text').value); });
 route();
-// השף נפתח עם מסך פתיחה של 4 שניות (לחיצה מדלגת)
+// השף והמורה נפתחים עם מסך פתיחה של 4 שניות (לחיצה מדלגת)
 if (cur === 'chef') gameSplash('chef-splash.jpg', 4000);
+if (cur === 'english') gameSplash('teacher-splash.jpg', 4000);
 </script>
 </body>
 </html>

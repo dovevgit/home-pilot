@@ -76,8 +76,9 @@ main[data-kind=enrichment]{--hero:radial-gradient(circle at 18% 30%,#D8CCFF 0,#A
   </section>
   <div id="adminBar" class="bn-tools hidden">
     <button class="btn" id="add" type="button">משימה חדשה</button>
-    <button class="btn secondary" id="prevOn" type="button">איך הילד רואה</button>
+    <button class="btn secondary hidden" id="aiBtn" type="button">🇬🇧 מורה לאנגלית</button>
   </div>
+  <div id="aiBar" class="bn-tools hidden"><button class="btn" id="aiBtn2" type="button">🇬🇧 מורה לאנגלית</button></div>
   <div id="pendBox" class="hidden">
     <div class="bn-sec">ממתינים לאישור <span class="bn-count" id="pendN"></span></div>
     <div id="pend"></div>
@@ -90,6 +91,7 @@ main[data-kind=enrichment]{--hero:radial-gradient(circle at 18% 30%,#D8CCFF 0,#A
   </div>
   <div class="bn-sec" id="mineT">הבונוסים שלי</div>
   <div id="mine"></div>
+  <div id="prevBox" class="bn-tools hidden" style="margin-top:18px"><button class="btn secondary" id="prevOn" type="button">איך הילד רואה</button></div>
 </main>
 <div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <script type="module">
@@ -138,6 +140,11 @@ function render() {
   $('mineT').textContent = K.mine; $('manageT').textContent = tab === 'bonus' ? 'ניהול משימות בונוס' : 'ניהול משימות העשרה';
   $('prevBar').classList.toggle('hidden', !kidView);
   $('adminBar').classList.toggle('hidden', !showAdmin);
+  // מורה לאנגלית: רק בבית של הבעלים, רק בלשונית ההעשרה
+  const aiOn = tab === 'enrichment' && byId[me]?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+  $('aiBtn').classList.toggle('hidden', !aiOn);
+  $('aiBar').classList.toggle('hidden', !(aiOn && !showAdmin));
+  $('prevBox').classList.toggle('hidden', !showAdmin);
   $('adminBox').classList.toggle('hidden', !showAdmin);
   const allPend = showAdmin ? claims.filter(c => (c.status === 'pending' || c.status === 'requested') && c.user_id !== me) : [];
   [['nB', 'bonus'], ['nE', 'enrichment']].forEach(([id, k]) => { const n = allPend.filter(c => claimKind(c) === k).length; $(id).textContent = n; $(id).classList.toggle('hidden', !n); });
@@ -167,6 +174,7 @@ function render() {
   $('mine').innerHTML = mine.length ? mine.map(c => `<div class="bn-min">${tile(c.title, tasks.find(t => t.id === c.task_id)?.icon)}<div class="bn-t"><b style="font-size:16px">${esc(c.title)}</b></div><span class="bn-chip ${st[c.status][1]}">${st[c.status][0]}</span><span class="bn-pts" dir="ltr" style="font-size:15px;padding:4px 9px">${c.status === 'approved' ? '+' : ''}${c.points}</span>${showAdmin ? `<button class="btn secondary" data-delc="${c.id}" type="button" style="width:auto;padding:6px 12px;min-height:0;margin:0" aria-label="מחיקה">🗑</button>` : ''}</div>`).join('') : empty('עוד לא דיווחתם על משימות כאלה');
 }
 document.querySelectorAll('.bn-tabs [data-k]').forEach(b => b.onclick = () => { tab = b.dataset.k; try { localStorage.setItem('bonusTab', tab); } catch (_) {} render(); window.scrollTo(0, 0); });
+$('aiBtn').onclick = $('aiBtn2').onclick = () => { location.href = 'ai.html#english'; };
 $('prevOn').onclick = () => { kidView = true; render(); window.scrollTo(0, 0); };
 $('prevOff').onclick = () => { kidView = false; render(); window.scrollTo(0, 0); };
 
