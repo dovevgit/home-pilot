@@ -42,6 +42,7 @@
 </form>
 <script type="module">
 import { initPage, supabase, esc, icon, showToast } from './js/common.js';
+import { gameSplash } from './js/gamesplash.js';
 document.getElementById('send').innerHTML = icon('send', 22);
 const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
 const { session, profiles } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
@@ -126,10 +127,10 @@ async function send(text) {
   draw();
 }
 window.addEventListener('hashchange', route);
-// חץ החזרה: משיחה חוזר למסך הבחירה, ממסך הבחירה לדף הבית
-hdrBack?.addEventListener('click', e => { if (cur) { e.preventDefault(); location.hash = ''; } });
 $('form').addEventListener('submit', e => { e.preventDefault(); send($('text').value); });
 route();
+// השף נפתח עם מסך פתיחה של 4 שניות (לחיצה מדלגת)
+if (cur === 'chef') gameSplash('chef-splash.jpg', 4000);
 </script>
 </body>
 </html>
