@@ -27,6 +27,7 @@
 .msg.mine .bubble{white-space:pre-wrap}
 .aiav{width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;box-shadow:0 2px 6px rgba(31,41,55,.08)}
 .typing{opacity:.6}
+.saybtn{display:flex;width:max-content;align-items:center;gap:6px;margin:8px 0 0;border:2px solid var(--blue,#0D6EFD);background:#fff;color:var(--blue-dark,#0A58CA);border-radius:999px;padding:6px 14px;font:inherit;font-size:18px;font-weight:700;cursor:pointer;direction:ltr}
 .aisug{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .aisug button{border:2px solid var(--blue,#0D6EFD);background:#fff;color:var(--blue-dark,#0A58CA);border-radius:999px;padding:8px 14px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
 </style>
@@ -48,13 +49,17 @@ const meP = profiles.find(p => p.id === session.user.id);
 // תכונה ניסיונית: מוצגת רק בבית של הבעלים
 if (meP?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
 const $ = id => document.getElementById(id);
+const EN = (() => { try { return localStorage.getItem('lang') === 'en'; } catch (_) { return false; } })();
+const myName = meP?.name || '';
+const greetTime = () => { const h = new Date().getHours(), k = h >= 5 && h < 12 ? 0 : h >= 12 && h < 17 ? 1 : h >= 17 && h < 21 ? 2 : 3;
+  return (EN ? ['Good morning', 'Good afternoon', 'Good evening', 'Good night'] : ['בוקר טוב', 'צהריים טובים', 'ערב טוב', 'לילה טוב'])[k]; };
 const H = {
   chef: { ico: '👨‍🍳', name: 'השף', hint: 'שאלו את השף מה לבשל: ארוחות בוקר, צהריים, ערב וקינוחים', ph: 'מה בא לכם לבשל?',
-    hi: 'שלום! אני השף של הבית. ספרו לי כמה אנשים אוכלים, מה יש בבית ואם יש דברים שאי אפשר לאכול, ואציע תפריט או מתכון.',
-    sug: ['תפריט לארוחת ערב משפחתית', 'רעיון לארוחת בוקר מהירה', 'קינוח קל להכנה'] },
+    hi: () => `היי ${myName}, שמח שאתם כאן, מה בא לכם להכין היום?`,
+    sug: ['🍳 ארוחת בוקר', '🥗 ארוחת צהריים', '🍝 ארוחת ערב', '🍰 קינוח מפנק', 'משהו אחר'], full: 'השף סיים להיום, נתראה מחר 👨‍🍳' },
   english: { ico: '🇬🇧', name: 'מורה לאנגלית', hint: 'תרגול אנגלית עם מורה סבלני. הוא שואל, מתקן ומסביר בעברית', ph: 'כתבו באנגלית או בעברית...',
-    hi: 'Hi! שלום, אני המורה לאנגלית. אפשר להתחיל ברמה קלה. תכתבו לי איזו רמה אתם, או פשוט תגידו Hello.',
-    sug: ['Hello', 'בוא נתרגל משפטים על המשפחה', 'תן לי תרגיל קטן'] },
+    hi: () => `${greetTime()} ${myName}, מה בא לך לתרגל היום?`,
+    sug: ['📚 מילים חדשות', '💬 שיחה באנגלית', '✏️ משפטים', '🎯 תרגיל מהיר', 'משהו אחר'], full: 'המורה סיים להיום, נתראה מחר 🇬🇧' },
 };
 let cur = null, busy = false;
 const hdrBack = document.querySelector('header.bar a.iconbtn[href]');
@@ -78,31 +83,44 @@ function route() {
 function draw() {
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
-  const bot = t => `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(t)}</div></div>`;
-  $('msgs').innerHTML = bot(h.hi) + list.map(m => m.role === 'user'
+  const bot = t => {
+    const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
+    const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
+    return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}</div></div>`; };
+  $('msgs').innerHTML = bot(h.hi()) + list.map(m => m.role === 'user'
     ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content)).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
     + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');
-  $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s));
+  $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
+  $('msgs').querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
   window.scrollTo(0, document.body.scrollHeight);
+}
+function say(w) {
+  try {
+    const sy = window.speechSynthesis; if (!sy) { showToast('ההקראה לא נתמכת במכשיר הזה', true); return; }
+    sy.cancel(); const u = new SpeechSynthesisUtterance(w); u.lang = 'en-US'; u.rate = 0.85;
+    const v = sy.getVoices().find(x => /^en[-_]US/i.test(x.lang)) || sy.getVoices().find(x => /^en/i.test(x.lang)); if (v) u.voice = v;
+    sy.speak(u);
+  } catch (_) { showToast('ההקראה לא הצליחה', true); }
 }
 async function send(text) {
   text = (text || '').trim();
   if (!text || busy) return;
   const helper = cur;
+  try { if (helper === 'english' && window.speechSynthesis) { const z = new SpeechSynthesisUtterance(' '); z.volume = 0; window.speechSynthesis.speak(z); } } catch (_) {} // פותח את ההקראה האוטומטית בטלפון
   hist[helper].push({ role: 'user', content: text }); save();
   $('text').value = ''; busy = true; draw();
   let reply = null, err = null;
   try {
-    const { data, error } = await supabase.functions.invoke('ai-helper', { body: { helper, messages: hist[helper].slice(-20) } });
+    const { data, error } = await supabase.functions.invoke('ai-helper', { body: { helper, messages: hist[helper].slice(-80) } });
     if (error) { let c = null; try { c = (await error.context.json()).error; } catch (_) {} err = c || 'x'; }
     else reply = data?.reply || null;
   } catch (_) { err = 'x'; }
   busy = false;
-  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); }
+  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); const w = (reply.match(/\[\[say:([^\]]{1,60})\]\]/) || [])[1]; if (w && helper === 'english') setTimeout(() => say(w.trim()), 150); }
   else {
     hist[helper].pop(); save();
-    showToast(err === 'user_limit' ? 'הגעתם למגבלת השאלות להיום. נסו שוב מחר' : err === 'family_limit' ? 'הבית הגיע למגבלת השאלות להיום' : 'העוזר לא הצליח לענות, נסו שוב', true);
+    showToast(err === 'helper_limit' || err === 'user_limit' ? H[helper].full : err === 'family_limit' ? 'הבית הגיע למגבלת השאלות להיום' : 'העוזר לא הצליח לענות, נסו שוב', true);
     $('text').value = text;
   }
   draw();
