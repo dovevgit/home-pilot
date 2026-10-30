@@ -39,10 +39,9 @@
 </main>
 <script type="module">
 import { initPage, supabase, esc, showToast } from './js/common.js';
-const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
 const { me, isAdmin } = await initPage({ active: 'lessons', title: 'שיעורי אנגלית', back: 'index.html', menu: false });
-// תכונה ניסיונית: רק הורים בבית של הבעלים
-if (!isAdmin || me?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
+// רק הורים
+if (!isAdmin) { location.replace('index.html'); await new Promise(() => {}); }
 const $ = id => document.getElementById(id);
 const open = new Set();
 let rows = [];

@@ -141,7 +141,7 @@ function render() {
   $('prevBar').classList.toggle('hidden', !kidView);
   $('adminBar').classList.toggle('hidden', !showAdmin);
   // מורה לאנגלית: רק בבית של הבעלים, רק בלשונית ההעשרה
-  const aiOn = tab === 'enrichment' && byId[me]?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+  const aiOn = tab === 'enrichment';
   $('aiBtn').classList.toggle('hidden', !aiOn);
   $('aiBar').classList.toggle('hidden', !(aiOn && !showAdmin));
   $('prevBox').classList.toggle('hidden', !showAdmin);

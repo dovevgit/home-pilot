@@ -65,6 +65,7 @@ body.teacher #msgs{padding:12px 12px 0}
 .finbox button{display:block;width:100%;border:0;border-radius:18px;height:58px;font:inherit;font-size:21px;font-weight:800;cursor:pointer;margin-top:10px}
 .finyes{background:linear-gradient(180deg,#52D87A,#22A84B);color:#fff;box-shadow:0 5px 0 #167532}
 .finno{background:#fff;color:#34425E;border:3px solid #B9C7DD!important;box-shadow:0 4px 0 #B9C7DD}
+.ainote{margin:10px 12px 0;padding:10px 14px;border-radius:14px;background:#FEF3C7;border:1px solid #FCD34D;color:#78350F;font-size:15px;font-weight:600;line-height:1.45;text-align:center}
 .ttyping{text-align:center;font-size:30px;opacity:.7}
 </style>
 </head>
@@ -80,11 +81,8 @@ body.teacher #msgs{padding:12px 12px 0}
 import { initPage, supabase, esc, icon, showToast } from './js/common.js';
 import { gameSplash } from './js/gamesplash.js';
 document.getElementById('send').innerHTML = icon('send', 22);
-const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
-const { session, profiles } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
+const { session, profiles, isAdmin } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
 const meP = profiles.find(p => p.id === session.user.id);
-// תכונה ניסיונית: מוצגת רק בבית של הבעלים
-if (meP?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
 const $ = id => document.getElementById(id);
 const EN = (() => { try { return localStorage.getItem('lang') === 'en'; } catch (_) { return false; } })();
 const myName = meP?.name || '';
@@ -99,6 +97,7 @@ const H = {
     sug: ['📚 מילים חדשות', '💬 שיחה באנגלית', '✏️ משפטים', '🎯 תרגיל מהיר', 'משהו אחר'], full: 'המורה סיים להיום, נתראה מחר 🇬🇧' },
 };
 let cur = null, busy = false;
+const noteHtml = () => `<div class="ainote">🔒 ${cur === 'english' && isAdmin ? 'השיחות נשלחות לבינה מלאכותית, ושיעורי אנגלית נשמרים לצפייה של ההורים' : 'השיחות נשלחות לבינה מלאכותית כדי לקבל תשובה'}</div>`;
 const hdrBack = document.querySelector('header.bar a.iconbtn[href]');
 const hist = { chef: [], english: [] };
 try { const s = JSON.parse(sessionStorage.getItem('aiHist') || 'null'); if (s) { hist.chef = s.chef || []; hist.english = s.english || []; } } catch (_) {}
@@ -140,7 +139,7 @@ function drawBoard() {
   const sug = list.length ? '' : `<div class="tbig">${h.sug.map((x, i) => `<button type="button" class="c${i + 1}" data-s="${esc(x)}">${T_ICONS[i] || ''}${esc(x.replace(/^[^\p{L}]+/u, ''))}</button>`).join('')}</div>`;
   $('msgs').innerHTML = `<div class="tboard${list.length ? ' run' : ''}"><div class="tin"><div class="ttitle"><div class="en">Let’s Learn English</div><div class="ln"></div></div><div class="tchalk">${esc(h.hi())}</div>`
     + list.map(m => m.role === 'user' ? `<div class="tnote">${esc(m.content)}</div>` : teacher(m.content)).join('')
-    + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug
+    + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug + (list.length ? '' : noteHtml())
     + (list.filter(m => m.role === 'user').length >= 2 && !busy ? '<div style="margin:16px 0 4px"><button type="button" class="tfinish" id="finishBtn">🏁 סיימתי שיעור</button></div>' : '');
   const fb = $('finishBtn'); if (fb) fb.onclick = () => askFinish();
   $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
@@ -156,7 +155,7 @@ function draw() {
     const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
     return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}</div></div>`; };
-  $('msgs').innerHTML = bot(h.hi()) + list.map(m => m.role === 'user'
+  $('msgs').innerHTML = (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map(m => m.role === 'user'
     ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content))).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
     + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');
