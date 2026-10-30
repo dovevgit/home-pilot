@@ -16,9 +16,11 @@
 <script src="js/splash.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <style>
-.aitabs{display:flex;gap:8px;padding:10px 12px 0}
-.aitabs button{flex:1;border:2px solid var(--border,#ddd);background:#fff;border-radius:16px;padding:10px 6px;font:inherit;font-size:17px;font-weight:700;cursor:pointer}
-.aitabs button[aria-pressed=true]{border-color:var(--blue,#0D6EFD);background:var(--bg)}
+.aipick{display:flex;flex-direction:column;gap:14px;padding:18px 14px}
+.aipick button{border:3px solid var(--border,#ddd);background:#fff;border-radius:22px;padding:22px 14px;font:inherit;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.aipick button:active{background:var(--bg)}
+.aipick .aipi{font-size:54px;line-height:1}.aipick .aitt{display:block;font-size:24px;font-weight:800;margin-top:6px}.aipick .aipd{display:block;color:var(--muted,#667);font-size:16px;margin-top:4px}
+.hidden{display:none!important}
 .aihint{margin:8px 12px 0;color:var(--muted,#667);font-size:15px;text-align:center}
 #msgs{padding:12px}
 .msg.bot .bubble{background:#fff;white-space:pre-wrap}
@@ -30,10 +32,7 @@
 </style>
 </head>
 <body class="chatpage">
-<div class="aitabs" id="tabs">
-  <button type="button" data-h="chef" aria-pressed="true">👨‍🍳 השף</button>
-  <button type="button" data-h="english" aria-pressed="false">🇬🇧 מורה לאנגלית</button>
-</div>
+<div id="pick" class="aipick"></div>
 <div class="aihint" id="hint"></div>
 <main id="msgs"></main>
 <form class="composer" id="form" autocomplete="off">
@@ -50,22 +49,35 @@ const meP = profiles.find(p => p.id === session.user.id);
 if (meP?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
 const $ = id => document.getElementById(id);
 const H = {
-  chef: { ico: '👨‍🍳', hint: 'שאלו את השף מה לבשל: ארוחות בוקר, צהריים, ערב וקינוחים', ph: 'מה בא לכם לבשל?',
+  chef: { ico: '👨‍🍳', name: 'השף', hint: 'שאלו את השף מה לבשל: ארוחות בוקר, צהריים, ערב וקינוחים', ph: 'מה בא לכם לבשל?',
     hi: 'שלום! אני השף של הבית. ספרו לי כמה אנשים אוכלים, מה יש בבית ואם יש דברים שאי אפשר לאכול, ואציע תפריט או מתכון.',
     sug: ['תפריט לארוחת ערב משפחתית', 'רעיון לארוחת בוקר מהירה', 'קינוח קל להכנה'] },
-  english: { ico: '🇬🇧', hint: 'תרגול אנגלית עם מורה סבלני. הוא שואל, מתקן ומסביר בעברית', ph: 'כתבו באנגלית או בעברית...',
+  english: { ico: '🇬🇧', name: 'מורה לאנגלית', hint: 'תרגול אנגלית עם מורה סבלני. הוא שואל, מתקן ומסביר בעברית', ph: 'כתבו באנגלית או בעברית...',
     hi: 'Hi! שלום, אני המורה לאנגלית. אפשר להתחיל ברמה קלה. תכתבו לי איזו רמה אתם, או פשוט תגידו Hello.',
     sug: ['Hello', 'בוא נתרגל משפטים על המשפחה', 'תן לי תרגיל קטן'] },
 };
-let cur = 'chef', busy = false;
+let cur = null, busy = false;
+const hdrBack = document.querySelector('header.bar a.iconbtn[href]');
 const hist = { chef: [], english: [] };
 try { const s = JSON.parse(sessionStorage.getItem('aiHist') || 'null'); if (s) { hist.chef = s.chef || []; hist.english = s.english || []; } } catch (_) {}
 const save = () => { try { sessionStorage.setItem('aiHist', JSON.stringify(hist)); } catch (_) {} };
 
+function route() {
+  const k = decodeURIComponent(location.hash.slice(1));
+  cur = H[k] ? k : null;
+  const chat = !!cur;
+  $('pick').classList.toggle('hidden', chat); $('msgs').classList.toggle('hidden', !chat);
+  $('form').classList.toggle('hidden', !chat); $('hint').classList.toggle('hidden', !chat);
+  if (!chat) {
+    $('pick').innerHTML = Object.entries(H).map(([k2, h2]) => `<button type="button" data-k="${k2}"><span class="aipi">${h2.ico}</span><span class="aitt">${esc(h2.name)}</span><span class="aipd">${esc(h2.hint)}</span></button>`).join('');
+    $('pick').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { location.hash = b.dataset.k; });
+    return;
+  }
+  draw();
+}
 function draw() {
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
-  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.h === cur)));
   const bot = t => `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(t)}</div></div>`;
   $('msgs').innerHTML = bot(h.hi) + list.map(m => m.role === 'user'
     ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content)).join('')
@@ -95,9 +107,11 @@ async function send(text) {
   }
   draw();
 }
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { cur = b.dataset.h; draw(); });
+window.addEventListener('hashchange', route);
+// חץ החזרה: משיחה חוזר למסך הבחירה, ממסך הבחירה לדף הבית
+hdrBack?.addEventListener('click', e => { if (cur) { e.preventDefault(); location.hash = ''; } });
 $('form').addEventListener('submit', e => { e.preventDefault(); send($('text').value); });
-draw();
+route();
 </script>
 </body>
 </html>
