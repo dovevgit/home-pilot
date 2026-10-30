@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Amatic+SC:wght@700&display=swap" rel="stylesheet">
 <script src="js/splash.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -30,6 +30,33 @@
 .saybtn{display:flex;width:max-content;align-items:center;gap:6px;margin:8px 0 0;border:2px solid var(--blue,#0D6EFD);background:#fff;color:var(--blue-dark,#0A58CA);border-radius:999px;padding:6px 14px;font:inherit;font-size:18px;font-weight:700;cursor:pointer;direction:ltr}
 .aisug{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .aisug button{border:2px solid var(--blue,#0D6EFD);background:#fff;color:var(--blue-dark,#0A58CA);border-radius:999px;padding:8px 14px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+
+/* מסך המורה: לוח כיתה וכפתורים גדולים */
+body.teacher #hint{display:none}
+body.teacher #msgs{padding:12px 12px 0}
+.tboard{border-radius:18px;padding:10px;background:linear-gradient(135deg,#C48A4A,#8E5B27);box-shadow:0 8px 18px rgba(80,45,10,.35)}
+.tin{border-radius:10px;padding:16px 16px 14px;background:radial-gradient(ellipse at 30% 15%,#3F7A66 0,#2E5E4E 55%,#244B3E 100%);box-shadow:inset 0 0 28px rgba(0,0,0,.35);color:#F7F5EC;display:flex;flex-direction:column;gap:12px}
+.tledge{height:8px;margin:6px 24px 0;border-radius:4px;background:#F2E6CF;box-shadow:0 2px 3px rgba(0,0,0,.25)}
+.ttitle{text-align:center}
+.ttitle .en{font-family:'Amatic SC',cursive;font-weight:700;font-size:54px;line-height:.95;letter-spacing:1px;color:#FFE066;direction:ltr}
+.ttitle .ln{width:70%;height:4px;margin:8px auto 4px;border-radius:4px;background:#F7F5EC;opacity:.75}
+.tchalk{font-size:24px;font-weight:700;line-height:1.35;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere}
+.tword{text-align:center}
+.tword .w{font-family:'Amatic SC',cursive;font-weight:700;font-size:104px;line-height:.9;letter-spacing:2px;color:#FFE066;direction:ltr;overflow-wrap:anywhere}
+.tword .u{width:60%;height:4px;margin:6px auto 0;border-radius:4px;background:#FFE066;opacity:.7}
+.tsay{align-self:center;border:0;border-radius:999px;padding:0 26px;height:62px;background:linear-gradient(180deg,#fff,#E7EEF9);box-shadow:0 5px 0 #A9B8D0;color:#0A58CA;font:inherit;font-size:23px;font-weight:800;display:flex;align-items:center;gap:12px;cursor:pointer}
+.tsay:active{transform:translateY(3px);box-shadow:0 2px 0 #A9B8D0}
+.tnote{align-self:flex-start;max-width:80%;transform:rotate(-2deg);background:#FFF3A8;color:#4A3B00;font-size:22px;font-weight:700;padding:10px 18px;border-radius:6px;box-shadow:0 4px 8px rgba(0,0,0,.35);white-space:pre-wrap;overflow-wrap:anywhere}
+.tbig{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:92px;gap:12px;margin:16px 0 8px}
+.tbig button{border:0;border-radius:22px;color:#fff;font:inherit;font-size:22px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.tbig button:active{transform:translateY(4px)}
+.tbig .c1{background:linear-gradient(180deg,#FFB05C,#FF8A1F);box-shadow:0 6px 0 #C4640A}
+.tbig .c2{background:linear-gradient(180deg,#A78BFF,#7451EB);box-shadow:0 6px 0 #4B2FB3}
+.tbig .c3{background:linear-gradient(180deg,#52D87A,#22A84B);box-shadow:0 6px 0 #167532}
+.tbig .c4{background:linear-gradient(180deg,#4C9BFF,#0D6EFD);box-shadow:0 6px 0 #0A47A8}
+.tbig .c5{grid-column:1/-1;background:#fff;color:#34425E;border:3px solid #B9C7DD;box-shadow:0 5px 0 #B9C7DD;font-size:21px}
+.tboard.run .tin{min-height:calc(100dvh - 300px)}
+.ttyping{text-align:center;font-size:30px;opacity:.7}
 </style>
 </head>
 <body class="chatpage">
@@ -72,16 +99,44 @@ function route() {
   const k = decodeURIComponent(location.hash.slice(1));
   cur = H[k] ? k : null;
   const chat = !!cur;
+  const hh = document.querySelector('h1'); if (hh) hh.textContent = cur === 'english' ? 'שיעור אנגלית' : cur === 'chef' ? 'השף של הבית' : 'עוזרים';
   $('pick').classList.toggle('hidden', chat); $('msgs').classList.toggle('hidden', !chat);
   $('form').classList.toggle('hidden', !chat); $('hint').classList.toggle('hidden', !chat);
   if (!chat) {
+    document.body.classList.remove('teacher');
     $('pick').innerHTML = Object.entries(H).map(([k2, h2]) => `<button type="button" data-k="${k2}"><span class="aipi">${h2.ico}</span><span class="aitt">${esc(h2.name)}</span><span class="aipd">${esc(h2.hint)}</span></button>`).join('');
     $('pick').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { location.hash = b.dataset.k; });
     return;
   }
   draw();
 }
+const SV = d => `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const T_ICONS = [
+  SV('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5zM4 5.5V21.5M9 8h7"/>'),
+  SV('<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20.5l1.4-4.6A8 8 0 1 1 21 12zM8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/>'),
+  SV('<path d="M4 20l1-5L16.5 3.5a2.1 2.1 0 0 1 3 3L8 18zM14 6l3 3"/>'),
+  SV('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>')];
+const SPK = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0A58CA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+function drawBoard() {
+  const h = H[cur], list = hist[cur];
+  const teacher = t => {
+    const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
+    let clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
+    const w = says[0];
+    if (w) { const re = new RegExp('(^|[^A-Za-z])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z])', 'i'); clean = clean.replace(re, '$1').replace(/[ \t]+\n/g, '\n').replace(/[:：]\s*$/m, ':').trim(); }
+    return (clean ? `<div class="tchalk">${esc(clean)}</div>` : '') + (w ? `<div class="tword"><div class="w">${esc(w)}</div><div class="u"></div></div><button type="button" class="tsay" data-say="${esc(w)}" aria-label="הקשב למילה">${SPK} הקשב למילה</button>` : '');
+  };
+  const sug = list.length ? '' : `<div class="tbig">${h.sug.map((x, i) => `<button type="button" class="c${i + 1}" data-s="${esc(x)}">${T_ICONS[i] || ''}${esc(x.replace(/^[^\p{L}]+/u, ''))}</button>`).join('')}</div>`;
+  $('msgs').innerHTML = `<div class="tboard${list.length ? ' run' : ''}"><div class="tin"><div class="ttitle"><div class="en">Let’s Learn English</div><div class="ln"></div></div><div class="tchalk">${esc(h.hi())}</div>`
+    + list.map(m => m.role === 'user' ? `<div class="tnote">${esc(m.content)}</div>` : teacher(m.content)).join('')
+    + (busy ? '<div class="ttyping">...</div>' : '') + `</div><div class="tledge"></div></div>` + sug;
+  $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
+  $('msgs').querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
+  window.scrollTo(0, list.length ? document.body.scrollHeight : 0);
+}
 function draw() {
+  document.body.classList.toggle('teacher', cur === 'english');
+  if (cur === 'english') return drawBoard();
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
   const bot = t => {
