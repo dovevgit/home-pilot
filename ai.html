@@ -113,7 +113,7 @@ H.home = { ico: '🏠', name: 'עוזר הבית', hint: 'שאלו אותי על
   hi: () => `היי ${myName}, מה תרצה לדעת על הבית?`,
   sug: ['מה לא בוצע היום?', 'מי עשה משימות אתמול?', 'כמה נקודות יש לכל אחד?', 'איך מוסיפים משימה?'], full: 'העוזר לא זמין כרגע' };
 // עוזר הבית: רק לדובב (גם השרת חוסם כל אחד אחר)
-if (session.user.id !== 'e1fbc911-82d6-4eef-9989-21ca0324c906') delete H.home;
+if (!['e1fbc911-82d6-4eef-9989-21ca0324c906','67e6f7e0-9519-45cf-96ac-e2913ab95ce8'].includes(session.user.id)) delete H.home;
 let cur = null, busy = false;
 const noteHtml = () => `<div class="ainote">🔒 ${cur === 'english' && isAdmin ? 'השיחות נשלחות לבינה מלאכותית, ושיעורי אנגלית נשמרים לצפייה של ההורים' : 'השיחות נשלחות לבינה מלאכותית כדי לקבל תשובה'}</div>`;
 const hdrBack = document.querySelector('header.bar a.iconbtn[href]');

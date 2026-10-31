@@ -270,7 +270,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   if (me) import('./bonuspopup.js').then(m => m.startBonusPopup(me, profiles || [])).catch(() => {});
   if (me) import('./important.js').then(m => m.startImportant(me, profiles || [])).catch(() => {});
   // בועה כתומה לעוזר הבית: רק לבעל הבית (גם השרת חוסם אחרים), לא במסך העוזר עצמו
-  if (session.user.id === 'e1fbc911-82d6-4eef-9989-21ca0324c906' && active !== 'ai' && !document.getElementById('homeBubble')) {
+  if (['e1fbc911-82d6-4eef-9989-21ca0324c906','67e6f7e0-9519-45cf-96ac-e2913ab95ce8'].includes(session.user.id) && active !== 'ai' && !document.getElementById('homeBubble')) {
     const bub = document.createElement('a');
     bub.id = 'homeBubble'; bub.href = 'ai.html#home'; bub.setAttribute('aria-label', EN ? 'Home assistant' : 'עוזר הבית'); bub.textContent = '🏠';
     document.body.append(bub);
