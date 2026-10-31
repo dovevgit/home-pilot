@@ -30,6 +30,7 @@
   <div class="sec-title">בני המשפחה</div>
   <div class="family" id="family"></div>
   <a href="bonus.html" id="bonusCard" style="display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px 14px;border-radius:20px;text-decoration:none;color:#4A2A00;font-weight:800;font-size:18px;background:radial-gradient(circle at 15% 30%,#FFE27A 0,#FFC233 45%,#FF9A1F 100%);box-shadow:0 4px 12px rgba(255,138,0,.35)"><img src="icons/task/trophy.png" alt="" style="width:46px;height:46px;object-fit:contain"><span style="flex:1">משימות בונוס</span><span aria-hidden="true">⭐</span></a>
+  <a href="ai.html#home" id="homeAI" class="hidden" style="display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:12px 14px;border-radius:20px;text-decoration:none;color:#fff;font-weight:800;font-size:18px;background:linear-gradient(135deg,#4C9BFF,#0D6EFD);box-shadow:0 4px 12px rgba(13,110,253,.35)"><span style="font-size:30px">🏠</span><span>עוזר הבית: שאלו אותי הכול</span></a>
   <a class="reqcard" href="requests.html" id="reqCard"><span id="reqIcon"></span><b id="reqTitle">אין בקשות</b><span id="reqBadge"></span></a>
   <div class="sec-head"><div class="sec-title">המשימות של היום</div><a href="tasks.html">הצג הכל</a></div>
   <div id="tasks"><p class="empty">טוען...</p></div>
@@ -51,6 +52,7 @@ document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
 
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
+if (me?.id === 'e1fbc911-82d6-4eef-9989-21ca0324c906') document.getElementById('homeAI').classList.remove('hidden');
 const today = ilDate(new Date());
 if (me?.role === 'admin') {
   supabase.from('task_conflicts').select('id', { count: 'exact', head: true }).eq('status', 'open').then(({ count }) => {

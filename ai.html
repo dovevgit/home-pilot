@@ -65,6 +65,16 @@ body.teacher #msgs{padding:12px 12px 0}
 .finbox button{display:block;width:100%;border:0;border-radius:18px;height:58px;font:inherit;font-size:21px;font-weight:800;cursor:pointer;margin-top:10px}
 .finyes{background:linear-gradient(180deg,#52D87A,#22A84B);color:#fff;box-shadow:0 5px 0 #167532}
 .finno{background:#fff;color:#34425E;border:3px solid #B9C7DD!important;box-shadow:0 4px 0 #B9C7DD}
+.rnd{width:48px;height:48px;border-radius:50%;border:2px solid var(--blue,#0D6EFD);background:#fff;font-size:22px;padding:0;flex:none;cursor:pointer}
+.rnd.on{background:#DC2626;border-color:#DC2626;color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.6}}
+.propcard{margin-top:10px;padding:10px 12px;border-radius:14px;background:#EEF6FF;border:2px solid #93C5FD;line-height:1.5}
+.propcard b{display:block;color:#1D4ED8;margin-bottom:2px}
+.propcard.ok{background:#F0FDF4;border-color:#86EFAC;color:#166534;font-weight:700}
+.propcard.no{background:#F3F4F6;border-color:#D1D5DB;color:#6b7280}
+.pbtns{display:flex;gap:8px;margin-top:8px}
+.pbtns button{flex:1;border:0;border-radius:999px;height:42px;font:inherit;font-weight:800;cursor:pointer}
+.pyes{background:#22A84B;color:#fff}.pno{background:#fff;color:#34425E;border:2px solid #B9C7DD!important}
 .ainote{margin:10px 12px 0;padding:10px 14px;border-radius:14px;background:#FEF3C7;border:1px solid #FCD34D;color:#78350F;font-size:15px;font-weight:600;line-height:1.45;text-align:center}
 .ttyping{text-align:center;font-size:30px;opacity:.7}
 </style>
@@ -78,7 +88,7 @@ body.teacher #msgs{padding:12px 12px 0}
   <button class="cbtn send" id="send" type="submit" aria-label="שליחה"></button>
 </form>
 <script type="module">
-import { initPage, supabase, esc, icon, showToast } from './js/common.js';
+import { initPage, supabase, esc, icon, showToast, submitReport, toIsraelDate } from './js/common.js';
 import { gameSplash } from './js/gamesplash.js';
 document.getElementById('send').innerHTML = icon('send', 22);
 const { session, profiles, isAdmin } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
@@ -96,18 +106,23 @@ const H = {
     hi: () => `${greetTime()} ${myName}, מה בא לך לתרגל היום?`,
     sug: ['📚 מילים חדשות', '💬 שיחה באנגלית', '✏️ משפטים', '🎯 תרגיל מהיר', 'משהו אחר'], full: 'המורה סיים להיום, נתראה מחר 🇬🇧' },
 };
+H.home = { ico: '🏠', name: 'עוזר הבית', hint: 'שאלו אותי על המשימות, הדיווחים והנקודות, או איך להפעיל את האפליקציה. שינויים רק באישור שלכם', ph: 'שאלו אותי משהו...',
+  hi: () => `היי ${myName}, מה תרצה לדעת על הבית?`,
+  sug: ['מה לא בוצע היום?', 'מי עשה משימות אתמול?', 'כמה נקודות יש לכל אחד?', 'איך מוסיפים משימה?'], full: 'העוזר לא זמין כרגע' };
+// עוזר הבית: רק לדובב (גם השרת חוסם כל אחד אחר)
+if (session.user.id !== 'e1fbc911-82d6-4eef-9989-21ca0324c906') delete H.home;
 let cur = null, busy = false;
 const noteHtml = () => `<div class="ainote">🔒 ${cur === 'english' && isAdmin ? 'השיחות נשלחות לבינה מלאכותית, ושיעורי אנגלית נשמרים לצפייה של ההורים' : 'השיחות נשלחות לבינה מלאכותית כדי לקבל תשובה'}</div>`;
 const hdrBack = document.querySelector('header.bar a.iconbtn[href]');
-const hist = { chef: [], english: [] };
-try { const s = JSON.parse(sessionStorage.getItem('aiHist') || 'null'); if (s) { hist.chef = s.chef || []; hist.english = s.english || []; } } catch (_) {}
+const hist = { chef: [], english: [], home: [] };
+try { const s = JSON.parse(sessionStorage.getItem('aiHist') || 'null'); if (s) { hist.chef = s.chef || []; hist.english = s.english || []; hist.home = s.home || []; } } catch (_) {}
 const save = () => { try { sessionStorage.setItem('aiHist', JSON.stringify(hist)); } catch (_) {} };
 
 function route() {
   const k = decodeURIComponent(location.hash.slice(1));
   cur = H[k] ? k : null;
   const chat = !!cur;
-  const hh = document.querySelector('h1'); if (hh) hh.textContent = cur === 'english' ? 'שיעור אנגלית' : cur === 'chef' ? 'השף של הבית' : 'עוזרים';
+  const hh = document.querySelector('h1'); if (hh) hh.textContent = cur === 'english' ? 'שיעור אנגלית' : cur === 'chef' ? 'השף של הבית' : cur === 'home' ? 'עוזר הבית' : 'עוזרים';
   $('pick').classList.toggle('hidden', chat); $('msgs').classList.toggle('hidden', !chat);
   $('form').classList.toggle('hidden', !chat); $('hint').classList.toggle('hidden', !chat);
   if (!chat) {
@@ -116,7 +131,7 @@ function route() {
     $('pick').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { location.hash = b.dataset.k; });
     return;
   }
-  draw();
+  draw(); setupMic();
 }
 const SV = d => `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const T_ICONS = [
@@ -151,15 +166,19 @@ function draw() {
   if (cur === 'english') return drawBoard();
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
-  const bot = (t, share) => {
+  const propCard = (pr, i) => !pr ? '' : pr.state === 'done' ? '<div class="propcard ok">✅ בוצע</div>' : pr.state === 'no' ? '<div class="propcard no">בוטל</div>'
+    : `<div class="propcard"><b>הצעה לשינוי</b><div>${esc(pr.summary)}</div><div class="pbtns"><button type="button" class="pyes" data-pa="${i}">אישור</button><button type="button" class="pno" data-pc="${i}">ביטול</button></div></div>`;
+  const bot = (t, share, pi = -1) => {
     const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
-    return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}</div></div>`; };
-  $('msgs').innerHTML = (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map(m => m.role === 'user'
-    ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content))).join('')
+    return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}${pi >= 0 ? propCard(list[pi].prop, pi) : ''}</div></div>`; };
+  $('msgs').innerHTML = (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map((m, i) => m.role === 'user'
+    ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content), m.prop ? i : -1)).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
     + (busy ? `<div class="msg bot typing"><div class="aiav">${h.ico}</div><div class="bubble">...</div></div>` : '');
   $('msgs').querySelectorAll('[data-s]').forEach(b => b.onclick = () => send(b.dataset.s.replace(/^[^\p{L}]+/u, '')));
+  $('msgs').querySelectorAll('[data-pa]').forEach(b => b.onclick = () => runProposal(+b.dataset.pa));
+  $('msgs').querySelectorAll('[data-pc]').forEach(b => b.onclick = () => { const m = hist.home[+b.dataset.pc]; if (m?.prop) { m.prop.state = 'no'; save(); draw(); } });
   $('msgs').querySelectorAll('[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
   $('msgs').querySelectorAll('[data-share]').forEach(b => b.onclick = () => { window.open('https://wa.me/?text=' + encodeURIComponent(b.dataset.share), '_blank', 'noopener'); });
   window.scrollTo(0, document.body.scrollHeight);
@@ -202,14 +221,16 @@ async function send(text) {
   try { if (helper === 'english' && window.speechSynthesis) { const z = new SpeechSynthesisUtterance(' '); z.volume = 0; window.speechSynthesis.speak(z); } } catch (_) {} // פותח את ההקראה האוטומטית בטלפון
   hist[helper].push({ role: 'user', content: text }); save();
   $('text').value = ''; busy = true; draw();
-  let reply = null, err = null;
+  let reply = null, err = null, prop = null;
   try {
-    const { data, error } = await supabase.functions.invoke('ai-helper', { body: { helper, messages: hist[helper].slice(-80) } });
+    const fn = helper === 'home' ? 'home-assistant' : 'ai-helper';
+    const msgs = hist[helper].slice(helper === 'home' ? -30 : -80).map(({ role, content }) => ({ role, content }));
+    const { data, error } = await supabase.functions.invoke(fn, { body: helper === 'home' ? { messages: msgs } : { helper, messages: msgs } });
     if (error) { let c = null; try { c = (await error.context.json()).error; } catch (_) {} err = c || 'x'; }
-    else reply = data?.reply || null;
+    else { reply = data?.reply || null; prop = data?.proposal ? { ...data.proposal, state: 'open' } : null; }
   } catch (_) { err = 'x'; }
   busy = false;
-  if (reply) { hist[helper].push({ role: 'assistant', content: reply }); save(); const w = (reply.match(/\[\[say:([^\]]{1,60})\]\]/) || [])[1]; if (w && helper === 'english') setTimeout(() => say(w.trim()), 150);
+  if (reply) { hist[helper].push({ role: 'assistant', content: reply, ...(prop ? { prop } : {}) }); save(); if (helper === 'home') speakReply(reply); const w = (reply.match(/\[\[say:([^\]]{1,60})\]\]/) || [])[1]; if (w && helper === 'english') setTimeout(() => say(w.trim()), 150);
     // המורה סיים 20 מילים ולא נתן מילה חדשה: השיעור מסתיים ונשלח להורים
     if (helper === 'english' && !w && hist.english.filter(m => m.role === 'assistant').reduce((n, m) => n + (m.content.match(/\[\[say:/g) || []).length, 0) >= 20) { draw(); await finishLesson(); return; } }
   else {
@@ -218,6 +239,86 @@ async function send(text) {
     $('text').value = text;
   }
   draw();
+}
+async function runProposal(i) {
+  const m = hist.home[i]; const pr = m?.prop; if (!pr || pr.state !== 'open' || busy) return;
+  busy = true; pr.state = 'work'; draw();
+  let msg = '';
+  try { msg = await execAction(pr); } catch (e) { msg = String(e.message || '').startsWith('ERR:') ? e.message : 'ERR:הפעולה נכשלה'; }
+  busy = false;
+  if (msg.startsWith('ERR:')) { pr.state = 'open'; save(); draw(); showToast(msg.slice(4), true); return; }
+  pr.state = 'done'; hist.home.push({ role: 'assistant', content: msg }); save(); draw(); speakReply(msg);
+}
+async function execAction(pr) {
+  const a = pr.args, uid = session.user.id;
+  const need = async id => { const { data } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle(); if (!data) throw new Error('ERR:לא מצאתי את המשימה'); return data; };
+  if (pr.kind === 'mark_done') {
+    const t = await need(a.task_id);
+    if (t.kind !== 'occurrence' || !t.active) throw new Error('ERR:אי אפשר לדווח על המשימה הזאת מכאן');
+    if (t.assignee_only && !((t.slots || []).flatMap(s => s.assignees || [s.assignee_id]).includes(uid))) throw new Error('ERR:המשימה הזאת שייכת למישהו אחר');
+    const { count } = await supabase.from('feed').select('id', { count: 'exact', head: true }).eq('type', 'report').eq('task_id', t.id);
+    if ((count || 0) >= (t.slots || []).length) throw new Error('ERR:המשימה הזאת כבר סומנה כבוצעה');
+    if (t.requires_photo) throw new Error('ERR:המשימה דורשת תמונה, צריך לדווח עליה במסך המשימה');
+    const { error } = await submitReport({ task: t, userId: uid, note: a.note });
+    if (error) throw new Error('ERR:הדיווח נכשל');
+    return `✅ סימנתי את "${t.title}" כבוצעה.`;
+  }
+  if (pr.kind === 'add_task') {
+    const { data: who } = await supabase.from('profiles').select('id,name,is_user,active').eq('id', a.assignee_id).maybeSingle();
+    if (!who || !who.is_user || !who.active) throw new Error('ERR:לא מצאתי את האחראי');
+    const row = { title: a.title, description: a.description || null, tips: null, icon: 'sparkles', color: 'blue', subject_id: null, room: null,
+      points: a.points || 0, penalty_points: 0, late_fraction: 0.5, requires_photo: false, assignee_only: false, times_required: 1,
+      remind_before_minutes: 15, reminder_text: null, overdue_text: null, kind: 'occurrence', template_id: null, repeat: 'once', weekday: null,
+      occurrence_date: a.date, created_by: uid,
+      slots: [{ n: 1, assignee_id: who.id, due_at: toIsraelDate(a.date, a.time).toISOString(), reminded: false, overdue_notified: false, penalized: false }] };
+    const { error } = await supabase.from('tasks').insert(row);
+    if (error) throw new Error('ERR:היצירה נכשלה');
+    return `✅ הוספתי את המשימה "${a.title}" ל${who.name}.`;
+  }
+  if (pr.kind === 'change_slot') {
+    const t = await need(a.task_id);
+    if (t.kind !== 'occurrence' || !t.active) throw new Error('ERR:אפשר לשנות רק משימה של יום מסוים');
+    const slots = JSON.parse(JSON.stringify(t.slots || [])); const sl = slots[a.slot_n - 1];
+    if (!sl) throw new Error('ERR:לא מצאתי את החזרה הזאת');
+    let name = '';
+    if (a.assignee_id) {
+      const { data: who } = await supabase.from('profiles').select('id,name,is_user,active').eq('id', a.assignee_id).maybeSingle();
+      if (!who || !who.is_user || !who.active) throw new Error('ERR:לא מצאתי את האחראי');
+      sl.assignee_id = who.id; delete sl.assignees; name = who.name;
+    }
+    if (a.time) { sl.due_at = toIsraelDate(t.occurrence_date, a.time).toISOString(); sl.reminded = false; sl.overdue_notified = false; }
+    const { error } = await supabase.from('tasks').update({ slots }).eq('id', t.id);
+    if (error) throw new Error('ERR:השינוי נכשל');
+    return `✅ עדכנתי את "${t.title}"${name ? ': האחראי עכשיו ' + name : ''}${a.time ? ', שעה ' + a.time : ''}.`;
+  }
+  throw new Error('ERR:פעולה לא מוכרת');
+}
+// מיקרופון והקראה (רק בעוזר הבית)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const speakOn = () => { try { return localStorage.getItem('homeSpeak') === '1'; } catch (_) { return false; } };
+function speakReply(t) {
+  if (!speakOn() || !window.speechSynthesis) return;
+  try { const sy = window.speechSynthesis; sy.cancel(); const u = new SpeechSynthesisUtterance(String(t).replace(/[✅🏠]/g, '')); u.lang = 'he-IL'; sy.speak(u); } catch (_) {}
+}
+function setupMic() {
+  const f = $('form'); ['mic', 'spk'].forEach(id => { const e = $(id); if (e && cur !== 'home') e.remove(); });
+  if (cur !== 'home' || $('mic')) return;
+  const mk = (id, txt, label) => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = 'cbtn rnd'; b.textContent = txt; b.setAttribute('aria-label', label); f.insertBefore(b, $('send')); return b; };
+  const spk = mk('spk', speakOn() ? '🔊' : '🔈', 'הקראת תשובות');
+  spk.onclick = () => { const on = !speakOn(); try { localStorage.setItem('homeSpeak', on ? '1' : '0'); } catch (_) {} spk.textContent = on ? '🔊' : '🔈'; if (!on) { try { window.speechSynthesis.cancel(); } catch (_) {} } showToast(on ? 'התשובות יוקראו' : 'ההקראה כבויה'); };
+  if (!SR) return;
+  const mic = mk('mic', '🎤', 'דיבור');
+  let rec = null;
+  mic.onclick = () => {
+    if (rec) { try { rec.stop(); } catch (_) {} return; }
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {}
+    rec = new SR(); rec.lang = 'he-IL'; rec.interimResults = false; rec.maxAlternatives = 1;
+    mic.classList.add('on');
+    rec.onresult = e => { const t = e.results?.[0]?.[0]?.transcript || ''; if (t.trim()) send(t); };
+    rec.onerror = e => { if (e.error !== 'aborted' && e.error !== 'no-speech') showToast('לא הצלחתי להשתמש במיקרופון', true); };
+    rec.onend = () => { rec = null; mic.classList.remove('on'); };
+    try { rec.start(); } catch (_) { rec = null; mic.classList.remove('on'); }
+  };
 }
 window.addEventListener('hashchange', route);
 $('form').addEventListener('submit', e => { e.preventDefault(); send($('text').value); });
