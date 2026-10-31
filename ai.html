@@ -70,6 +70,7 @@ body.teacher #msgs{padding:12px 12px 0}
 @keyframes pulse{50%{opacity:.6}}
 .propcard{margin-top:10px;padding:10px 12px;border-radius:14px;background:#EEF6FF;border:2px solid #93C5FD;line-height:1.5}
 .propcard b{display:block;color:#1D4ED8;margin-bottom:2px}
+.propcard.del{background:#FEF2F2;border-color:#FCA5A5}.propcard.del b{color:#B91C1C}.propcard.del .pyes{background:#DC2626}
 .propcard.ok{background:#F0FDF4;border-color:#86EFAC;color:#166534;font-weight:700}
 .propcard.no{background:#F3F4F6;border-color:#D1D5DB;color:#6b7280}
 .pbtns{display:flex;gap:8px;margin-top:8px}
@@ -88,7 +89,8 @@ body.teacher #msgs{padding:12px 12px 0}
   <button class="cbtn send" id="send" type="submit" aria-label="שליחה"></button>
 </form>
 <script type="module">
-import { initPage, supabase, esc, icon, showToast, submitReport, toIsraelDate } from './js/common.js';
+import { initPage, supabase, esc, icon, showToast, submitReport, toIsraelDate, ilDate } from './js/common.js';
+import { generateOccurrences, syncOccurrences } from './js/generate.js';
 import { gameSplash } from './js/gamesplash.js';
 document.getElementById('send').innerHTML = icon('send', 22);
 const { session, profiles, isAdmin } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
@@ -167,7 +169,7 @@ function draw() {
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
   const propCard = (pr, i) => !pr ? '' : pr.state === 'done' ? '<div class="propcard ok">✅ בוצע</div>' : pr.state === 'no' ? '<div class="propcard no">בוטל</div>'
-    : `<div class="propcard"><b>הצעה לשינוי</b><div>${esc(pr.summary)}</div><div class="pbtns"><button type="button" class="pyes" data-pa="${i}">אישור</button><button type="button" class="pno" data-pc="${i}">ביטול</button></div></div>`;
+    : `<div class="propcard${pr.kind === 'remove_task' ? ' del' : ''}"><b>${pr.kind === 'remove_task' ? 'הסרת משימה' : 'הצעה לשינוי'}</b><div>${esc(pr.summary)}</div><div class="pbtns"><button type="button" class="pyes" data-pa="${i}">${pr.kind === 'remove_task' ? 'הסר' : 'אישור'}</button><button type="button" class="pno" data-pc="${i}">ביטול</button></div></div>`;
   const bot = (t, share, pi = -1) => {
     const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
@@ -264,20 +266,45 @@ async function execAction(pr) {
     return `✅ סימנתי את "${t.title}" כבוצעה.`;
   }
   if (pr.kind === 'add_task') {
-    const { data: who } = await supabase.from('profiles').select('id,name,is_user,active').eq('id', a.assignee_id).maybeSingle();
-    if (!who || !who.is_user || !who.active) throw new Error('ERR:לא מצאתי את האחראי');
-    const row = { title: a.title, description: a.description || null, tips: null, icon: 'sparkles', color: 'blue', subject_id: null, room: null,
-      points: a.points || 0, penalty_points: 0, late_fraction: 0.5, requires_photo: false, assignee_only: false, times_required: 1,
-      remind_before_minutes: 15, reminder_text: null, overdue_text: null, kind: 'occurrence', template_id: null, repeat: 'once', weekday: null,
-      occurrence_date: a.date, created_by: uid,
-      slots: [{ n: 1, assignee_id: who.id, due_at: toIsraelDate(a.date, a.time).toISOString(), reminded: false, overdue_notified: false, penalized: false }] };
+    const sin = a.slots || [{ assignee_id: a.assignee_id, time: a.time }];
+    const ids = [...new Set(sin.map(x => x.assignee_id))];
+    const { data: ppl } = await supabase.from('profiles').select('id,name,is_user,active').in('id', ids);
+    const by = Object.fromEntries((ppl || []).map(x => [x.id, x]));
+    if (ids.some(id => !by[id] || !by[id].is_user || !by[id].active)) throw new Error('ERR:לא מצאתי את האחראי');
+    const repeat = a.repeat || 'once';
+    const base = { title: a.title, description: a.description || null, tips: null, icon: 'sparkles', color: 'blue', subject_id: null, room: null,
+      points: a.points || 0, penalty_points: 0, late_fraction: 0.5, requires_photo: !!a.requires_photo, assignee_only: false, times_required: sin.length,
+      remind_before_minutes: 15, reminder_text: null, overdue_text: null, created_by: uid };
+    const row = repeat === 'once'
+      ? { ...base, kind: 'occurrence', template_id: null, repeat: 'once', weekday: null, occurrence_date: a.date,
+          slots: sin.map((x, i) => ({ n: i + 1, assignee_id: x.assignee_id, due_at: toIsraelDate(a.date, x.time).toISOString(), reminded: false, overdue_notified: false, penalized: false })) }
+      : { ...base, kind: 'template', repeat, weekday: repeat === 'weekly' ? a.weekday : null, slots: sin.map(x => ({ assignee_id: x.assignee_id, due_time: x.time })) };
     const { error } = await supabase.from('tasks').insert(row);
     if (error) throw new Error('ERR:היצירה נכשלה');
-    return `✅ הוספתי את המשימה "${a.title}" ל${who.name}.`;
+    if (row.kind === 'template') { try { await generateOccurrences(uid); } catch (_) {} }
+    return `✅ הוספתי את המשימה "${a.title}" ל${ids.map(id => by[id].name).join(' ו')}.`;
+  }
+  if (pr.kind === 'edit_task') {
+    const t = await need(a.task_id);
+    if (!t.active) throw new Error('ERR:המשימה הזאת כבר הוסרה');
+    const patch = {}; ['title', 'description', 'points', 'requires_photo'].forEach(k => { if (a[k] !== undefined) patch[k] = a[k]; });
+    if (patch.points === 0) patch.penalty_points = 0;
+    const { error } = await supabase.from('tasks').update(patch).eq('id', t.id);
+    if (error) throw new Error('ERR:השינוי נכשל');
+    if (t.kind === 'template') { try { await syncOccurrences({ ...t, ...patch }); } catch (_) {} }
+    return `✅ עדכנתי את "${patch.title || t.title}".`;
+  }
+  if (pr.kind === 'remove_task') {
+    const t = await need(a.task_id);
+    if (!t.active) throw new Error('ERR:המשימה הזאת כבר הוסרה');
+    const { error } = await supabase.from('tasks').update({ active: false }).eq('id', t.id);
+    if (error) throw new Error('ERR:ההסרה נכשלה');
+    if (t.kind === 'template') await supabase.from('tasks').update({ active: false }).eq('template_id', t.id).gte('occurrence_date', ilDate(new Date()));
+    return `✅ הסרתי את "${t.title}". ההיסטוריה והנקודות נשמרו.`;
   }
   if (pr.kind === 'change_slot') {
     const t = await need(a.task_id);
-    if (t.kind !== 'occurrence' || !t.active) throw new Error('ERR:אפשר לשנות רק משימה של יום מסוים');
+    if (!t.active) throw new Error('ERR:המשימה הזאת הוסרה');
     const slots = JSON.parse(JSON.stringify(t.slots || [])); const sl = slots[a.slot_n - 1];
     if (!sl) throw new Error('ERR:לא מצאתי את החזרה הזאת');
     let name = '';
@@ -286,9 +313,10 @@ async function execAction(pr) {
       if (!who || !who.is_user || !who.active) throw new Error('ERR:לא מצאתי את האחראי');
       sl.assignee_id = who.id; delete sl.assignees; name = who.name;
     }
-    if (a.time) { sl.due_at = toIsraelDate(t.occurrence_date, a.time).toISOString(); sl.reminded = false; sl.overdue_notified = false; }
+    if (a.time) { if (t.kind === 'template') sl.due_time = a.time; else { sl.due_at = toIsraelDate(t.occurrence_date, a.time).toISOString(); sl.reminded = false; sl.overdue_notified = false; } }
     const { error } = await supabase.from('tasks').update({ slots }).eq('id', t.id);
     if (error) throw new Error('ERR:השינוי נכשל');
+    if (t.kind === 'template') { try { await syncOccurrences({ ...t, slots }); } catch (_) {} }
     return `✅ עדכנתי את "${t.title}"${name ? ': האחראי עכשיו ' + name : ''}${a.time ? ', שעה ' + a.time : ''}.`;
   }
   throw new Error('ERR:פעולה לא מוכרת');
