@@ -91,6 +91,7 @@ body.teacher #msgs{padding:12px 12px 0}
 <script type="module">
 import { initPage, supabase, esc, icon, showToast, submitReport, toIsraelDate, ilDate } from './js/common.js';
 import { generateOccurrences, syncOccurrences } from './js/generate.js';
+import { weeklyPoints, lifetimePoints } from './js/points.js';
 import { gameSplash } from './js/gamesplash.js';
 document.getElementById('send').innerHTML = icon('send', 22);
 const { session, profiles, isAdmin } = await initPage({ active: 'ai', title: 'עוזרים', back: 'index.html' });
@@ -216,6 +217,12 @@ async function finishLesson() {
   else showToast('לא הצלחנו לשלוח את השיעור, נסו שוב', true);
   draw();
 }
+// נקודות מחושבות באפליקציה (כמו במסך הראשי) לעוזר הבית. נשמר דקה כדי לא לחשב בכל הודעה.
+let ptsCache = null;
+async function homePoints() {
+  if (ptsCache && Date.now() - ptsCache.t < 60000) return ptsCache.v;
+  try { const [a, b] = await Promise.all([lifetimePoints(), weeklyPoints()]); ptsCache = { t: Date.now(), v: { total: a.earnedByUser, week: b.pointsByUser } }; return ptsCache.v; } catch (_) { return null; }
+}
 async function send(text) {
   text = (text || '').trim();
   if (!text || busy) return;
@@ -227,7 +234,7 @@ async function send(text) {
   try {
     const fn = helper === 'home' ? 'home-assistant' : 'ai-helper';
     const msgs = hist[helper].slice(helper === 'home' ? -30 : -80).map(({ role, content }) => ({ role, content }));
-    const { data, error } = await supabase.functions.invoke(fn, { body: helper === 'home' ? { messages: msgs } : { helper, messages: msgs } });
+    const { data, error } = await supabase.functions.invoke(fn, { body: helper === 'home' ? { messages: msgs, points: await homePoints() } : { helper, messages: msgs } });
     if (error) { let c = null; try { c = (await error.context.json()).error; } catch (_) {} err = c || 'x'; }
     else { reply = data?.reply || null; prop = data?.proposal ? { ...data.proposal, state: 'open' } : null; }
   } catch (_) { err = 'x'; }
