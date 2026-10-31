@@ -273,7 +273,14 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   if (['e1fbc911-82d6-4eef-9989-21ca0324c906','67e6f7e0-9519-45cf-96ac-e2913ab95ce8'].includes(session.user.id) && active !== 'ai' && !document.getElementById('homeBubble')) {
     const bub = document.createElement('a');
     bub.id = 'homeBubble'; bub.href = 'ai.html#home'; bub.setAttribute('aria-label', EN ? 'Home assistant' : 'עוזר הבית'); bub.textContent = '🏠';
-    document.body.append(bub);
+    const hdr = document.querySelector('header.bar');
+    const first = hdr && hdr.firstElementChild;
+    if (hdr && first) {
+      // בעברית הצד הימני הוא תחילת הכותרת; באנגלית הוא סוף הכותרת (ליד התפריט)
+      if (EN) { const mb = document.getElementById('menuBtn'); if (mb) mb.before(bub); else hdr.append(bub); }
+      else if (first.classList.contains('ghost')) first.replaceWith(bub);
+      else { const w = document.createElement('span'); w.className = 'hdrR'; first.replaceWith(w); w.append(first, bub); hdr.classList.add('hasBub'); }
+    } else document.body.append(bub);
   }
   return { session, me, profiles: profiles || [], isAdmin };
 }
