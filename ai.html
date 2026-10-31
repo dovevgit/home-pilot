@@ -169,12 +169,13 @@ function draw() {
   if (cur === 'english') return drawBoard();
   const h = H[cur], list = hist[cur];
   $('hint').textContent = h.hint; $('text').placeholder = h.ph;
+  const isDel = pr => pr && (pr.kind === 'remove_task' || pr.kind === 'remove_event');
   const propCard = (pr, i) => !pr ? '' : pr.state === 'done' ? '<div class="propcard ok">✅ בוצע</div>' : pr.state === 'no' ? '<div class="propcard no">בוטל</div>'
-    : `<div class="propcard${pr.kind === 'remove_task' ? ' del' : ''}"><b>${pr.kind === 'remove_task' ? 'הסרת משימה' : 'הצעה לשינוי'}</b><div>${esc(pr.summary)}</div><div class="pbtns"><button type="button" class="pyes" data-pa="${i}">${pr.kind === 'remove_task' ? 'הסר' : 'אישור'}</button><button type="button" class="pno" data-pc="${i}">ביטול</button></div></div>`;
+    : `<div class="propcard${isDel(pr) ? ' del' : ''}"><b>${pr.kind === 'remove_task' ? 'הסרת משימה' : pr.kind === 'remove_event' ? 'מחיקת אירוע מלוח השנה' : 'הצעה לשינוי'}</b><div>${esc(pr.summary)}</div><div class="pbtns"><button type="button" class="pyes" data-pa="${i}">${pr.kind === 'remove_task' ? 'הסר' : pr.kind === 'remove_event' ? 'מחק' : 'אישור'}</button><button type="button" class="pno" data-pc="${i}">ביטול</button></div></div>`;
   const bot = (t, share, pi = -1) => {
     const says = [...t.matchAll(/\[\[say:([^\]]{1,60})\]\]/g)].map(m => m[1].trim());
     const clean = t.replace(/\s*\[\[say:[^\]]*\]\]/g, '');
-    return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}${pi >= 0 ? propCard(list[pi].prop, pi) : ''}</div></div>`; };
+    return `<div class="msg bot"><div class="aiav">${h.ico}</div><div class="bubble">${cur === 'home' ? esc(clean).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*\*/g, '') : esc(clean)}${says.map(w => `<button type="button" class="saybtn" data-say="${esc(w)}" aria-label="הקשב למילה">🔊 הקשב למילה</button>`).join('')}${share ? `<button type="button" class="sharebtn" data-share="${esc(clean)}">💬 שתף את המתכון</button>` : ''}${pi >= 0 ? propCard(list[pi].prop, pi) : ''}</div></div>`; };
   $('msgs').innerHTML = (list.length ? '' : noteHtml()) + bot(h.hi()) + list.map((m, i) => m.role === 'user'
     ? `<div class="msg mine"><div class="bubble">${esc(m.content)}</div></div>` : bot(m.content, cur === 'chef' && isRecipe(m.content), m.prop ? i : -1)).join('')
     + (list.length ? '' : `<div class="aisug">${h.sug.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>`)
@@ -308,6 +309,36 @@ async function execAction(pr) {
     if (error) throw new Error('ERR:ההסרה נכשלה');
     if (t.kind === 'template') await supabase.from('tasks').update({ active: false }).eq('template_id', t.id).gte('occurrence_date', ilDate(new Date()));
     return `✅ הסרתי את "${t.title}". ההיסטוריה והנקודות נשמרו.`;
+  }
+  if (pr.kind === 'add_event' || pr.kind === 'edit_event' || pr.kind === 'remove_event') {
+    const WD = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const whoOf = async id => { const { data: w } = await supabase.from('profiles').select('id,name,is_user,active').eq('id', id).maybeSingle(); if (!w || !w.is_user || !w.active) throw new Error('ERR:לא מצאתי את בן הבית'); return w; };
+    if (pr.kind === 'add_event') {
+      const w = await whoOf(a.user_id);
+      const row = { user_id: w.id, title: a.title, repeat: a.repeat, weekday: a.repeat === 'weekly' ? a.weekday : null, event_date: a.repeat === 'once' ? a.date : null, start_time: a.start, end_time: a.end };
+      const { error } = await supabase.from('events').insert(row);
+      if (error) throw new Error('ERR:ההוספה ללוח השנה נכשלה');
+      return `✅ הוספתי ללוח השנה של ${w.name}: ${a.title}, ${a.repeat === 'weekly' ? 'כל יום ' + WD[a.weekday] : a.date.split('-').reverse().join('.')} ${a.start} עד ${a.end}.`;
+    }
+    const { data: ev } = await supabase.from('events').select('*').eq('id', a.event_id).maybeSingle();
+    if (!ev) throw new Error('ERR:לא מצאתי את האירוע');
+    if (pr.kind === 'remove_event') {
+      const { error } = await supabase.from('events').delete().eq('id', ev.id);
+      if (error) throw new Error('ERR:המחיקה נכשלה');
+      return `✅ מחקתי מלוח השנה את "${ev.title}".`;
+    }
+    const patch = {};
+    if (a.title) patch.title = a.title;
+    if (a.user_id) patch.user_id = (await whoOf(a.user_id)).id;
+    if (a.date) { if (ev.repeat !== 'once') throw new Error('ERR:האירוע הזה שבועי, אי אפשר לתת לו תאריך'); patch.event_date = a.date; }
+    if (a.weekday !== undefined) { if (ev.repeat !== 'weekly') throw new Error('ERR:האירוע הזה חד-פעמי, אי אפשר לתת לו יום בשבוע'); patch.weekday = a.weekday; }
+    if (a.start) patch.start_time = a.start;
+    if (a.end) patch.end_time = a.end;
+    const st = String(patch.start_time || ev.start_time).slice(0, 5), en = String(patch.end_time || ev.end_time).slice(0, 5);
+    if (en <= st) throw new Error('ERR:שעת הסיום צריכה להיות אחרי שעת ההתחלה');
+    const { error } = await supabase.from('events').update(patch).eq('id', ev.id);
+    if (error) throw new Error('ERR:השינוי נכשל');
+    return `✅ עדכנתי את "${patch.title || ev.title}" בלוח השנה.`;
   }
   if (pr.kind === 'change_slot') {
     const t = await need(a.task_id);
