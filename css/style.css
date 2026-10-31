@@ -327,3 +327,7 @@ button.avn{background:none;border:0;font:inherit;color:inherit;cursor:pointer;pa
 /* אנגלית (כיוון שמאל לימין): החץ בכפתור החזרה מתהפך */
 html[dir=ltr] header.bar a.iconbtn svg{transform:scaleX(-1)}
 html[dir=ltr] .calnav .sqbtn svg{transform:scaleX(-1)}
+
+/* בועת עוזר הבית (רק לבעל הבית) */
+#homeBubble{position:fixed;inset-inline-end:14px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:30;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:28px;text-decoration:none;background:linear-gradient(180deg,#FFB05C,#FF8A1F);box-shadow:0 5px 14px rgba(196,100,10,.5),0 0 0 3px #fff}
+#homeBubble:active{transform:scale(.94)}

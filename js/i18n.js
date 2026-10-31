@@ -470,7 +470,6 @@ const D = {
   "הסר": "Remove",
   "המשימה הזאת כבר הוסרה": "This task was already removed",
   "ההסרה נכשלה": "The removal failed",
-  "עוזר הבית: שאלו אותי הכול": "Home assistant: ask me anything",
   "שאלו אותי על המשימות, הדיווחים והנקודות, או איך להפעיל את האפליקציה. שינויים רק באישור שלכם": "Ask me about tasks, reports and points, or how to use the app. Changes only with your approval",
   "שאלו אותי משהו...": "Ask me something...",
   "מה לא בוצע היום?": "What wasn't done today?",
