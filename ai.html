@@ -66,6 +66,7 @@ body.teacher #msgs{padding:12px 12px 0}
 .finyes{background:linear-gradient(180deg,#52D87A,#22A84B);color:#fff;box-shadow:0 5px 0 #167532}
 .finno{background:#fff;color:#34425E;border:3px solid #B9C7DD!important;box-shadow:0 4px 0 #B9C7DD}
 .rnd{width:48px;height:48px;border-radius:50%;border:2px solid var(--blue,#0D6EFD);background:#fff;font-size:22px;padding:0;flex:none;cursor:pointer}
+.rnd.mlang{font-size:15px;font-weight:800;color:var(--blue-dark,#0A58CA)}
 .rnd.on{background:#DC2626;border-color:#DC2626;color:#fff;animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.6}}
 .propcard{margin-top:10px;padding:10px 12px;border-radius:14px;background:#EEF6FF;border:2px solid #93C5FD;line-height:1.5}
@@ -390,20 +391,33 @@ function speakReply(t) {
   try { const sy = window.speechSynthesis; sy.cancel(); const u = new SpeechSynthesisUtterance(String(t).replace(/[✅🏠]/g, '')); u.lang = 'he-IL'; sy.speak(u); } catch (_) {}
 }
 function setupMic() {
-  const f = $('form'); ['mic', 'spk'].forEach(id => { const e = $(id); if (e && cur !== 'home') e.remove(); });
-  if (cur !== 'home' || $('mic')) return;
-  const mk = (id, txt, label) => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = 'cbtn rnd'; b.textContent = txt; b.setAttribute('aria-label', label); f.insertBefore(b, $('send')); return b; };
-  const spk = mk('spk', speakOn() ? '🔊' : '🔈', 'הקראת תשובות');
-  spk.onclick = () => { const on = !speakOn(); try { localStorage.setItem('homeSpeak', on ? '1' : '0'); } catch (_) {} spk.textContent = on ? '🔊' : '🔈'; if (!on) { try { window.speechSynthesis.cancel(); } catch (_) {} } showToast(on ? 'התשובות יוקראו' : 'ההקראה כבויה'); };
+  const f = $('form'); ['mic', 'spk', 'mlang'].forEach(id => { const e = $(id); if (e) e.remove(); });
+  const isHome = cur === 'home', isEn = cur === 'english';
+  if (!isHome && !isEn) return;
+  const mk = (id, txt, label, cls = 'cbtn rnd') => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = cls; b.textContent = txt; b.setAttribute('aria-label', label); f.insertBefore(b, $('send')); return b; };
+  if (isHome) {
+    const spk = mk('spk', speakOn() ? '🔊' : '🔈', 'הקראת תשובות');
+    spk.onclick = () => { const on = !speakOn(); try { localStorage.setItem('homeSpeak', on ? '1' : '0'); } catch (_) {} spk.textContent = on ? '🔊' : '🔈'; if (!on) { try { window.speechSynthesis.cancel(); } catch (_) {} } showToast(on ? 'התשובות יוקראו בקול' : 'ההקראה כבויה'); };
+  }
   if (!SR) return;
+  // בשיעור אנגלית: מתג שפה (אנגלית או עברית), והטקסט נכתב בתיבה בלי לשלוח
+  let lang = 'en-US';
+  if (isEn) {
+    try { if (localStorage.getItem('micLang') === 'he') lang = 'he-IL'; } catch (_) {}
+    const ml = mk('mlang', lang === 'he-IL' ? 'עב' : 'EN', 'שפת הדיבור', 'cbtn rnd mlang');
+    ml.onclick = () => { lang = lang === 'he-IL' ? 'en-US' : 'he-IL'; ml.textContent = lang === 'he-IL' ? 'עב' : 'EN'; try { localStorage.setItem('micLang', lang === 'he-IL' ? 'he' : 'en'); } catch (_) {} showToast(lang === 'he-IL' ? 'מקשיב בעברית' : 'מקשיב באנגלית'); };
+  }
   const mic = mk('mic', '🎤', 'דיבור');
   let rec = null;
   mic.onclick = () => {
     if (rec) { try { rec.stop(); } catch (_) {} return; }
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (_) {}
-    rec = new SR(); rec.lang = 'he-IL'; rec.interimResults = false; rec.maxAlternatives = 1;
+    rec = new SR(); rec.lang = isEn ? lang : 'he-IL'; rec.interimResults = false; rec.maxAlternatives = 1;
     mic.classList.add('on');
-    rec.onresult = e => { const t = e.results?.[0]?.[0]?.transcript || ''; if (t.trim()) send(t); };
+    rec.onresult = e => {
+      const t = (e.results?.[0]?.[0]?.transcript || '').trim(); if (!t) return;
+      if (isEn) { const box = $('text'); box.value = (box.value ? box.value.trim() + ' ' : '') + t; box.focus(); } else send(t);
+    };
     rec.onerror = e => { if (e.error !== 'aborted' && e.error !== 'no-speech') showToast('לא הצלחתי להשתמש במיקרופון', true); };
     rec.onend = () => { rec = null; mic.classList.remove('on'); };
     try { rec.start(); } catch (_) { rec = null; mic.classList.remove('on'); }

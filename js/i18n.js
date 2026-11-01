@@ -7,6 +7,10 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "מקשיב בעברית": "Listening in Hebrew",
+  "מקשיב באנגלית": "Listening in English",
+  "שפת הדיבור": "Speech language",
+  "דיבור": "Speak",
   "את לא יכולה לעשות את זה, רק ההורים": "You can't do that, only the parents can",
   "זה לא האירוע שלך": "That's not your event",
   "השליחה נכשלה": "Sending failed",
