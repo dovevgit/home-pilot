@@ -7,6 +7,15 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "את לא יכולה לעשות את זה, רק ההורים": "You can't do that, only the parents can",
+  "זה לא האירוע שלך": "That's not your event",
+  "השליחה נכשלה": "Sending failed",
+  "✅ שלחתי את הבקשה.": "✅ I sent the request.",
+  "מה המשימות שלי היום?": "What are my tasks today?",
+  "כמה נקודות יש לי?": "How many points do I have?",
+  "מי לא בבית היום?": "Who is not home today?",
+  "תוסיפי לי אירוע בלוח": "Add an event to my calendar",
+  "שאלו אותי על המשימות והנקודות, או בקשו ממני להוסיף אירוע ללוח השנה, לדווח שאת לא בבית או לשלוח בקשה. כל שינוי רק באישור שלך": "Ask me about tasks and points, or ask me to add a calendar event, report that you are not home, or send a request. Every change only with your approval",
   'הבית שלנו': 'Our Home', 'טוען...': 'Loading...',
   'חזרה': 'Back', 'תפריט': 'Menu', 'ניהול': 'Admin', 'בית': 'Home',
   'המשימות שלי': 'My tasks', 'לוח שנה': 'Calendar', 'היסטוריה ודיווחים': 'History and reports', 'חנות': 'Shop',
@@ -1157,6 +1166,8 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^היי (.+), מה תרצי לדעת\?$/, 'Hi $1, what would you like to know?'],
+  [/^✅ דיווחתי שאת לא בבית: (.+)$/, '✅ I reported that you are not home: $1'],
   [/^היי (.+), שמח שאתם כאן, מה בא לכם להכין היום\?$/, 'Hi $1, glad you are here, what do you feel like making today?'],
   [/^(.+) (.+), מה בא לך לתרגל היום\?$/, '$1 $2, what would you like to practice today?'],
   [/^\s*מבקש\/ת לבצע: (.+)$/, 'wants to do: $1'],

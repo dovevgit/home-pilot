@@ -113,7 +113,12 @@ H.home = { ico: '🏠', name: 'עוזר הבית', hint: 'שאלו אותי על
   hi: () => `היי ${myName}, מה תרצה לדעת על הבית?`,
   sug: ['מה לא בוצע היום?', 'מי עשה משימות אתמול?', 'כמה נקודות יש לכל אחד?', 'איך מוסיפים משימה?'], full: 'העוזר לא זמין כרגע' };
 // עוזר הבית: רק לדובב (גם השרת חוסם כל אחד אחר)
-if (!['e1fbc911-82d6-4eef-9989-21ca0324c906','67e6f7e0-9519-45cf-96ac-e2913ab95ce8'].includes(session.user.id)) delete H.home;
+const HOME_ADMINS = ['e1fbc911-82d6-4eef-9989-21ca0324c906', '67e6f7e0-9519-45cf-96ac-e2913ab95ce8'];
+const HOME_KIDS = ['87a5ede6-fbdc-4ffe-90de-b046b3836f90', 'c9a7a118-fafe-4df5-8eff-a7dd1bbeba0d'];
+const isKid = HOME_KIDS.includes(session.user.id);
+if (!HOME_ADMINS.includes(session.user.id) && !isKid) delete H.home;
+if (H.home && isKid) Object.assign(H.home, { hint: 'שאלו אותי על המשימות והנקודות, או בקשו ממני להוסיף אירוע ללוח השנה, לדווח שאת לא בבית או לשלוח בקשה. כל שינוי רק באישור שלך', hi: () => `היי ${myName}, מה תרצי לדעת?`,
+  sug: ['מה המשימות שלי היום?', 'כמה נקודות יש לי?', 'מי לא בבית היום?', 'תוסיפי לי אירוע בלוח'] });
 let cur = null, busy = false;
 const noteHtml = () => `<div class="ainote">🔒 ${cur === 'english' && isAdmin ? 'השיחות נשלחות לבינה מלאכותית, ושיעורי אנגלית נשמרים לצפייה של ההורים' : 'השיחות נשלחות לבינה מלאכותית כדי לקבל תשובה'}</div>`;
 const hdrBack = document.querySelector('header.bar a.iconbtn[href]');
@@ -261,6 +266,8 @@ async function runProposal(i) {
 }
 async function execAction(pr) {
   const a = pr.args, uid = session.user.id;
+  if (isKid && !['add_event', 'edit_event', 'remove_event', 'add_outing', 'add_request'].includes(pr.kind)) throw new Error('ERR:את לא יכולה לעשות את זה, רק ההורים');
+  if (isKid && (pr.kind === 'add_event')) a.user_id = uid;
   const need = async id => { const { data } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle(); if (!data) throw new Error('ERR:לא מצאתי את המשימה'); return data; };
   if (pr.kind === 'mark_done') {
     const t = await need(a.task_id);
@@ -322,6 +329,7 @@ async function execAction(pr) {
     }
     const { data: ev } = await supabase.from('events').select('*').eq('id', a.event_id).maybeSingle();
     if (!ev) throw new Error('ERR:לא מצאתי את האירוע');
+    if (isKid && ev.user_id !== uid) throw new Error('ERR:זה לא האירוע שלך');
     if (pr.kind === 'remove_event') {
       const { error } = await supabase.from('events').delete().eq('id', ev.id);
       if (error) throw new Error('ERR:המחיקה נכשלה');
@@ -329,7 +337,7 @@ async function execAction(pr) {
     }
     const patch = {};
     if (a.title) patch.title = a.title;
-    if (a.user_id) patch.user_id = (await whoOf(a.user_id)).id;
+    if (a.user_id && !isKid) patch.user_id = (await whoOf(a.user_id)).id;
     if (a.date) { if (ev.repeat !== 'once') throw new Error('ERR:האירוע הזה שבועי, אי אפשר לתת לו תאריך'); patch.event_date = a.date; }
     if (a.weekday !== undefined) { if (ev.repeat !== 'weekly') throw new Error('ERR:האירוע הזה חד-פעמי, אי אפשר לתת לו יום בשבוע'); patch.weekday = a.weekday; }
     if (a.start) patch.start_time = a.start;
@@ -339,6 +347,21 @@ async function execAction(pr) {
     const { error } = await supabase.from('events').update(patch).eq('id', ev.id);
     if (error) throw new Error('ERR:השינוי נכשל');
     return `✅ עדכנתי את "${patch.title || ev.title}" בלוח השנה.`;
+  }
+  if (pr.kind === 'add_outing') {
+    const dmy = d => d.split('-').reverse().join('.');
+    const row = { user_id: uid, reason: a.reason, start_date: a.start_date, end_date: a.end_date, place: a.place || '', address: a.address || null, note: a.note || null, contacts: a.contacts || [], phone: null, with_whom: null };
+    const { error } = await supabase.from('outings').insert(row);
+    if (error) throw new Error('ERR:הדיווח נכשל');
+    return `✅ דיווחתי שאת לא בבית: ${a.reason}${a.place ? ', ' + a.place : ''}, ${a.start_date === a.end_date ? dmy(a.start_date) : dmy(a.start_date) + ' עד ' + dmy(a.end_date)}.`;
+  }
+  if (pr.kind === 'add_request') {
+    let pts = 5;
+    try { const { data: st } = await supabase.from('app_settings').select('value').eq('key', 'request_points').maybeSingle(); if (st?.value) pts = parseInt(st.value) || pts; } catch (_) {}
+    const ids = (a.to_user_ids || []).filter(x => x !== uid);
+    const { error } = await supabase.from('requests').insert({ created_by: uid, status: 'open', to_users: ids.length ? ids : null, body: a.body, due_date: a.due_date || null, due_time: a.due_time || null, points: pts });
+    if (error) throw new Error('ERR:השליחה נכשלה');
+    return '✅ שלחתי את הבקשה.';
   }
   if (pr.kind === 'change_slot') {
     const t = await need(a.task_id);
