@@ -277,7 +277,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
     const first = hdr && hdr.firstElementChild;
     if (hdr && first) {
       // בעברית הצד הימני הוא תחילת הכותרת; באנגלית הוא סוף הכותרת (ליד התפריט)
-      if (EN) { const mb = document.getElementById('menuBtn'); if (mb) mb.before(bub); else hdr.append(bub); }
+      if (EN) { const mb = document.getElementById('menuBtn'); if (mb) { const w = document.createElement('span'); w.className = 'hdrR'; mb.replaceWith(w); w.append(bub, mb); hdr.classList.add('hasBubEn'); } else hdr.append(bub); }
       else if (first.classList.contains('ghost')) first.replaceWith(bub);
       else { const w = document.createElement('span'); w.className = 'hdrR'; first.replaceWith(w); w.append(first, bub); hdr.classList.add('hasBub'); }
     } else document.body.append(bub);
