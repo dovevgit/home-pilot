@@ -7,6 +7,7 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  'נבחרתם לשמש כקבוצת ביקורת, אך למרות זאת לא השתמשתם באפליקציה. כעת תמה האפשרות לכך.': 'You were chosen to serve as a control group, yet you did not use the app. The opportunity has now ended.', 'הבנתי': 'OK',
   "מקשיב בעברית": "Listening in Hebrew",
   "מקשיב באנגלית": "Listening in English",
   "שפת הדיבור": "Speech language",

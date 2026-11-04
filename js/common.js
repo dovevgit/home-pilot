@@ -154,6 +154,20 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   const EN = initI18n(active);
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.replace('login.html'); await new Promise(() => {}); }
+  // בית סגור: מנתקים ומציגים הודעה (הסימון נקבע ב-families.closed_at)
+  try {
+    const { data: closed } = await supabase.rpc('my_family_closed');
+    if (closed === true) {
+      try { await supabase.auth.signOut(); } catch (_) {}
+      try { localStorage.removeItem('myFam'); localStorage.removeItem('myName'); } catch (_) {}
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px';
+      ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:18px;padding:26px 22px;max-width:360px;text-align:center;font-size:18px;line-height:1.6;box-shadow:0 10px 40px rgba(0,0,0,.4)"><p style="margin:0 0 18px">נבחרתם לשמש כקבוצת ביקורת, אך למרות זאת לא השתמשתם באפליקציה. כעת תמה האפשרות לכך.</p><button type="button" style="font-size:17px;padding:10px 28px;border:0;border-radius:12px;background:#f08a24;color:#fff">הבנתי</button></div>';
+      ov.querySelector('button').onclick = () => location.replace('login.html');
+      document.body.appendChild(ov);
+      await new Promise(() => {});
+    }
+  } catch (_) {}
   const { data: profiles } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
   (profiles || []).forEach(p => { if (p.avatar_path && p.avatar_path.startsWith('static/')) p.avatar_url = 'icons/avatars/' + p.avatar_path.slice(7); });
   const withPhoto = (profiles || []).filter(p => p.avatar_path && !p.avatar_path.startsWith('static/'));
