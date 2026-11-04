@@ -13,7 +13,7 @@ export const savedCode = () => { try { return localStorage.getItem('familyCode')
 export const saveCode = (c) => { try { localStorage.setItem('familyCode', c.trim().toUpperCase()); } catch (_) {} };
 
 const MSG = {
-  bad_signup_code: 'קוד ההצטרפות לניסוי לא נכון',
+  bad_signup_code: 'ההרשמה לבתים חדשים סגורה כרגע',
   bad_name: 'השם לא תקין (עד 20 תווים)',
   bad_username: 'שם משתמש: 2 עד 20 תווים, אותיות, ספרות, נקודה, קו תחתון או מקף',
   bad_password: 'הסיסמה צריכה להיות לפחות 6 תווים',
