@@ -1,4 +1,4 @@
-/* הדמות הכחולה של הבית: יושבת על המלבן של משימות הבונוס, מטיילת עליו מדי פעם,
+/* הדמות הכחולה של הבית: יושבת על המלבן של ההודעה ליד הגביע ("צברתם ... נקודות"), מטיילת עליו מדי פעם,
    צונחת כשגוללים למטה, מתעופפת בחזרה כשגוללים למעלה, ומתעצבנת כשמציקים לה. לא קשורה למשימות. */
 const POSES = ['idle', 'wave', 'tongue', 'look', 'fly', 'stretch', 'fall', 'angry'];
 const BASE = new URL('../icons/mascot/', import.meta.url).href;
@@ -6,14 +6,14 @@ POSES.forEach(p => { const i = new Image(); i.src = `${BASE}${p}.png`; });
 
 const S = 84;                 // גודל הדמות בפיקסלים
 const FEET = S * 209 / 240;   // כמה פיקסלים מראש התמונה עד כפות הרגליים
+const TROPHY = 42;            // חצי מרוחב הגביע
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const css = document.createElement('style');
 css.textContent = `
 #mascot{width:${S}px;height:${S}px;z-index:15;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#mascot.m-home{position:absolute;top:${Math.round(6 - FEET)}px}
+#mascot.m-home{position:absolute;top:${Math.round(2 - FEET)}px}
 #mascot.m-air{position:fixed;top:0;left:0;will-change:transform}
-#mascotWrap{position:relative;margin-top:40px}
 #mascot img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none;transform-origin:50% 90%;
   transition:transform .22s ease-out;filter:drop-shadow(0 3px 3px rgba(0,0,0,.18))}
 #mascot.m-idle img{animation:m-bob 2.6s ease-in-out infinite}
@@ -41,22 +41,24 @@ const img = document.createElement('img');
 img.alt = ''; img.draggable = false;
 box.appendChild(img);
 
-/* המלבן שהדמות יושבת עליו: משימות הבונוס. אם אין כזה, היא נשארת בפינה למטה */
-const card = document.getElementById('bonusCard');
-let wrap = null;
-if (card) {
-  wrap = document.createElement('div'); wrap.id = 'mascotWrap';
-  wrap.style.marginBottom = card.style.marginBottom || '12px';
-  card.style.marginBottom = '0';
-  card.parentNode.insertBefore(wrap, card); wrap.appendChild(card);
-}
+/* המלבן שהדמות יושבת עליו: ההודעה עם הגביע. הוא נטען מהשרת, אז מחכים לו. עד שהוא מופיע (או אם אין הודעה) היא בפינה למטה */
+let home = null;
+const target = () => document.querySelector('#announce .announce');
 
 /* mode: home = יושבת על המלבן | falling = נופלת | floor = על הרצפה למטה | flying = עפה חזרה למלבן */
 let mode = 'floor', x = 8, y = 0, vy = 0, homeX = 0;
 const tabH = () => (document.querySelector('.tabbar')?.offsetHeight || 82);
 const floorX = () => 8;
 const floorY = () => innerHeight - tabH() - FEET - 4;
-const maxHomeX = () => Math.max(8, (wrap ? wrap.clientWidth : 300) - S - 8);
+const homeW = () => (home ? home.clientWidth : 300);
+const maxHomeX = () => Math.max(8, homeW() - S - 8);
+/* לא לשבת על הגביע: אם יוצא עליו, זזים לצד הקרוב */
+function avoidTrophy(px) {
+  const c = homeW() / 2;
+  if (px + S > c - TROPHY && px < c + TROPHY) px = px + S / 2 < c ? c - TROPHY - S - 6 : c + TROPHY + 6;
+  return Math.min(Math.max(8, px), maxHomeX());
+}
+const restX = () => avoidTrophy(homeW() / 2 + TROPHY + 8);
 
 function placeAir() { box.style.transform = `translate3d(${Math.round(x)}px,${Math.round(y)}px,0)`; }
 function toAir(px, py) {
@@ -65,14 +67,14 @@ function toAir(px, py) {
   box.style.left = ''; document.body.appendChild(box); placeAir();
 }
 function toHome(px) {
-  homeX = Math.min(Math.max(8, px), maxHomeX());
+  homeX = avoidTrophy(px);
   box.classList.remove('m-air'); box.classList.add('m-home');
   box.style.transform = ''; box.style.left = homeX + 'px';
-  wrap.appendChild(box);
+  home.appendChild(box);
 }
-function cardSpot() {                 // היעד: אמצע הקצה העליון של המלבן (בקואורדינטות של המסך)
-  const r = card.getBoundingClientRect();
-  return { cx: r.left + r.width / 2 - S / 2, cy: r.top - FEET + 6, top: r.top, bottom: r.bottom };
+function spot() {                     // היעד: ליד הגביע, על הקצה העליון של המלבן (קואורדינטות המסך)
+  const r = home.getBoundingClientRect();
+  return { cx: r.left + restX(), cy: r.top - FEET + 6, bottom: r.bottom, top: r.top };
 }
 
 /* תנוחה לפי המצב */
@@ -95,7 +97,7 @@ function render() {
 const later = (fn, ms) => setTimeout(fn, ms);
 const land = () => { landUntil = Date.now() + 450; render(); later(render, 470); };
 
-/* תנועה: נפילה ועוף (רק כשצריך) */
+/* תנועה: נפילה, עוף וטיול (רק כשצריך) */
 let raf = 0, tPrev = 0, walkTo = null;
 function frame(t) {
   raf = 0;
@@ -106,15 +108,15 @@ function frame(t) {
     const fy = floorY();
     if (REDUCED || y >= fy) { y = fy; x = floorX(); vy = 0; mode = 'floor'; placeAir(); land(); }
     else { placeAir(); active = true; }
-  } else if (mode === 'flying' && card) {
-    const c = cardSpot();
+  } else if (mode === 'flying' && home) {
+    const c = spot();
     const offTop = c.bottom < 80;                      // המלבן עדיין למעלה, מחוץ למסך
     const tx = offTop ? floorX() + 20 : c.cx, ty = offTop ? 90 : c.cy;
     const dx = tx - x, dy = ty - y, dist = Math.hypot(dx, dy);
-    if (!offTop && (REDUCED || dist < 6)) { toHome(c.cx - wrap.getBoundingClientRect().left); mode = 'home'; land(); }
+    if (!offTop && (REDUCED || dist < 6)) { toHome(restX()); mode = 'home'; land(); }
     else {
-      const step = Math.max(200 * dt, dist * Math.min(1, dt * 5));
-      if (dist > 1) { x += dx / dist * Math.min(step, dist); y += dy / dist * Math.min(step, dist); }
+      const step = Math.min(dist, Math.max(200 * dt, dist * Math.min(1, dt * 5)));
+      if (dist > 1) { x += dx / dist * step; y += dy / dist * step; }
       placeAir(); active = true;
     }
   } else if (mode === 'home' && walkTo !== null) {
@@ -126,14 +128,20 @@ function frame(t) {
 }
 const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
 
-/* התחלה: על המלבן אם רואים אותו, אחרת על הרצפה */
-function start() {
-  const c = card && cardSpot();
-  if (card && c.bottom > 80 && c.top < innerHeight) {
-    wrap.appendChild(box); box.classList.add('m-home'); mode = 'home'; homeX = Math.min(maxHomeX(), Math.max(8, wrap.clientWidth - S - 24));
-    box.style.left = homeX + 'px';
-  } else { mode = 'floor'; document.body.appendChild(box); box.classList.add('m-air'); x = floorX(); y = floorY(); placeAir(); }
-  render();
+/* התחלה: על הרצפה, ועוברת למלבן ברגע שההודעה מופיעה */
+function attach() {
+  const el = target();
+  if (!el || home === el) return !!el;
+  home = el;
+  if (mode === 'floor' && scrollY < 300) { toHome(restX()); mode = 'home'; render(); }
+  return true;
+}
+document.body.appendChild(box); box.classList.add('m-air'); x = floorX(); y = floorY(); placeAir(); render();
+const holder = document.getElementById('announce');
+if (holder && !attach()) {
+  const mo = new MutationObserver(() => { if (attach()) mo.disconnect(); });
+  mo.observe(holder, { childList: true, subtree: true });
+  later(() => mo.disconnect(), 15000);
 }
 
 /* גלילה */
@@ -146,7 +154,7 @@ window.addEventListener('scroll', () => {
     if (dir === 'down') {
       if (mode === 'home') { const r = box.getBoundingClientRect(); walking = false; walkTo = null; toAir(r.left, Math.max(80, r.top + d)); mode = 'falling'; vy = 0; kick(); }
       else if (mode === 'flying') { mode = 'falling'; vy = 0; kick(); }
-    } else if ((mode === 'floor' || mode === 'falling') && card) { mode = 'flying'; kick(); }
+    } else if ((mode === 'floor' || mode === 'falling') && home) { mode = 'flying'; kick(); }
     scrollMode = dir; render();
   }
   clearTimeout(stopTimer);
@@ -178,8 +186,8 @@ const FLAIR = ['wave', 'tongue', 'look', 'stretch'];
     const calm = !scrollMode && now > angryUntil && now > flairUntil && mode !== 'falling' && mode !== 'flying';
     if (calm) {
       if (mode === 'home' && !walking && Math.random() < 0.6) {
-        let to = 8 + Math.random() * (maxHomeX() - 8);
-        if (Math.abs(to - homeX) < 70) to = homeX < maxHomeX() / 2 ? maxHomeX() - 8 : 8;
+        let to = avoidTrophy(8 + Math.random() * (maxHomeX() - 8));
+        if (Math.abs(to - homeX) < 70) to = avoidTrophy(homeX < maxHomeX() / 2 ? maxHomeX() : 8);
         walkTo = to; walking = true; stepFlip = false;
         const steps = setInterval(() => { if (!walking) return clearInterval(steps); stepFlip = !stepFlip; render(); }, 260);
         render(); kick();
@@ -191,5 +199,3 @@ const FLAIR = ['wave', 'tongue', 'look', 'stretch'];
     idleLoop();
   }, 7000 + Math.random() * 5000);
 })();
-
-start();
