@@ -1,24 +1,35 @@
-/* הדמות הכחולה של הבית: צונחת כשגוללים למטה, מתעופפת כשגוללים למעלה, ומתעצבנת כשמציקים לה. לא קשורה למשימות. */
+/* הדמות הכחולה של הבית: יושבת על המלבן של משימות הבונוס, מטיילת עליו מדי פעם,
+   צונחת כשגוללים למטה, מתעופפת בחזרה כשגוללים למעלה, ומתעצבנת כשמציקים לה. לא קשורה למשימות. */
 const POSES = ['idle', 'wave', 'tongue', 'look', 'fly', 'stretch', 'fall', 'angry'];
 const BASE = new URL('../icons/mascot/', import.meta.url).href;
 POSES.forEach(p => { const i = new Image(); i.src = `${BASE}${p}.png`; });
 
+const S = 84;                 // גודל הדמות בפיקסלים
+const FEET = S * 209 / 240;   // כמה פיקסלים מראש התמונה עד כפות הרגליים
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const css = document.createElement('style');
 css.textContent = `
-#mascot{position:fixed;inset-inline-end:8px;bottom:calc(82px + env(safe-area-inset-bottom));width:88px;height:88px;z-index:15;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#mascot{width:${S}px;height:${S}px;z-index:15;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#mascot.m-home{position:absolute;top:${Math.round(6 - FEET)}px}
+#mascot.m-air{position:fixed;top:0;left:0;will-change:transform}
+#mascotWrap{position:relative;margin-top:40px}
 #mascot img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none;transform-origin:50% 90%;
   transition:transform .22s ease-out;filter:drop-shadow(0 3px 3px rgba(0,0,0,.18))}
 #mascot.m-idle img{animation:m-bob 2.6s ease-in-out infinite}
+#mascot.m-sit img{animation:m-sit 3.2s ease-in-out infinite}
+#mascot.m-walk img{animation:m-step .26s ease-in-out infinite}
 #mascot.m-flair img{animation:m-hop .5s ease-out 2}
-#mascot.m-fall img{transform:translateY(14px) rotate(-9deg);transition:transform .16s ease-in}
-#mascot.m-fly img{animation:m-fly .38s ease-in-out infinite;transition:transform .2s ease-out}
+#mascot.m-fall img{transform:rotate(-14deg);transition:transform .16s ease-in}
+#mascot.m-fly img{animation:m-fly .38s ease-in-out infinite}
 #mascot.m-land img{animation:m-land .45s ease-out 1}
 #mascot.m-angry img{animation:m-shake .09s linear infinite}
 @keyframes m-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes m-sit{0%,100%{transform:translateY(3px) scale(1,.93)}50%{transform:translateY(2px) scale(1,.96)}}
+@keyframes m-step{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(3deg)}}
 @keyframes m-hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-10px) rotate(4deg)}}
-@keyframes m-fly{0%,100%{transform:translateY(-20px) rotate(-3deg)}50%{transform:translateY(-30px) rotate(3deg)}}
-@keyframes m-land{0%{transform:translateY(10px) scale(1.08,.88)}60%{transform:translateY(-5px)}100%{transform:translateY(0)}}
+@keyframes m-fly{0%,100%{transform:translateY(-3px) rotate(-3deg)}50%{transform:translateY(5px) rotate(3deg)}}
+@keyframes m-land{0%{transform:translateY(8px) scale(1.08,.88)}60%{transform:translateY(-5px)}100%{transform:translateY(0)}}
 @keyframes m-shake{0%{transform:translateX(-3px) rotate(-3deg)}50%{transform:translateX(3px) rotate(3deg)}100%{transform:translateX(-3px) rotate(-3deg)}}
 @media (prefers-reduced-motion:reduce){#mascot img{animation:none!important;transition:none!important}}
 `;
@@ -29,36 +40,122 @@ box.id = 'mascot'; box.setAttribute('aria-hidden', 'true');
 const img = document.createElement('img');
 img.alt = ''; img.draggable = false;
 box.appendChild(img);
-document.body.appendChild(box);
 
+/* המלבן שהדמות יושבת עליו: משימות הבונוס. אם אין כזה, היא נשארת בפינה למטה */
+const card = document.getElementById('bonusCard');
+let wrap = null;
+if (card) {
+  wrap = document.createElement('div'); wrap.id = 'mascotWrap';
+  wrap.style.marginBottom = card.style.marginBottom || '12px';
+  card.style.marginBottom = '0';
+  card.parentNode.insertBefore(wrap, card); wrap.appendChild(card);
+}
+
+/* mode: home = יושבת על המלבן | falling = נופלת | floor = על הרצפה למטה | flying = עפה חזרה למלבן */
+let mode = 'floor', x = 8, y = 0, vy = 0, homeX = 0;
+const tabH = () => (document.querySelector('.tabbar')?.offsetHeight || 82);
+const floorX = () => 8;
+const floorY = () => innerHeight - tabH() - FEET - 4;
+const maxHomeX = () => Math.max(8, (wrap ? wrap.clientWidth : 300) - S - 8);
+
+function placeAir() { box.style.transform = `translate3d(${Math.round(x)}px,${Math.round(y)}px,0)`; }
+function toAir(px, py) {
+  x = px; y = py;
+  box.classList.remove('m-home'); box.classList.add('m-air');
+  box.style.left = ''; document.body.appendChild(box); placeAir();
+}
+function toHome(px) {
+  homeX = Math.min(Math.max(8, px), maxHomeX());
+  box.classList.remove('m-air'); box.classList.add('m-home');
+  box.style.transform = ''; box.style.left = homeX + 'px';
+  wrap.appendChild(box);
+}
+function cardSpot() {                 // היעד: אמצע הקצה העליון של המלבן (בקואורדינטות של המסך)
+  const r = card.getBoundingClientRect();
+  return { cx: r.left + r.width / 2 - S / 2, cy: r.top - FEET + 6, top: r.top, bottom: r.bottom };
+}
+
+/* תנוחה לפי המצב */
 let pose = '', cls = '';
 function show(p, c) {
   if (p !== pose) { pose = p; img.src = `${BASE}${p}.png`; }
-  if (c !== cls) { box.classList.remove('m-idle', 'm-flair', 'm-fall', 'm-fly', 'm-land', 'm-angry'); void box.offsetWidth; box.classList.add(c); cls = c; }
+  if (c !== cls) { box.classList.remove('m-idle', 'm-sit', 'm-walk', 'm-flair', 'm-fall', 'm-fly', 'm-land', 'm-angry'); void box.offsetWidth; box.classList.add(c); cls = c; }
 }
-
-let angryUntil = 0, scrollMode = '', flairUntil = 0, flairPose = 'wave', landUntil = 0;
+let angryUntil = 0, scrollMode = '', flairUntil = 0, flairPose = 'wave', landUntil = 0, walking = false, stepFlip = false;
 function render() {
   const now = Date.now();
   if (now < angryUntil) return show('angry', 'm-angry');
-  if (scrollMode === 'down') return show('fall', 'm-fall');
-  if (scrollMode === 'up') return show('fly', 'm-fly');
+  if (mode === 'falling' || (mode === 'floor' && scrollMode === 'down')) return show('fall', 'm-fall');
+  if (mode === 'flying') return show('fly', 'm-fly');
   if (now < landUntil) return show('idle', 'm-land');
+  if (mode === 'home' && walking) return show(stepFlip ? 'look' : 'idle', 'm-walk');
   if (now < flairUntil) return show(flairPose, 'm-flair');
-  show('idle', 'm-idle');
+  show('idle', mode === 'home' ? 'm-sit' : 'm-idle');
+}
+const later = (fn, ms) => setTimeout(fn, ms);
+const land = () => { landUntil = Date.now() + 450; render(); later(render, 470); };
+
+/* תנועה: נפילה ועוף (רק כשצריך) */
+let raf = 0, tPrev = 0, walkTo = null;
+function frame(t) {
+  raf = 0;
+  const dt = Math.min(0.05, (t - (tPrev || t)) / 1000); tPrev = t;
+  let active = false;
+  if (mode === 'falling') {
+    vy += 2200 * dt; y += vy * dt; x += (floorX() - x) * Math.min(1, dt * 5);
+    const fy = floorY();
+    if (REDUCED || y >= fy) { y = fy; x = floorX(); vy = 0; mode = 'floor'; placeAir(); land(); }
+    else { placeAir(); active = true; }
+  } else if (mode === 'flying' && card) {
+    const c = cardSpot();
+    const offTop = c.bottom < 80;                      // המלבן עדיין למעלה, מחוץ למסך
+    const tx = offTop ? floorX() + 20 : c.cx, ty = offTop ? 90 : c.cy;
+    const dx = tx - x, dy = ty - y, dist = Math.hypot(dx, dy);
+    if (!offTop && (REDUCED || dist < 6)) { toHome(c.cx - wrap.getBoundingClientRect().left); mode = 'home'; land(); }
+    else {
+      const step = Math.max(200 * dt, dist * Math.min(1, dt * 5));
+      if (dist > 1) { x += dx / dist * Math.min(step, dist); y += dy / dist * Math.min(step, dist); }
+      placeAir(); active = true;
+    }
+  } else if (mode === 'home' && walkTo !== null) {
+    const dx = walkTo - homeX, step = 46 * dt;
+    if (Math.abs(dx) <= step) { homeX = walkTo; walkTo = null; walking = false; box.style.left = homeX + 'px'; render(); }
+    else { homeX += Math.sign(dx) * step; box.style.left = homeX + 'px'; active = true; }
+  }
+  if (active) raf = requestAnimationFrame(frame); else tPrev = 0;
+}
+const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+/* התחלה: על המלבן אם רואים אותו, אחרת על הרצפה */
+function start() {
+  const c = card && cardSpot();
+  if (card && c.bottom > 80 && c.top < innerHeight) {
+    wrap.appendChild(box); box.classList.add('m-home'); mode = 'home'; homeX = Math.min(maxHomeX(), Math.max(8, wrap.clientWidth - S - 24));
+    box.style.left = homeX + 'px';
+  } else { mode = 'floor'; document.body.appendChild(box); box.classList.add('m-air'); x = floorX(); y = floorY(); placeAir(); }
+  render();
 }
 
 /* גלילה */
 let lastY = window.scrollY, stopTimer = 0;
 window.addEventListener('scroll', () => {
-  const y = window.scrollY, d = y - lastY;
-  if (Math.abs(d) >= 4) { scrollMode = d > 0 ? 'down' : 'up'; lastY = y; render(); }
+  const sy = window.scrollY, d = sy - lastY;
+  if (Math.abs(d) >= 5) {
+    lastY = sy;
+    const dir = d > 0 ? 'down' : 'up';
+    if (dir === 'down') {
+      if (mode === 'home') { const r = box.getBoundingClientRect(); walking = false; walkTo = null; toAir(r.left, Math.max(80, r.top + d)); mode = 'falling'; vy = 0; kick(); }
+      else if (mode === 'flying') { mode = 'falling'; vy = 0; kick(); }
+    } else if ((mode === 'floor' || mode === 'falling') && card) { mode = 'flying'; kick(); }
+    scrollMode = dir; render();
+  }
   clearTimeout(stopTimer);
-  stopTimer = setTimeout(() => {
-    if (scrollMode) { scrollMode = ''; landUntil = Date.now() + 450; render(); setTimeout(render, 460); }
-    lastY = window.scrollY;
-  }, 160);
+  stopTimer = setTimeout(() => { scrollMode = ''; lastY = window.scrollY; render(); }, 160);
 }, { passive: true });
+window.addEventListener('resize', () => {
+  if (mode === 'floor') { x = floorX(); y = floorY(); placeAir(); }
+  else if (mode === 'home') toHome(homeX);
+});
 
 /* הצקות: נגיעה ראשונה מצחיקה אותה, שנייה מבלבלת אותה, שלישית ואילך מעצבנת */
 let taps = 0, tapTimer = 0;
@@ -68,29 +165,31 @@ box.addEventListener('pointerdown', e => {
   clearTimeout(tapTimer);
   tapTimer = setTimeout(() => { taps = 0; }, 2500);
   const now = Date.now();
-  if (taps >= 3) {
-    angryUntil = now + 2600;
-    setTimeout(() => { render(); }, 2650);
-  } else {
-    flairPose = taps === 1 ? 'tongue' : 'look';
-    flairUntil = now + 1100;
-    setTimeout(render, 1150);
-  }
+  if (taps >= 3) { angryUntil = now + 2600; later(render, 2650); }
+  else { flairPose = taps === 1 ? 'tongue' : 'look'; flairUntil = now + 1100; later(render, 1150); }
   render();
 });
 
-/* מדי פעם מנופפת, מוציאה לשון או מתמתחת */
+/* מדי פעם: מנופפת / מוציאה לשון / מתמתחת, ואם יושבת על המלבן גם מטיילת עליו ומתיישבת שוב */
 const FLAIR = ['wave', 'tongue', 'look', 'stretch'];
 (function idleLoop() {
-  setTimeout(() => {
+  later(() => {
     const now = Date.now();
-    if (!scrollMode && now > angryUntil && now > flairUntil) {
-      flairPose = FLAIR[Math.floor(Math.random() * FLAIR.length)];
-      flairUntil = now + 1700;
-      render(); setTimeout(render, 1750);
+    const calm = !scrollMode && now > angryUntil && now > flairUntil && mode !== 'falling' && mode !== 'flying';
+    if (calm) {
+      if (mode === 'home' && !walking && Math.random() < 0.6) {
+        let to = 8 + Math.random() * (maxHomeX() - 8);
+        if (Math.abs(to - homeX) < 70) to = homeX < maxHomeX() / 2 ? maxHomeX() - 8 : 8;
+        walkTo = to; walking = true; stepFlip = false;
+        const steps = setInterval(() => { if (!walking) return clearInterval(steps); stepFlip = !stepFlip; render(); }, 260);
+        render(); kick();
+      } else {
+        flairPose = FLAIR[Math.floor(Math.random() * FLAIR.length)];
+        flairUntil = now + 1700; render(); later(render, 1750);
+      }
     }
     idleLoop();
   }, 7000 + Math.random() * 5000);
 })();
 
-render();
+start();
