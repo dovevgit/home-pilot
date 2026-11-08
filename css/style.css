@@ -4,7 +4,8 @@
   --text:#1F2937; --text2:#4B5563; --border:#E5E7EB; --field:#AEBFD3;
   --danger:#B91C1C; --success:#15803D;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+a:focus:not(:focus-visible),button:focus:not(:focus-visible),[role=button]:focus:not(:focus-visible){outline:none}
 html{color-scheme:only light}
 html,body{margin:0;min-height:100%}
 body{font-family:'Assistant',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:18px;line-height:1.4;padding-top:76px;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
