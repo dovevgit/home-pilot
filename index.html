@@ -60,6 +60,10 @@ if (me?.role === 'admin') {
 
 /* --- נקודות מצטברות, מוביל ובני משפחה --- */
 const { earnedByUser: pointsByUser } = await lifetimePoints();
+// יתרה להצגה: נקודות שנצברו פחות רכישות בחנות (גם בקשות שממתינות; לא כולל נדחו). המוביל נשאר לפי נקודות שנצברו.
+const spentBy = {};
+try { const { data: pur } = await supabase.from('purchases').select('user_id,price,status'); for (const r of pur || []) if (r.status !== 'rejected') spentBy[r.user_id] = (spentBy[r.user_id] || 0) + r.price; } catch (_) {}
+const balanceOf = id => (pointsByUser[id] || 0) - (spentBy[id] || 0);
 const users = profiles.filter(p => p.is_user);
 const best = Math.max(0, ...users.map(u => pointsByUser[u.id] || 0));
 const leaders = best > 0 ? users.filter(u => (pointsByUser[u.id] || 0) === best) : [];
@@ -73,7 +77,7 @@ const away = Object.fromEntries((awayRows || []).map(r => [r.user_id, r.reason])
 const awayEx = Object.fromEntries((awayRows || []).map(r => [r.user_id, !!r.excused]));
 const awayTag = id => awayEx[id] ? '<span class="abs-tag">נעדר/ת</span>' : '<span class="abs-tag out">לא בבית</span>';
 document.getElementById('family').innerHTML = users.map(p => `
-  <button type="button" class="avn ${away[p.id] ? 'away' : ''}" data-uid="${p.id}" aria-label="הכרטיס של ${esc(p.name)}">${avatar(p, 54)}<span class="avname">${esc(p.name)}</span>${away[p.id] ? `${awayTag(p.id)}<span class="apts abs-why">${esc(away[p.id])}</span>` : `<span class="apts" dir="ltr">${pointsByUser[p.id] || 0}</span>`}</button>`).join('');
+  <button type="button" class="avn ${away[p.id] ? 'away' : ''}" data-uid="${p.id}" aria-label="הכרטיס של ${esc(p.name)}">${avatar(p, 54)}<span class="avname">${esc(p.name)}</span>${away[p.id] ? `${awayTag(p.id)}<span class="apts abs-why">${esc(away[p.id])}</span>` : `<span class="apts" dir="ltr">${balanceOf(p.id)}</span>`}</button>`).join('');
 
 /* --- כרטיס משתמש --- */
 const dmy = d => d.split('-').reverse().join('.');
@@ -132,7 +136,7 @@ function openCard(uid, editMode = false) {
       ${away[uid] ? `<div class="pline">${awayTag(uid)} ${esc(away[uid])}</div>` : ''}
       <div class="pline">${p.birthday ? `<b>🎂 נולד/ה ב-${dmy(p.birthday)}</b><br><small>${esc(bdayText(bi))}</small>` : '<small>עוד לא הוזן תאריך לידה</small>'}</div>
       <div class="pline"><b>מה כדאי לדעת</b><br>${p.about ? esc(p.about).replace(/\n/g, '<br>') : '<small>עוד לא נכתב</small>'}</div>
-      <div class="pline"><b>סך הנקודות:</b> <span dir="ltr">${pointsByUser[uid] || 0}</span></div>
+      <div class="pline"><b>סך הנקודות:</b> <span dir="ltr">${balanceOf(uid)}</span></div>
       ${me?.role === 'admin' ? `<button class="btn secondary" id="pEdit" type="button">${icon('pencil', 18)} עריכה</button>` : ''}`;
     pc.querySelector('#pEdit')?.addEventListener('click', () => openCard(uid, true));
   }

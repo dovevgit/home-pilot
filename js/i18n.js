@@ -88,7 +88,7 @@ const D = {
   'ביצע/ה:': 'completed:', 'תמונת הדיווח': 'Report photo', 'אין תמונה לדיווח הזה': 'No photo for this report', 'מחיקת הדיווח': 'Delete report',
   'למחוק את הדיווח הזה? אי אפשר לשחזר.': 'Delete this report? This cannot be undone.',
   'חנות': 'Shop', 'היתרה שלי': 'My balance', 'בקשות לאישור': 'Requests for approval', 'החנות': 'Shop', '+ מוצר חדש': '+ New item',
-  'הרכישות שלי': 'My purchases', 'אין רכישות עדיין': 'No purchases yet', '🗑 מחיקת היסטוריית רכישות': '🗑 Delete purchase history',
+  'הרכישות שלי': 'My purchases', 'הרכישות בחנות': 'Shop purchases', 'אין רכישות עדיין': 'No purchases yet', '🗑 מחיקת היסטוריית רכישות': '🗑 Delete purchase history',
   'ממתין לאישור': 'Waiting for approval', 'נמסר': 'Delivered', 'נדחה': 'Rejected', 'מימוש': 'Redeem', 'מוסתר מהילדים': 'Hidden from the kids',
   'עוד אין מוצרים. לחצו על "+ מוצר חדש".': 'No items yet. Tap "+ New item".', 'עוד אין מוצרים בחנות': 'No items in the shop yet',
   '· היתרה שלו/ה:': '· Their balance:', 'לפני הבקשה': 'before the request', 'דחייה': 'Reject', 'אין בקשות ממתינות': 'No pending requests',

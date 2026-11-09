@@ -42,7 +42,7 @@
   <div id="adminBox" class="hidden"><div class="sec-title" style="margin-top:0">בקשות לאישור</div><div id="pending"></div></div>
   <div class="hdrow"><div class="sec-title">החנות</div><button class="smallbtn hidden" id="addItem" type="button">+ מוצר חדש</button></div>
   <div id="items" class="shopgrid"><p class="empty">טוען...</p></div>
-  <div class="sec-title" style="margin-top:22px">הרכישות שלי</div>
+  <div class="sec-title" style="margin-top:22px">הרכישות בחנות</div>
   <div id="mine"><p class="empty">אין רכישות עדיין</p></div>
   <button class="smallbtn hidden" id="clearHist" type="button" style="margin-top:12px">🗑 מחיקת היסטוריית רכישות</button>
 </main>
@@ -82,10 +82,9 @@ function render() {
       ${i.active ? `<button class="btn ${can ? '' : 'disabled'}" data-buy="${i.id}" type="button" ${can ? '' : 'disabled'}>${can ? 'מימוש' : `חסרות ${i.price - bal}`}</button>` : '<small>מוסתר מהילדים</small>'}
       ${isAdmin ? `<button class="smallbtn" data-edit="${i.id}" type="button">עריכה</button>` : ''}</div>`;
   }).join('') : `<p class="empty" style="grid-column:1/-1">${isAdmin ? 'עוד אין מוצרים. לחצו על "+ מוצר חדש".' : 'עוד אין מוצרים בחנות'}</p>`;
-  const mine = purchases.filter(p => p.user_id === me.id);
-  $('mine').innerHTML = mine.length ? mine.map(p => `<div class="prow"><div class="pmain"><b data-user>${esc(p.item_name)}</b><small>⭐ <span dir="ltr">${p.price}</span> · ${new Date(p.created_at).toLocaleDateString('he-IL')}</small></div>
+  $('mine').innerHTML = purchases.length ? purchases.map(p => `<div class="prow">${avatar(byId[p.user_id], 36)}<div class="pmain"><b data-user>${esc(p.item_name)}</b><small data-user>${esc(byId[p.user_id]?.name || '')} · ⭐ <span dir="ltr">${p.price}</span> · ${new Date(p.created_at).toLocaleDateString('he-IL')}</small></div>
     <span class="chip ${ST[p.status][1]}">${ST[p.status][0]}</span>
-    ${p.status === 'pending' ? `<button class="bt no" data-cancel="${p.id}" type="button">ביטול</button>` : ''}</div>`).join('') : '<p class="empty">אין רכישות עדיין</p>';
+    ${p.status === 'pending' && p.user_id === me.id ? `<button class="bt no" data-cancel="${p.id}" type="button">ביטול</button>` : ''}</div>`).join('') : '<p class="empty">אין רכישות עדיין</p>';
   if (isAdmin) {
     $('addItem').classList.remove('hidden'); $('adminBox').classList.remove('hidden'); $('clearHist').classList.remove('hidden');
     const pend2 = purchases.filter(p => p.status === 'pending').slice().reverse();
