@@ -7,6 +7,11 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "שליחת האפליקציה": "Send the app",
+  "שולחים למי שרוצה בית משלו. הוא נרשם עם חשבון Google.": "Send it to anyone who wants their own home. They sign up with a Google account.",
+  "שלח את האפליקציה": "Send the app",
+  "העתקת הקישור": "Copy the link",
+  "הקישור הועתק": "Link copied",
   "יש לי קוד הצטרפות": "I have a join code",
   "מדיניות פרטיות": "Privacy policy",
   "תנאי שימוש": "Terms of use",

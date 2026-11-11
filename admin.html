@@ -568,6 +568,12 @@ async function showMembers() {
       <div style="font-size:34px;font-weight:800;letter-spacing:4px;margin:6px 0" dir="ltr">${esc(fam?.code || '')}</div>
       <p class="note" style="margin:0">כל בן משפחה נכנס עם קוד הבית, שם המשתמש והסיסמה שלו.</p>
     </div>
+    ${me.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80' ? `<div class="card flat" style="text-align:center;margin-top:12px">
+      <div class="sec-title" style="margin:0">שליחת האפליקציה</div>
+      <p class="note" style="margin:6px 0 0">שולחים למי שרוצה בית משלו. הוא נרשם עם חשבון Google.</p>
+      <button class="btn" id="shareApp" type="button" style="margin-top:10px">שלח את האפליקציה</button>
+      <button class="btn secondary" id="copyApp" type="button">העתקת הקישור</button>
+    </div>` : ''}
     <div class="sec-title">בני המשפחה</div>
     <div id="memRows">${list.map(p => `<div class="row-item">${avatar(p, 44)}
       <div class="tmain"><b>${esc(p.name)}${p.role === 'admin' ? ' · הורה' : ''}</b><small>${p.is_user ? 'שם משתמש: ' + esc(p.username || '') : 'דמות (ללא כניסה)'}</small></div>
@@ -594,6 +600,15 @@ async function showMembers() {
     <button class="btn secondary" id="famDel" type="button" style="width:100%;margin-top:0;color:#B91C1C;border-color:#EF4444">מחיקת הבית וכל הנתונים</button>
     <p class="note">מוחק לצמיתות את כל המשימות, התמונות, ההודעות והנקודות של הבית. אי אפשר לשחזר.</p>`;
   wireTabs();
+  const APP_LINK = 'https://dovevgit.github.io/home-pilot/signup.html';
+  const APP_MSG = 'היי, הנה האפליקציה "הבית שלנו" לניהול משימות הבית של המשפחה. נרשמים בקלות עם חשבון Google:';
+  const shareBtn = document.getElementById('shareApp'), copyBtn = document.getElementById('copyApp');
+  const copyLink = async () => { try { await navigator.clipboard.writeText(APP_LINK); toast('הקישור הועתק'); } catch (_) { toast('לא הצלחתי להעתיק. הקישור: ' + APP_LINK, true); } };
+  if (shareBtn) shareBtn.onclick = async () => {
+    if (navigator.share) { try { await navigator.share({ title: 'הבית שלנו', text: APP_MSG, url: APP_LINK }); } catch (_) { /* בוטל */ } }
+    else await copyLink();
+  };
+  if (copyBtn) copyBtn.onclick = copyLink;
   const $ = id => document.getElementById(id), done = (msg) => { toast(msg); location.hash = '#members'; location.reload(); };
   $('mChar').onchange = () => { $('mLogin').style.display = $('mChar').checked ? 'none' : ''; };
   let phFor = null;
