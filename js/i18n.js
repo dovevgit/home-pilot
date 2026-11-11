@@ -7,6 +7,9 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "יש לי קוד הצטרפות": "I have a join code",
+  "מדיניות פרטיות": "Privacy policy",
+  "תנאי שימוש": "Terms of use",
   "המשך עם Google": "Continue with Google",
   "הרשמה עם Google": "Sign up with Google",
   "כמעט סיימנו": "Almost done",

@@ -20,6 +20,9 @@
 <div class="hero"><img class="logo" src="logo.png" alt="הבית שלנו"></div>
 <form class="card login-card" id="form" novalidate>
   <h2>יצירת בית חדש</h2>
+  <button class="btn" id="google" type="button">הרשמה עם Google</button>
+  <p class="error" id="error" role="alert"></p>
+  <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700;color:#0A58CA;text-align:center">יש לי קוד הצטרפות</summary>
   <label for="sc">קוד הצטרפות לניסוי</label>
   <input id="sc" type="text" autocomplete="off" autocapitalize="none" dir="ltr" placeholder="הקוד שקיבלתם" required>
   <label for="fname">שם הבית</label>
@@ -30,15 +33,15 @@
   <input id="user" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" placeholder="אותיות או ספרות" required>
   <label for="pass">סיסמה (לפחות 6 תווים)</label>
   <input id="pass" type="password" autocomplete="new-password" dir="ltr" required>
-  <button class="btn" id="submit" type="submit">יצירת הבית</button>
-  <p class="error" id="error" role="alert"></p>
-  <button class="btn secondary" id="google" type="button" style="margin-top:6px">הרשמה עם Google</button>
+  <button class="btn secondary" id="submit" type="submit">יצירת הבית</button>
+  </details>
+  <p class="help" style="text-align:center;margin-top:12px"><a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a></p>
   <a class="btn secondary" href="login.html" style="margin-top:6px">יש לי כבר בית</a>
 </form>
 <script type="module">
 import { callFamily, signIn, saveCode, googleSignIn } from './js/family.js';
 const $ = id => document.getElementById(id);
-try { const c = new URLSearchParams(location.search).get('c'); if (c) $('sc').value = c.slice(0, 60); } catch (_) {}
+try { const c = new URLSearchParams(location.search).get('c'); if (c) { $('sc').value = c.slice(0, 60); document.querySelector('details').open = true; } } catch (_) {}
 $('form').addEventListener('submit', async (e) => {
   e.preventDefault(); $('error').textContent = '';
   $('submit').disabled = true; $('submit').textContent = 'יוצר...';
