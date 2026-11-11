@@ -29,6 +29,7 @@
   <button class="btn" id="submit" type="submit">התחברות</button>
   <p class="error" id="error" role="alert"></p>
   <p class="help" style="text-align:center">שכחתם סיסמה? ההורה יכול לאפס אותה.</p>
+  <button class="btn secondary" id="google" type="button" style="margin-top:6px">המשך עם Google</button>
   <a class="btn secondary" href="signup.html" style="margin-top:6px">יצירת בית חדש</a>
 </form>
 <div class="ios-tip hidden" id="iosTip">להתקנה: שיתוף ← הוספה למסך הבית</div>
@@ -37,16 +38,15 @@ import { supabase } from './js/supabase.js';
 const { data } = await supabase.auth.getSession();
 if (data.session) {
   try {
-    if (!localStorage.getItem('myName') || !localStorage.getItem('myFam')) {
-      const { data: pr } = await supabase.from('profiles').select('name,family_id').eq('id', data.session.user.id).maybeSingle();
-      if (pr?.name) localStorage.setItem('myName', pr.name);
-      if (pr?.family_id) localStorage.setItem('myFam', pr.family_id);
-    }
+    const { data: pr, error: pe } = await supabase.from('profiles').select('name,family_id').eq('id', data.session.user.id).maybeSingle();
+    if (!pe && !pr) { location.replace('google-setup.html'); await new Promise(() => {}); }
+    if (pr?.name) localStorage.setItem('myName', pr.name);
+    if (pr?.family_id) localStorage.setItem('myFam', pr.family_id);
   } catch (_) {}
   location.replace('index.html');
 }
 
-import { signIn, savedCode, saveCode } from './js/family.js';
+import { signIn, savedCode, saveCode, googleSignIn } from './js/family.js';
 document.getElementById('code').value = savedCode();
 const form = document.getElementById('form');
 const btn = document.getElementById('submit');
@@ -70,6 +70,12 @@ form.addEventListener('submit', async (e) => {
     } catch (_) {}
     location.replace('index.html');
   }
+});
+
+document.getElementById('google').addEventListener('click', async () => {
+  err.textContent = '';
+  const { error } = await googleSignIn();
+  if (error) err.textContent = 'ההתחברות עם Google נכשלה, נסו שוב';
 });
 
 const ua = navigator.userAgent;

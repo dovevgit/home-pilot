@@ -1,12 +1,20 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
+export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'google-setup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "המשך עם Google": "Continue with Google",
+  "הרשמה עם Google": "Sign up with Google",
+  "כמעט סיימנו": "Almost done",
+  "התחברתם עם Google. נשאר ליצור את הבית שלכם.": "You signed in with Google. Now let's create your home.",
+  "כבר חלק מבית קיים? חזרו וכנסו עם קוד הבית, שם המשתמש והסיסמה.": "Already part of an existing home? Go back and sign in with the home code, username and password.",
+  "חזרה למסך הכניסה": "Back to sign in",
+  "ההתחברות עם Google נכשלה, נסו שוב": "Google sign-in failed, please try again",
+  "לחשבון הזה כבר יש בית": "This account already has a home",
   'ההרשמה לבתים חדשים סגורה כרגע': 'Sign-up for new homes is closed for now',
   'נבחרתם לשמש כקבוצת ביקורת, אך למרות זאת לא השתמשתם באפליקציה. כעת תמה האפשרות לכך.': 'You were chosen to serve as a control group, yet you did not use the app. The opportunity has now ended.', 'הבנתי': 'OK',
   "מקשיב בעברית": "Listening in Hebrew",

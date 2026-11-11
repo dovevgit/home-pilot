@@ -168,7 +168,9 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       await new Promise(() => {});
     }
   } catch (_) {}
-  const { data: profiles } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
+  const { data: profiles, error: profErr } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
+  // נכנס עם Google אבל עדיין אין לו בית: ממשיכים ליצירת בית
+  if (!profErr && Array.isArray(profiles) && profiles.length === 0) { location.replace('google-setup.html'); await new Promise(() => {}); }
   (profiles || []).forEach(p => { if (p.avatar_path && p.avatar_path.startsWith('static/')) p.avatar_url = 'icons/avatars/' + p.avatar_path.slice(7); });
   const withPhoto = (profiles || []).filter(p => p.avatar_path && !p.avatar_path.startsWith('static/'));
   if (withPhoto.length) {

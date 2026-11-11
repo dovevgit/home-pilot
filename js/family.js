@@ -27,7 +27,9 @@ const MSG = {
   bad_avatar: 'התמונה לא תקינה',
   avatar_too_big: 'התמונה גדולה מדי',
   no_login: 'לדמות אין כניסה',
-  not_found: 'לא נמצא'
+  not_found: 'לא נמצא',
+  already_has_home: 'לחשבון הזה כבר יש בית',
+  google_failed: 'ההתחברות עם Google נכשלה, נסו שוב'
 };
 
 export async function callFamily(action, body = {}) {
@@ -40,6 +42,14 @@ export async function callFamily(action, body = {}) {
   const out = await res.json().catch(() => ({}));
   if (!res.ok || out.error) { const e = new Error(MSG[out.error] || 'הפעולה נכשלה, נסו שוב'); e.code = out.error; throw e; }
   return out;
+}
+
+// כניסה / הרשמה עם חשבון Google. אחרי האישור Google מחזיר ל-login.html
+export async function googleSignIn() {
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: new URL('login.html', location.href).href, queryParams: { prompt: 'select_account' } }
+  });
 }
 
 export async function signIn(code, username, password) {

@@ -32,10 +32,11 @@
   <input id="pass" type="password" autocomplete="new-password" dir="ltr" required>
   <button class="btn" id="submit" type="submit">יצירת הבית</button>
   <p class="error" id="error" role="alert"></p>
+  <button class="btn secondary" id="google" type="button" style="margin-top:6px">הרשמה עם Google</button>
   <a class="btn secondary" href="login.html" style="margin-top:6px">יש לי כבר בית</a>
 </form>
 <script type="module">
-import { callFamily, signIn, saveCode } from './js/family.js';
+import { callFamily, signIn, saveCode, googleSignIn } from './js/family.js';
 const $ = id => document.getElementById(id);
 try { const c = new URLSearchParams(location.search).get('c'); if (c) $('sc').value = c.slice(0, 60); } catch (_) {}
 $('form').addEventListener('submit', async (e) => {
@@ -51,6 +52,11 @@ $('form').addEventListener('submit', async (e) => {
   } catch (err) {
     $('error').textContent = err.message; $('submit').disabled = false; $('submit').textContent = 'יצירת הבית';
   }
+});
+$('google').addEventListener('click', async () => {
+  $('error').textContent = '';
+  const { error } = await googleSignIn();
+  if (error) $('error').textContent = 'ההתחברות עם Google נכשלה, נסו שוב';
 });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

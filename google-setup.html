@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | יצירת בית</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login">
+<div class="hero"><img class="logo" src="logo.png" alt="הבית שלנו"></div>
+<form class="card login-card" id="form" novalidate>
+  <h2>כמעט סיימנו</h2>
+  <p class="help" style="text-align:center">התחברתם עם Google. נשאר ליצור את הבית שלכם.</p>
+  <label for="fname">שם הבית</label>
+  <input id="fname" type="text" maxlength="40" placeholder="למשל: משפחת כהן" required>
+  <label for="name">השם שלך (הורה)</label>
+  <input id="name" type="text" maxlength="20" placeholder="למשל: אבא" required>
+  <button class="btn" id="submit" type="submit">יצירת הבית</button>
+  <p class="error" id="error" role="alert"></p>
+  <p class="help" style="text-align:center">כבר חלק מבית קיים? חזרו וכנסו עם קוד הבית, שם המשתמש והסיסמה.</p>
+  <button class="btn secondary" id="back" type="button" style="margin-top:6px">חזרה למסך הכניסה</button>
+</form>
+<script type="module">
+import { supabase } from './js/supabase.js';
+import { callFamily, saveCode } from './js/family.js';
+const $ = id => document.getElementById(id);
+const { data } = await supabase.auth.getSession();
+if (!data.session) location.replace('login.html');
+const leave = async () => {
+  try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {}
+  try { localStorage.removeItem('myName'); localStorage.removeItem('myFam'); } catch (_) {}
+  location.replace('login.html');
+};
+$('back').addEventListener('click', leave);
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('error').textContent = '';
+  $('submit').disabled = true; $('submit').textContent = 'יוצר...';
+  try {
+    const r = await callFamily('google_signup', { family_name: $('fname').value, name: $('name').value });
+    saveCode(r.code);
+    try { localStorage.setItem('myName', $('name').value.trim()); } catch (_) {}
+    try {
+      const { data: pr } = await supabase.from('profiles').select('family_id').eq('id', data.session.user.id).maybeSingle();
+      if (pr?.family_id) localStorage.setItem('myFam', pr.family_id);
+    } catch (_) {}
+    sessionStorage.setItem('newFamily', r.code);
+    location.replace('admin.html#members');
+  } catch (err) {
+    if (err.code === 'already_has_home') { location.replace('login.html'); return; }
+    $('error').textContent = err.message; $('submit').disabled = false; $('submit').textContent = 'יצירת הבית';
+  }
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+<script type="module">
+import { initI18n } from './js/i18n.js';
+initI18n('google-setup');
+</script>
+</body>
+</html>
