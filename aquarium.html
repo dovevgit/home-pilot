@@ -37,6 +37,14 @@ body{display:flex;justify-content:center}
 #sat{background:#0008;color:#e6fbff;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;min-width:130px;backdrop-filter:blur(4px)}
 #sat .bar{height:7px;background:#fff3;border-radius:5px;margin-top:4px;overflow:hidden}
 #sat i{display:block;height:100%;background:#4dd0e1;border-radius:5px;transition:width .5s}
+#mb{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:0;background:#0008;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}#mb svg{width:26px;height:26px}#mb.open{background:#0d5a7ccc}
+#mm{position:absolute;top:calc(max(12px,env(safe-area-inset-top,0px)) + 56px);right:12px;width:min(270px,calc(100% - 24px));z-index:9500;background:#031c2bea;backdrop-filter:blur(8px);border-radius:16px;padding:0 6px;max-height:0;opacity:0;overflow:hidden;pointer-events:none;transition:max-height .35s ease,opacity .25s,padding .35s;direction:ltr;box-shadow:0 8px 24px #0006}
+#mm.open{max-height:360px;opacity:1;padding:8px 6px;pointer-events:auto}
+#mm .mt{color:#9fe3f2;font-size:12px;font-weight:800;padding:4px 10px 6px;letter-spacing:.3px}html[lang=he] #mm .mt{direction:rtl;text-align:right}
+#mm .mi{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:#e6fbff;font:700 15px 'Assistant',system-ui,sans-serif;padding:11px 10px;border-radius:11px;text-align:left;cursor:pointer}
+#mm .mi:active{background:#ffffff1c}#mm .mi.on{background:#1ca4c733;color:#fff}
+#mm .mi i{flex:0 0 18px;height:18px;display:flex;align-items:flex-end;justify-content:center;gap:2px}#mm .mi.on i b{width:3px;height:10px;background:#7dffe0;border-radius:2px}#mm.pl .mi.on i b{animation:eq 1s ease-in-out infinite alternate}#mm.pl .mi.on i b:nth-child(2){animation-delay:.25s}#mm.pl .mi.on i b:nth-child(3){animation-delay:.5s}@keyframes eq{from{height:4px}to{height:16px}}
+#mm .mi:not(.on) i{opacity:0}
 #nb{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:0;background:#0008;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #nb svg,#sb svg{width:26px;height:26px}#sb{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:0;background:#0008;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}#sb.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{box-shadow:0 0 0 8px #4dd0e155}}
 .bb{position:absolute;pointer-events:none}
@@ -51,7 +59,8 @@ body{display:flex;justify-content:center}
 <div id="stg" aria-hidden="true"><div id="plw"><div class="pl" style="left:26px;top:280px;width:159px;height:520px;--d:9s;--a:1.5deg;--dl:-1s"><img src="icons/aquarium/pl1.webp" alt=""></div><div class="pl" style="left:136px;top:320px;width:78px;height:470px;--d:7.5s;--a:1.9deg;--dl:-4s"><img src="icons/aquarium/pl7.webp" alt=""></div><div class="pl" style="left:173px;top:715px;width:154px;height:250px;--d:8.5s;--a:1.6deg;--dl:-2s"><img src="icons/aquarium/pl3.webp" alt=""></div><div class="pl" style="left:678px;top:450px;width:174px;height:560px;--d:10s;--a:1.4deg;--dl:-6s"><img src="icons/aquarium/pl8.webp" alt=""></div><div class="pl" style="left:575px;top:365px;width:230px;height:600px;--d:8s;--a:1.7deg;--dl:-3s"><img src="icons/aquarium/pl4.webp" alt=""></div><div class="pl" style="left:381px;top:665px;width:179px;height:300px;--d:7s;--a:2.0deg;--dl:-5s"><img src="icons/aquarium/pl6.webp" alt=""></div><div class="pl" style="left:528px;top:575px;width:75px;height:400px;--d:9.5s;--a:1.8deg;--dl:-7.5s"><img src="icons/aquarium/pl2.webp" alt=""></div></div><img class="fg" id="fgd" src="icons/aquarium/fg_day.webp" alt=""><img class="fg" id="fgn" src="icons/aquarium/fg_night.webp" alt=""></div>
 <div id="world"></div>
 <div id="ui"><a class="gback" href="games.html">‹ חזרה למשחקים</a>
-<div style="display:flex;gap:8px"><button id="sb" aria-label="סאונד"><svg id="sico" viewBox="0 0 26 26"></svg></button><button id="nb" aria-label="יום ולילה"><svg id="ico" viewBox="0 0 26 26"></svg></button></div></div>
+<div style="display:flex;gap:8px"><button id="mb" aria-label="מנגינות" aria-expanded="false"><svg viewBox="0 0 26 26"><path d="M10 19V6l11-2v13" fill="none" stroke="#e6fbff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="19" r="3" fill="#e6fbff"/><circle cx="18.5" cy="17" r="3" fill="#e6fbff"/></svg></button><button id="sb" aria-label="סאונד"><svg id="sico" viewBox="0 0 26 26"></svg></button><button id="nb" aria-label="יום ולילה"><svg id="ico" viewBox="0 0 26 26"></svg></button></div></div>
+<div id="mm" role="menu" aria-hidden="true"><div class="mt">מנגינות</div></div>
 <div id="clk" aria-hidden="true"></div></div>
 <script>
 const A=new Proxy({},{get:(_,k)=>'icons/aquarium/'+k+'.webp'});
@@ -83,7 +92,7 @@ function bub(x,y,sz){const k=sz>14?'bubL':sz>9?'bubM':'bubS';const o=mkObj(A[k],
 function ripple(x,y){const r=document.createElement('div');r.className='rp';r.style.transform=`translate(${x}px,${y}px)`;r.innerHTML='<i></i><i style="--dl:.28s;width:110px;height:110px;margin:-55px 0 0 -55px"></i><i style="--dl:.56s;width:70px;height:70px;margin:-35px 0 0 -35px"></i>';world.appendChild(r);setTimeout(()=>r.remove(),3300)}
 let spawnQ=[];
 function scare(x,y){fish.forEach(f=>{const d=Math.hypot(f.x-x,f.y-y);if(d<f.w*.5+110)f.flee=true;if(d<f.w*.5+190){f.scare=1.3;f.sx=x;f.sy=y;f.sgn=f.y>y+4?1:f.y<y-4?-1:(Math.random()<.5?1:-1);if(d<f.w*.6&&Math.random()<.9)bub(f.x+rnd(-10,10),f.y,rnd(8,14))}})}
-aq.addEventListener('pointerdown',e=>{if(e.target.closest('button,a'))return;const r=aq.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;ripple(x,y);scare(x,y)});
+aq.addEventListener('pointerdown',e=>{if(typeof mm!=='undefined'&&mm.classList.contains('open')&&!e.target.closest('#mm,#mb')){mopen(false);return}if(e.target.closest('button,a'))return;const r=aq.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;ripple(x,y);scare(x,y)});
 document.getElementById('nb').onclick=()=>{night=!night;aq.classList.toggle('night',night);ico()};
 function ico(){document.getElementById('ico').innerHTML=night?'<circle cx="13" cy="13" r="6" fill="#ffd54f"/><g stroke="#ffd54f" stroke-width="2" stroke-linecap="round"><path d="M13 2v3M13 21v3M2 13h3M21 13h3M5 5l2 2M19 19l2 2M21 5l-2 2M5 21l2-2"/></g>':'<path d="M18 3a10 10 0 1 0 5 15A8 8 0 0 1 18 3z" fill="#fff59d"/>'}ico();
 let spawnT=6;['clown','gold','blue','angel','yellow'].sort(()=>Math.random()-.5).slice(0,4).forEach(k=>addFish(k,{inside:true}));
@@ -126,15 +135,26 @@ function loop(now){if(!running)return;const dt=Math.min(.05,(now-last)/1000);las
  requestAnimationFrame(loop)}
 
 // sound
-const aud=new Audio('icons/aquarium/loop.mp3');aud.loop=true;aud.preload='none';aud.volume=0;
+const TRACKS=[{n:'Weightless Aquarian',s:'icons/aquarium/loop.mp3'},{n:'Crystal Bell Meditation',s:'icons/aquarium/crystal.mp3'}];let cur=0;try{const c=parseInt(localStorage.getItem('aqTrack'),10);if(c>=0&&c<TRACKS.length)cur=c}catch(e){}
+const aud=new Audio(TRACKS[cur].s);aud.loop=true;aud.preload='none';aud.volume=0;
 let wantSound=false; /* המוזיקה מתחילה רק בלחיצה על הכפתור, ולא נזכרת בכניסה הבאה */
 let sndOn=false;
-function sico(){document.getElementById('sico').innerHTML=sndOn?'<path d="M4 10h4l6-5v16l-6-5H4z" fill="#e6fbff"/><path d="M17 9c2 2 2 6 0 8M20 6c4 4 4 10 0 14" stroke="#e6fbff" stroke-width="2" fill="none" stroke-linecap="round"/>':'<path d="M4 10h4l6-5v16l-6-5H4z" fill="#e6fbff" opacity=".7"/><path d="M17 9l7 8M24 9l-7 8" stroke="#ff8a80" stroke-width="2.2" stroke-linecap="round"/>';document.getElementById('sb').classList.toggle('pulse',!sndOn&&!wantSound)}
+function sico(){const m_=document.getElementById('mm');if(m_)m_.classList.toggle('pl',!!sndOn);document.getElementById('sico').innerHTML=sndOn?'<path d="M4 10h4l6-5v16l-6-5H4z" fill="#e6fbff"/><path d="M17 9c2 2 2 6 0 8M20 6c4 4 4 10 0 14" stroke="#e6fbff" stroke-width="2" fill="none" stroke-linecap="round"/>':'<path d="M4 10h4l6-5v16l-6-5H4z" fill="#e6fbff" opacity=".7"/><path d="M17 9l7 8M24 9l-7 8" stroke="#ff8a80" stroke-width="2.2" stroke-linecap="round"/>';document.getElementById('sb').classList.toggle('pulse',!sndOn&&!wantSound)}
 function playSnd(){if(document.hidden||!onscreen)return;aud.play().then(()=>{sndOn=true;sico()}).catch(()=>{sndOn=false;sico()})}
 function stopSnd(){sndOn=false;aud.pause();sico()}
 document.getElementById('sb').onclick=()=>{if(sndOn){wantSound=false;stopSnd()}else{wantSound=true;playSnd()}};
+
+/* תפריט מנגינות */
+const mm=document.getElementById('mm'),mbt=document.getElementById('mb');
+TRACKS.forEach((t,i)=>{const b=document.createElement('button');b.className='mi';b.setAttribute('role','menuitemradio');b.innerHTML='<i><b></b><b></b><b></b></i><span></span>';b.querySelector('span').textContent=t.n;b.onclick=()=>pick(i);mm.appendChild(b)});
+function mrender(){[].forEach.call(mm.querySelectorAll('.mi'),(b,i)=>{b.classList.toggle('on',i===cur);b.setAttribute('aria-checked',i===cur)})}mrender();
+function mopen(o){mm.classList.toggle('open',o);mbt.classList.toggle('open',o);mbt.setAttribute('aria-expanded',o);mm.setAttribute('aria-hidden',!o)}
+mbt.onclick=e=>{e.stopPropagation();mopen(!mm.classList.contains('open'))};
+function pick(i){mopen(false);if(i===cur&&sndOn)return;cur=i;mrender();try{localStorage.setItem('aqTrack',String(i))}catch(e){}
+ const go=()=>{aud.src=TRACKS[cur].s;aud.load();wantSound=true;aud.play().then(()=>{sndOn=true;swi=false;sico()}).catch(()=>{sndOn=false;swi=false;sico()})};
+ if(sndOn){swi=true;setTimeout(go,650)}else go()}
 aq.addEventListener('pointerdown',()=>{if(wantSound&&!sndOn)playSnd()},true);
-setInterval(()=>{const t=sndOn?(night?.35:.6):0;aud.volume=clamp(aud.volume+(t-aud.volume)*.12,0,1)},100);
+let swi=false;setInterval(()=>{const t=(sndOn&&!swi)?(night?.35:.6):0;aud.volume=clamp(aud.volume+(t-aud.volume)*(swi?.3:.12),0,1)},100);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){aud.pause();sndOn=false;sico()}else if(wantSound)playSnd()});
 /* שעון LED: ארבע ספרות (שעות ודקות) בשעה האמיתית של המכשיר */
 (function(){

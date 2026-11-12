@@ -602,6 +602,7 @@ const D = {
   "לחצו על המים כדי להאכיל את הדגים": "Tap the water to feed the fish",
   "סאונד": "Sound",
   "יום ולילה": "Day and night",
+  "מנגינות": "Melodies",
   "שחקן": "Player",
   "ממתין לאישור": "Waiting for approval",
   "הזמנה אליך": "Invitation for you",
