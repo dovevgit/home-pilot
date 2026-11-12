@@ -26,6 +26,7 @@ body{display:flex;justify-content:center}
 .fi{transform-style:preserve-3d}
 .v{position:absolute;left:0;top:0}.v img{display:block;width:100%;height:auto}
 .fl{position:absolute;left:0;top:0;pointer-events:none;border-radius:40% 55% 45% 55%;opacity:.95}
+#clk{position:absolute;left:0;right:0;top:calc(max(12px,env(safe-area-inset-top,0px)) + 62px);display:flex;justify-content:center;z-index:9000;pointer-events:none;direction:ltr}#clk svg{height:40px;width:auto;background:#031c2bb8;padding:9px 16px;border-radius:14px;box-sizing:content-box;backdrop-filter:blur(3px);filter:drop-shadow(0 0 6px #4ff5d0aa);transition:opacity 1.6s;opacity:.92}#aq.night #clk svg{opacity:.7}#clk .cl{animation:clb 2s steps(1) infinite}@keyframes clb{50%{opacity:.15}}
 #ui{position:absolute;top:max(12px,env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;z-index:9000;pointer-events:none}
 #sat{background:#0008;color:#e6fbff;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;min-width:130px;backdrop-filter:blur(4px)}
 #sat .bar{height:7px;background:#fff3;border-radius:5px;margin-top:4px;overflow:hidden}
@@ -40,6 +41,7 @@ body{display:flex;justify-content:center}
 <div id="world"></div>
 <div id="ui"><a class="gback" href="games.html">‹ חזרה למשחקים</a>
 <div style="display:flex;gap:8px"><button id="sb" aria-label="סאונד"><svg id="sico" viewBox="0 0 26 26"></svg></button><button id="nb" aria-label="יום ולילה"><svg id="ico" viewBox="0 0 26 26"></svg></button></div></div>
+<div id="clk" aria-hidden="true"></div>
 <div id="hint"><span>לחצו על המים כדי להאכיל את הדגים</span></div></div>
 <script>
 const A=new Proxy({},{get:(_,k)=>'icons/aquarium/'+k+'.webp'});
@@ -134,6 +136,20 @@ document.getElementById('sb').onclick=()=>{if(sndOn){wantSound=false;stopSnd()}e
 aq.addEventListener('pointerdown',()=>{if(wantSound&&!sndOn)playSnd()},true);
 setInterval(()=>{const t=sndOn?(night?.35:.6):0;aud.volume=clamp(aud.volume+(t-aud.volume)*.12,0,1)},100);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){aud.pause();sndOn=false;sico()}else if(wantSound)playSnd()});
+/* שעון LED: ארבע ספרות (שעות ודקות) בשעה האמיתית של המכשיר */
+(function(){
+  const SEG=[[2,0,16,3],[18,2,3,16],[18,20,3,16],[2,36,16,3],[0,20,3,16],[0,2,3,16],[2,18,16,3]];
+  const MAP=['1111110','0110000','1101101','1111001','0110011','1011011','1011111','1110000','1111111','1111011'];
+  function dg(d,x){let o='';MAP[d].split('').forEach((on,i)=>{const[a,b,w,h]=SEG[i];o+='<rect x="'+(x+a)+'" y="'+b+'" width="'+w+'" height="'+h+'" rx="1.5" fill="'+(on==='1'?'#7dffe0':'#7dffe0')+'" opacity="'+(on==='1'?1:.08)+'"/>'});return o}
+  const clk=document.getElementById('clk');let tm=0;
+  function draw(){
+    const n=new Date(),h=n.getHours(),m=n.getMinutes();
+    clk.innerHTML='<svg viewBox="0 0 112 39" xmlns="http://www.w3.org/2000/svg">'+dg(Math.floor(h/10),0)+dg(h%10,26)+'<g class="cl" fill="#7dffe0"><rect x="53" y="11" width="4" height="4" rx="1"/><rect x="53" y="24" width="4" height="4" rx="1"/></g>'+dg(Math.floor(m/10),64)+dg(m%10,90)+'</svg>';
+    clearTimeout(tm);tm=setTimeout(draw,(60-n.getSeconds())*1000-n.getMilliseconds()+50);
+  }
+  draw();
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(tm);else draw()});
+})();
 sico();
 requestAnimationFrame(loop);
 </script>
