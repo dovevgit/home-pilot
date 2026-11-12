@@ -1,0 +1,231 @@
+(function(){
+'use strict';
+/* הכלב שיצו של הבית (רק בבית של הבעלים): מחליף את הדמות במסך הבית.
+   הולך על קצה מלבן ההודעה, יושב, צונח עם מצנח בגלילה למטה, מטפס חזרה בגלילה למעלה,
+   נובח ומתעצבן כשלוחצים עליו, ועושה קקי בלחיצה ארוכה. */
+var OWNER='40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+try{ if(localStorage.getItem('myFam')!==OWNER)return; }catch(_){ return; }
+if(document.getElementById('dg'))return;
+var BASE='icons/dog/';
+var SZ={walk:[95.7,96.9],face:[86,104.7],glide:[104,108.8],climb:[71.1,106],poop:[114.7,100.8]};
+var N={walk:6,face:4,glide:2,climb:3,poop:4};
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var css='#dg{position:fixed;left:0;top:0;width:110px;height:110px;z-index:8;pointer-events:none;will-change:transform;direction:ltr;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}'
++'#dgs{position:absolute;inset:0;transform-origin:55px 110px}'
++'#dgi{position:absolute;inset:0;transform-origin:50% 100%}'
++'#dgshadow{position:absolute;left:50%;bottom:-3px;width:70px;height:10px;margin-left:-35px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(40,25,10,.35),rgba(40,25,10,0) 70%)}'
++'#dg .dp{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:none;pointer-events:auto;cursor:pointer;touch-action:manipulation}'
++'#dg .dp.show{display:block}'
++'#dg .dp img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}'
++'#dg .dp.cyc img{display:none}#dg .dp.cyc img.cur{display:block}'
++'#dg .dp.flip img{transform:scaleX(-1)}'
++'#dg .dp .tail{animation:dgwag var(--wag,.46s) ease-in-out infinite alternate}'
++'@keyframes dgwag{from{transform:rotate(calc(var(--amp,11deg)*-1))}to{transform:rotate(var(--amp,11deg))}}'
++'#dg.sitting #dgi{animation:dgbreathe 2.6s ease-in-out infinite}'
++'@keyframes dgbreathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,.99)}}'
++'#dg.angry #dgi{filter:saturate(1.35) brightness(.94) drop-shadow(0 0 5px rgba(220,30,20,.7));animation:dgshake .08s linear infinite}'
++'@keyframes dgshake{0%{transform:scale(1.12) translate(-2px,0) rotate(-3deg)}50%{transform:scale(1.12) translate(2px,-1px) rotate(3deg)}100%{transform:scale(1.12) translate(-2px,0) rotate(-3deg)}}'
++'#dg.barking #dgi{animation:dgbark .32s cubic-bezier(.2,.9,.3,1) 1}'
++'@keyframes dgbark{0%{transform:scale(1)}25%{transform:scale(1.16,.9) translateY(2px)}55%{transform:scale(1.12,1.12) translateY(-9px) rotate(-3deg)}100%{transform:scale(1)}}'
++'#dg.strain #dgi{animation:dgstrain .12s linear infinite}'
++'@keyframes dgstrain{0%{transform:translateX(-.8px)}50%{transform:translateX(.8px) translateY(.6px)}100%{transform:translateX(-.8px)}}'
++'#dg.slink #dgi{animation:dgslink .5s ease-in-out infinite}'
++'@keyframes dgslink{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}'
++'#dgchute{position:absolute;left:-6px;top:-80px;width:122px;height:150px;display:none;pointer-events:none;overflow:visible}'
++'#dg.gliding #dgchute{display:block}'
++'#dg.flying #dgshadow{display:none}'
++'.dgpoo{position:absolute;width:30px;height:28px;pointer-events:none;z-index:7;transform-origin:50% 100%;animation:dgpooin .35s cubic-bezier(.2,1.6,.4,1) both;transition:opacity 1s}'
++'.dgpoo.out{opacity:0}'
++'@keyframes dgpooin{from{transform:scale(.2,.1)}to{transform:scale(1)}}'
++'.dgfly{position:absolute;width:12px;height:10px;pointer-events:none;z-index:7;animation:dgflya var(--d,2.4s) linear infinite}'
++'.dgfly.away{animation:dgflyaway 1s ease-in forwards}'
++'.dgfly svg{display:block;overflow:visible}'
++'.dgfly .w{transform-origin:6px 5px;animation:dgwing .07s linear infinite alternate}'
++'@keyframes dgwing{from{transform:scaleY(1)}to{transform:scaleY(.25)}}'
++'@keyframes dgflya{0%{transform:translate(-18px,-6px)}12%{transform:translate(2px,-20px)}25%{transform:translate(20px,-8px)}38%{transform:translate(8px,-26px)}52%{transform:translate(-14px,-18px)}66%{transform:translate(-4px,-4px)}80%{transform:translate(16px,-22px)}100%{transform:translate(-18px,-6px)}}'
++'@keyframes dgflyaway{to{transform:translate(var(--ax,30px),-90px);opacity:0}}'
++'@media print{#dg,.dgpoo,.dgfly{display:none!important}}'
++'@media (prefers-reduced-motion:reduce){#dg .tail,#dg.sitting #dgi,#dg.strain #dgi,#dg.slink #dgi,.dgfly,.dgfly .w{animation:none!important}}';
+var stl=document.createElement('style'); stl.textContent=css; document.head.appendChild(stl);
+
+var h='<div id="dgs"><svg id="dgchute" viewBox="0 0 122 150" aria-hidden="true">'
++'<path d="M4 56 C6 14 34 2 61 2 C88 2 116 14 118 56 C108 46 98 46 90 56 C82 46 70 46 61 56 C52 46 40 46 32 56 C24 46 14 46 4 56 Z" fill="#F97316" stroke="#7A3B0A" stroke-width="2.4" stroke-linejoin="round"/>'
++'<path d="M61 2 C52 16 45 34 47 54 M61 2 C70 16 77 34 75 54" fill="none" stroke="#fff" stroke-width="2.4" opacity=".75"/>'
++'<path d="M6 56 L40 134 M116 56 L82 134 M61 56 L61 128" fill="none" stroke="#7A3B0A" stroke-width="1.5" stroke-linecap="round"/></svg>'
++'<div id="dgshadow"></div><div id="dgi">';
+['walk','face','glide','climb','poop'].forEach(function(k){
+  h+='<div class="dp cyc" id="dp-'+k+'" style="width:'+SZ[k][0]+'px;height:'+SZ[k][1]+'px">';
+  for(var i=0;i<N[k];i++)h+='<img alt="" draggable="false" src="'+BASE+k+i+'.webp">';
+  h+='</div>';
+});
+h+='<div class="dp" id="dp-sit" style="width:73px;height:93px;--wag:.62s;--amp:8deg"><img alt="" draggable="false" src="'+BASE+'sit_body.webp"><img class="tail" alt="" draggable="false" src="'+BASE+'sit_tail.webp" style="transform-origin:20px 79.6px"></div>';
+h+='</div></div>';
+var dog=document.createElement('div'); dog.id='dg'; dog.setAttribute('role','img'); dog.setAttribute('aria-label','כלב שיצו'); dog.innerHTML=h; document.body.appendChild(dog);
+var dgs=document.getElementById('dgs');
+var poses={};['walk','face','glide','climb','poop','sit'].forEach(function(k){poses[k]=document.getElementById('dp-'+k)});
+var imgs={};['walk','face','glide','climb','poop'].forEach(function(k){imgs[k]=poses[k].querySelectorAll('img')});
+dog.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+var S={mode:'walk',x:0,y:0,face:1,tx:0,until:0,t0:0,dur:0,from:null,rot:0,dist:0,init:false,homeBar:true,stage:0,hold:'walk',prev:'walk',nextBark:0};
+var curCls='';
+function setFrame(k,n){ var l=imgs[k]; for(var i=0;i<l.length;i++)l[i].classList.toggle('cur',i===n); }
+function show(name,cls){
+  for(var k in poses)poses[k].classList.toggle('show',k===name);
+  curCls=cls||''; dog.className=curCls;
+}
+function scaleNow(){ var m=Math.max(72,Math.min(96,innerWidth*.2))/96; dgs.style.transform='scale('+m.toFixed(3)+')'; }
+function place(){
+  dog.style.transformOrigin=(S.mode==='glide'?'55px -50px':'55px 110px');
+  dog.style.transform='translate('+(S.x-55).toFixed(1)+'px,'+(S.y-110).toFixed(1)+'px)'+(S.rot?' rotate('+S.rot.toFixed(1)+'deg)':'');
+}
+/* הקו עליו הכלב עומד: קצה מלבן ההודעה, או מעל התפריט התחתון כשגוללים למטה */
+function ground(){
+  var card=document.querySelector('#announce .announce');
+  if(card){
+    var r=card.getBoundingClientRect();
+    if(scrollY<5)S.restTop=r.top;
+    var lim=scrollY<5?50:Math.min(110,Math.max(50,(S.restTop||110)-30));
+    if(r.width>150&&r.top>lim&&r.top<innerHeight-40){
+      var l=r.left+14+46,rr=r.right-14-46;
+      return{y:r.top+3,bar:true,l:l,r:Math.max(l+50,rr),cx:(r.left+r.right)/2};
+    }
+  }
+  var y=innerHeight-6,tb=document.querySelector('.tabbar');
+  if(tb&&getComputedStyle(tb).display!=='none'){var rc=tb.getBoundingClientRect();if(rc.height)y=rc.top+1}
+  return{y:y,bar:false,l:58,r:Math.max(100,innerWidth-58),cx:innerWidth/2};
+}
+function clamp(v,a,b){return Math.min(Math.max(v,a),b)}
+function avoid(x,g){
+  if(g.bar&&Math.abs(x-g.cx)<86)x=x<g.cx?g.cx-88:g.cx+88;
+  return clamp(x,g.l,g.r);
+}
+function rnd(g){return avoid(g.l+Math.random()*(g.r-g.l),g)}
+
+function setStep(d){ var n=Math.floor(d/5.2)%6; if(n!==S.curStep){ S.curStep=n; setFrame('walk',n); } }
+function startWalk(){
+  var g=ground(); S.mode='walk'; S.y=g.y; S.rot=0;
+  var tx=rnd(g); if(Math.abs(tx-S.x)<60)tx=avoid(S.x<g.cx?S.x+90:S.x-90,g);
+  S.tx=tx; S.face=tx>S.x?1:-1; S.dist=0; S.curStep=-1;
+  poses.walk.classList.toggle('flip',S.face>0); show('walk',''); setStep(0); place();
+}
+function startSit(ms){ S.mode='sit'; S.rot=0; S.y=ground().y; S.until=performance.now()+(ms||3500); show('sit','sitting'); place(); }
+function startGlide(){
+  if(S.mode==='glide')return; var g=ground();
+  S.from={x:S.x,y:S.y}; S.mode='glide'; S.t0=performance.now();
+  var dist=Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y); S.dur=Math.min(8000,Math.max(3200,dist/.12)); S.rot=0;
+  show('glide','gliding'); S.curG=-1; place();
+}
+function startFly(){
+  if(S.mode==='fly')return; var g=ground();
+  S.mode='fly'; S.from={x:S.x,y:S.y}; S.t0=performance.now(); S.rot=0;
+  S.dur=Math.min(4000,Math.max(1800,Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y)/.25));
+  show('climb','flying'); S.curC=-1; place();
+}
+function startAngry(){ if(S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return; S.mode='angry'; S.until=performance.now()+3000; S.nextBark=0; S.rot=0; show('face','angry'); setFrame('face',2); place(); }
+function hop(){
+  if(S.mode==='glide'||S.mode==='fly'||S.mode==='angry'||S.mode==='poop'||S.mode==='slink')return;
+  S.prev=S.mode==='hop'?S.prev:S.mode; S.mode='hop'; S.until=performance.now()+900; S.rot=0; show('face',''); setFrame('face',0); place(); barkOnce(false);
+}
+function barkOnce(big){
+  setFrame('face',big?3:1); clearTimeout(S.fT); S.fT=setTimeout(function(){setFrame('face',big?2:0)},260);
+  dog.classList.remove('barking'); void dog.offsetWidth; dog.classList.add('barking');
+  if(navigator.vibrate)try{navigator.vibrate(big?[40,30,60]:30)}catch(e){}
+}
+
+/* ---- קקי ---- */
+var POO='<svg viewBox="0 0 30 28" width="30" height="28" aria-hidden="true"><path d="M3 26 C0 26 0 19 6 18 C4 13 9 10 13 11 C12 6 18 3 20 7 C23 6 25 9 24 12 C28 13 29 20 27 24 C27 26 24 26 24 26 Z" fill="#7A4A21" stroke="#4A2A10" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 20 C12 18 18 18 22 20 M11 14 C14 12.5 18 12.5 20 14" fill="none" stroke="#A8672F" stroke-width="2" stroke-linecap="round"/><path d="M13 7 C14 5 17 4.5 18 6" fill="none" stroke="#B8793C" stroke-width="1.6" stroke-linecap="round"/></svg>';
+var FLY='<svg viewBox="0 0 12 10" width="12" height="10" aria-hidden="true"><g class="w"><ellipse cx="3.5" cy="2.5" rx="3" ry="1.7" fill="#fff" fill-opacity=".85" stroke="#8aa" stroke-width=".5"/><ellipse cx="8.5" cy="2.5" rx="3" ry="1.7" fill="#fff" fill-opacity=".85" stroke="#8aa" stroke-width=".5"/></g><ellipse cx="6" cy="6" rx="2.6" ry="2.4" fill="#222"/><circle cx="6" cy="4" r="1.3" fill="#222"/><circle cx="5.3" cy="3.6" r=".45" fill="#d33"/><circle cx="6.7" cy="3.6" r=".45" fill="#d33"/></svg>';
+function dropPoop(){
+  /* הגוש נשאר במקום בדף (גולל איתו), ונעלם אחרי 10 שניות */
+  var m=Math.max(72,Math.min(96,innerWidth*.2))/96;
+  var x=S.x-S.face*44*m+scrollX, y=S.y+scrollY;
+  var p=document.createElement('div'); p.className='dgpoo'; p.style.left=(x-15)+'px'; p.style.top=(y-26)+'px'; p.innerHTML=POO; document.body.appendChild(p);
+  var flies=[];
+  setTimeout(function(){ for(var k=0;k<4;k++){ var f=document.createElement('div'); f.className='dgfly'; f.style.left=(x-6+(k-1.5)*6)+'px'; f.style.top=(y-34)+'px'; f.style.setProperty('--d',(1.8+k*.45)+'s'); f.style.setProperty('--ax',((k%2?1:-1)*(20+k*10))+'px'); f.style.animationDelay=(-k*.6)+'s'; f.innerHTML=FLY; document.body.appendChild(f); flies.push(f); } },700);
+  setTimeout(function(){ flies.forEach(function(f){f.classList.add('away')}); p.classList.add('out'); },9000);
+  setTimeout(function(){ flies.forEach(function(f){f.remove()}); p.remove(); },10300);
+}
+function startPoop(){
+  if(S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return;
+  S.mode='poop'; S.rot=0; S.y=ground().y; S.t0=performance.now(); S.stage=0;
+  poses.poop.classList.toggle('flip',S.face>0); show('poop','strain'); setFrame('poop',0); place();
+}
+function startSlink(){
+  var g=ground(); S.mode='slink'; S.t0=performance.now();
+  var tx=avoid(S.x+S.face*110,g); if(Math.abs(tx-S.x)<50){ S.face=-S.face; tx=avoid(S.x+S.face*110,g); }
+  S.tx=tx; S.face=tx>S.x?1:-1; poses.poop.classList.toggle('flip',S.face>0); show('poop','slink'); setFrame('poop',3); place();
+}
+
+/* ---- לולאת האנימציה ---- */
+var last=0;
+function frame(ts){
+  var dt=Math.min(.05,(ts-(last||ts))/1000); last=ts;
+  var g=ground(); scaleNow();
+  var m=S.mode;
+  if((m==='walk'||m==='sit')&&S.init&&g.bar!==S.homeBar){ S.homeBar=g.bar; if(g.bar)startFly(); else startGlide(); m=S.mode; }
+  if(m==='walk'){
+    S.y=g.y;
+    var dx=S.tx-S.x,st=52*dt;
+    if(Math.abs(dx)<=st){ S.x=S.tx; startSit(2800+Math.random()*2500); }
+    else { S.x+=Math.sign(dx)*st; S.dist+=st; setStep(S.dist); place(); }
+  }else if(m==='sit'){
+    S.y=g.y; S.x=clamp(S.x,g.l,g.r); place(); if(ts>S.until)startWalk();
+  }else if(m==='glide'){
+    if(g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=true; S.mode='fly'; show('climb','flying'); S.curC=-1; requestAnimationFrame(frame); return; }
+    var A=S.from,Bx=clamp(A.x,g.l,g.r),By=g.y;
+    var u=Math.min(1,(ts-S.t0)/S.dur),e=(ts-S.t0)/1000,env=Math.min(1,(1-u)*4,u*5+.25);
+    var gi=Math.floor(e/.4)%2; if(gi!==S.curG){S.curG=gi;setFrame('glide',gi)}
+    S.x=clamp(A.x+(Bx-A.x)*u+Math.sin(e*.95)*46*env,50,innerWidth-50); S.y=A.y+(By-A.y)*u;
+    S.rot=Math.cos(e*.95)*10*env+Math.sin(e*2.3)*2.2*env;
+    if(reduce||u>=1){ S.x=clamp(S.x,g.l,g.r); S.y=g.y; S.rot=0; S.homeBar=false; S.face=1; startSit(1800); } else place();
+  }else if(m==='fly'){
+    if(!g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=false; S.mode='glide'; show('glide','gliding'); S.curG=-1; requestAnimationFrame(frame); return; }
+    var A2=S.from,Bx2=clamp(A2.x,g.l,g.r),By2=g.y;
+    var u2=Math.min(1,(ts-S.t0)/S.dur),k=1-Math.pow(1-u2,2);
+    var ci=[0,1,2,1][Math.floor((ts-S.t0)/150)%4]; if(ci!==S.curC){S.curC=ci;setFrame('climb',ci)}
+    S.x=A2.x+(Bx2-A2.x)*k+Math.sin(u2*9)*10*(1-u2); S.y=A2.y+(By2-A2.y)*k; S.rot=Math.sin(u2*9)*4*(1-u2);
+    if(reduce||u2>=1){ S.x=Bx2; S.y=g.y; S.rot=0; S.homeBar=g.bar; startSit(2200); } else place();
+  }else if(m==='angry'||m==='hop'){
+    S.y=g.y;
+    if(m==='angry'&&ts>S.nextBark){ S.nextBark=ts+520; barkOnce(true); }
+    place();
+    if(ts>S.until){ var back=m==='hop'?S.prev:S.hold; if(back==='sit')startSit(2200); else startWalk(); }
+  }else if(m==='poop'){
+    S.y=g.y; place();
+    var pe=ts-S.t0;
+    if(S.stage===0&&pe>1500){ S.stage=1; setFrame('poop',1); dog.className=''; dropPoop(); }
+    else if(S.stage===1&&pe>2600){ S.stage=2; setFrame('poop',2); }
+    else if(S.stage===2&&pe>4000){ startSlink(); }
+  }else if(m==='slink'){
+    S.y=g.y;
+    var dx2=S.tx-S.x,st2=34*dt; setFrame('poop',Math.floor((ts-S.t0)/260)%2?2:3);
+    if(Math.abs(dx2)<=st2){ S.x=S.tx; startSit(2200); } else { S.x+=Math.sign(dx2)*st2; place(); }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- נגיעות: לחיצה קצרה = נביחה, שלוש מהירות = כעס, לחיצה ארוכה = קקי ---- */
+var lpT=0,lpDone=false,taps=0,tapT=0;
+dog.addEventListener('pointerdown',function(e){
+  e.preventDefault(); lpDone=false; clearTimeout(lpT);
+  lpT=setTimeout(function(){ lpDone=true; if(S.mode==='walk'||S.mode==='sit'||S.mode==='hop')startPoop(); },650);
+});
+dog.addEventListener('pointerup',function(e){
+  e.stopPropagation(); clearTimeout(lpT); if(lpDone)return;
+  if(S.mode==='poop'||S.mode==='slink'||S.mode==='glide'||S.mode==='fly')return;
+  taps++; clearTimeout(tapT); tapT=setTimeout(function(){taps=0},2500);
+  if(taps>=3){ taps=0; var p=S.mode==='hop'?S.prev:S.mode; S.hold=p==='sit'?'sit':'walk'; startAngry(); }
+  else hop();
+});
+dog.addEventListener('pointercancel',function(){ clearTimeout(lpT); lpDone=true; });
+dog.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); });
+
+/* ---- התחלה ---- */
+(function init(){
+  var g=ground(); scaleNow();
+  S.homeBar=g.bar; S.init=true; S.x=g.bar?clamp(g.cx+130,g.l,g.r):(g.l+g.r)/2; S.y=g.y;
+  if(reduce){ S.face=-1; poses.walk.classList.remove('flip'); show('walk',''); setFrame('walk',0); place(); return; }
+  startWalk(); requestAnimationFrame(frame);
+})();
+})();

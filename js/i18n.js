@@ -7,6 +7,7 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "כלב שיצו": "Shih Tzu dog",
   "שליחת האפליקציה": "Send the app",
   "שולחים למי שרוצה בית משלו. הוא נרשם עם חשבון Google.": "Send it to anyone who wants their own home. They sign up with a Google account.",
   "שלח את האפליקציה": "Send the app",
