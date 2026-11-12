@@ -4,7 +4,9 @@
    הולך על קצה מלבן ההודעה, יושב, צונח עם מצנח בגלילה למטה, מטפס חזרה בגלילה למעלה,
    נובח ומתעצבן כשלוחצים עליו, ועושה קקי בלחיצה ארוכה. */
 var OWNER='40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
-try{ if(localStorage.getItem('myFam')!==OWNER)return; }catch(_){ return; }
+function famReady(cb){var n=0;(function w(){var f=null;try{f=localStorage.getItem('myFam')}catch(_){}if(f||n++>20)cb(f);else setTimeout(w,150)})()} /* מחכים עד שנודע לאיזה בית שייכים (נשמר אחרי טעינת הפרופיל) */
+famReady(function(f){ if(f===OWNER)main(); });
+function main(){
 if(document.getElementById('dg'))return;
 var BASE='icons/dog/';
 var SZ={walk:[95.7,96.9],face:[86,104.7],glide:[104,108.8],climb:[71.1,106],poop:[114.7,100.8]};
@@ -228,4 +230,5 @@ dog.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(
   if(reduce){ S.face=-1; poses.walk.classList.remove('flip'); show('walk',''); setFrame('walk',0); place(); return; }
   startWalk(); requestAnimationFrame(frame);
 })();
+}
 })();
