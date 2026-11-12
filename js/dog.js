@@ -9,8 +9,8 @@ famReady(function(f){ if(f===OWNER)main(); });
 function main(){
 if(document.getElementById('dg'))return;
 var BASE='icons/dog/';
-var SZ={walk:[95.7,96.9],face:[86,104.7],glide:[104,108.8],climb:[71.1,106],poop:[114.7,100.8]};
-var N={walk:6,face:4,glide:2,climb:3,poop:4};
+var SZ={walk:[95.7,96.9],face:[86,104.7],glide:[104,108.8],climb:[71.1,106],poop:[114.7,100.8],pee:[134.4,99.8]};
+var N={walk:6,face:4,glide:2,climb:3,poop:4,pee:3};
 var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 var css='#dg{position:fixed;left:0;top:0;width:110px;height:110px;z-index:8;pointer-events:none;will-change:transform;direction:ltr;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}'
@@ -20,6 +20,7 @@ var css='#dg{position:fixed;left:0;top:0;width:110px;height:110px;z-index:8;poin
 +'#dg .dp{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:none;pointer-events:auto;cursor:pointer;touch-action:manipulation}'
 +'#dg .dp.show{display:block}'
 +'#dg .dp img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}'
++'#dp-pee{margin-left:-6px}#dp-pee.flip{margin-left:6px}'
 +'#dg .dp.cyc img{display:none}#dg .dp.cyc img.cur{display:block}'
 +'#dg .dp.flip img{transform:scaleX(-1)}'
 +'#dg .dp .tail{animation:dgwag var(--wag,.46s) ease-in-out infinite alternate}'
@@ -47,8 +48,14 @@ var css='#dg{position:fixed;left:0;top:0;width:110px;height:110px;z-index:8;poin
 +'@keyframes dgwing{from{transform:scaleY(1)}to{transform:scaleY(.25)}}'
 +'@keyframes dgflya{0%{transform:translate(-18px,-6px)}12%{transform:translate(2px,-20px)}25%{transform:translate(20px,-8px)}38%{transform:translate(8px,-26px)}52%{transform:translate(-14px,-18px)}66%{transform:translate(-4px,-4px)}80%{transform:translate(16px,-22px)}100%{transform:translate(-18px,-6px)}}'
 +'@keyframes dgflyaway{to{transform:translate(var(--ax,30px),-90px);opacity:0}}'
-+'@media print{#dg,.dgpoo,.dgfly{display:none!important}}'
-+'@media (prefers-reduced-motion:reduce){#dg .tail,#dg.sitting #dgi,#dg.strain #dgi,#dg.slink #dgi,.dgfly,.dgfly .w{animation:none!important}}';
++'.dgstream{position:absolute;pointer-events:none;overflow:visible;z-index:7}'
++'.dgstream .s1{fill:none;stroke:#F2CC3A;stroke-width:3.4;stroke-linecap:round}'
++'.dgstream .s2{fill:none;stroke:#FFF2A6;stroke-width:1.4;stroke-linecap:round;stroke-dasharray:5 6;animation:dgsflow .35s linear infinite}'
++'@keyframes dgsflow{to{stroke-dashoffset:-11}}'
++'.dgpuddle{position:absolute;pointer-events:none;z-index:7;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,#FFF0A0 0,#F2CC3A 55%,#E0B52A 100%);border:1.5px solid #C99A1C;opacity:.9;transform:scale(0);transition:transform 3s ease-out,opacity 1s}'
++'.dgpuddle.go{transform:scale(1)}.dgpuddle.out{opacity:0}'
++'@media print{#dg,.dgpoo,.dgfly,.dgstream,.dgpuddle{display:none!important}}'
++'@media (prefers-reduced-motion:reduce){.dgstream .s2,#dg .tail,#dg.sitting #dgi,#dg.strain #dgi,#dg.slink #dgi,.dgfly,.dgfly .w{animation:none!important}}';
 var stl=document.createElement('style'); stl.textContent=css; document.head.appendChild(stl);
 
 var h='<div id="dgs"><svg id="dgchute" viewBox="0 0 122 150" aria-hidden="true">'
@@ -56,7 +63,7 @@ var h='<div id="dgs"><svg id="dgchute" viewBox="0 0 122 150" aria-hidden="true">
 +'<path d="M61 2 C52 16 45 34 47 54 M61 2 C70 16 77 34 75 54" fill="none" stroke="#fff" stroke-width="2.4" opacity=".75"/>'
 +'<path d="M6 56 L40 134 M116 56 L82 134 M61 56 L61 128" fill="none" stroke="#7A3B0A" stroke-width="1.5" stroke-linecap="round"/></svg>'
 +'<div id="dgshadow"></div><div id="dgi">';
-['walk','face','glide','climb','poop'].forEach(function(k){
+['walk','face','glide','climb','poop','pee'].forEach(function(k){
   h+='<div class="dp cyc" id="dp-'+k+'" style="width:'+SZ[k][0]+'px;height:'+SZ[k][1]+'px">';
   for(var i=0;i<N[k];i++)h+='<img alt="" draggable="false" src="'+BASE+k+i+'.webp">';
   h+='</div>';
@@ -65,8 +72,8 @@ h+='<div class="dp" id="dp-sit" style="width:73px;height:93px;--wag:.62s;--amp:8
 h+='</div></div>';
 var dog=document.createElement('div'); dog.id='dg'; dog.setAttribute('role','img'); dog.setAttribute('aria-label','כלב שיצו'); dog.innerHTML=h; document.body.appendChild(dog);
 var dgs=document.getElementById('dgs');
-var poses={};['walk','face','glide','climb','poop','sit'].forEach(function(k){poses[k]=document.getElementById('dp-'+k)});
-var imgs={};['walk','face','glide','climb','poop'].forEach(function(k){imgs[k]=poses[k].querySelectorAll('img')});
+var poses={};['walk','face','glide','climb','poop','pee','sit'].forEach(function(k){poses[k]=document.getElementById('dp-'+k)});
+var imgs={};['walk','face','glide','climb','poop','pee'].forEach(function(k){imgs[k]=poses[k].querySelectorAll('img')});
 dog.addEventListener('contextmenu',function(e){e.preventDefault()});
 
 var S={mode:'walk',x:0,y:0,face:1,tx:0,until:0,t0:0,dur:0,from:null,rot:0,dist:0,init:false,homeBar:true,stage:0,hold:'walk',prev:'walk',nextBark:0};
@@ -124,9 +131,9 @@ function startFly(){
   S.dur=Math.min(8000,Math.max(3500,Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y)/.1));
   show('climb','flying'); S.curC=-1; place();
 }
-function startAngry(){ if(S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return; S.mode='angry'; S.until=performance.now()+3000; S.nextBark=0; S.rot=0; show('face','angry'); setFrame('face',2); place(); }
+function startAngry(){ if(S.mode==='pee'||S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return; S.mode='angry'; S.until=performance.now()+3000; S.nextBark=0; S.rot=0; show('face','angry'); setFrame('face',2); place(); }
 function hop(){
-  if(S.mode==='glide'||S.mode==='fly'||S.mode==='angry'||S.mode==='poop'||S.mode==='slink')return;
+  if(S.mode==='pee'||S.mode==='glide'||S.mode==='fly'||S.mode==='angry'||S.mode==='poop'||S.mode==='slink')return;
   S.prev=S.mode==='hop'?S.prev:S.mode; S.mode='hop'; S.until=performance.now()+900; S.rot=0; show('face',''); setFrame('face',0); place(); barkOnce(false);
 }
 function barkOnce(big){
@@ -149,7 +156,7 @@ function dropPoop(){
   setTimeout(function(){ flies.forEach(function(f){f.remove()}); p.remove(); },10300);
 }
 function startPoop(){
-  if(S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return;
+  if(S.mode==='pee'||S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return;
   S.mode='poop'; S.rot=0; S.y=ground().y; S.t0=performance.now(); S.stage=0;
   poses.poop.classList.toggle('flip',S.face>0); show('poop','strain'); setFrame('poop',0); place();
 }
@@ -157,6 +164,33 @@ function startSlink(){
   var g=ground(); S.mode='slink'; S.t0=performance.now();
   var tx=avoid(S.x+S.face*110,g); if(Math.abs(tx-S.x)<50){ S.face=-S.face; tx=avoid(S.x+S.face*110,g); }
   S.tx=tx; S.face=tx>S.x?1:-1; poses.poop.classList.toggle('flip',S.face>0); show('poop','slink'); setFrame('poop',3); place();
+}
+
+
+/* ---- פיפי: שתי נגיעות מהירות ---- */
+var peeT=0;
+function startPee(){
+  if(!(S.mode==='walk'||S.mode==='sit'||S.mode==='hop'))return;
+  S.mode='pee'; S.rot=0; S.y=ground().y; S.t0=performance.now(); S.stage=0;
+  poses.pee.classList.toggle('flip',S.face>0); show('pee',''); setFrame('pee',0); place();
+}
+function pour(){
+  var m=Math.max(72,Math.min(96,innerWidth*.2))/96, d=-S.face;
+  var sx=S.x+d*43.7*m+scrollX, sy=S.y-32.8*m+scrollY, ex=S.x+d*70*m+scrollX, ey=S.y+scrollY;
+  var NS='http://www.w3.org/2000/svg', svg=document.createElementNS(NS,'svg'); svg.setAttribute('class','dgstream');
+  svg.style.left='0px'; svg.style.top='0px'; svg.setAttribute('width','1'); svg.setAttribute('height','1');
+  var dd='M'+sx+' '+sy+' Q'+(sx+d*20*m)+' '+(sy-14*m)+' '+ex+' '+ey;
+  var p1=document.createElementNS(NS,'path'); p1.setAttribute('class','s1'); p1.setAttribute('d',dd);
+  var p2=document.createElementNS(NS,'path'); p2.setAttribute('class','s2'); p2.setAttribute('d',dd);
+  svg.appendChild(p1); svg.appendChild(p2); document.body.appendChild(svg);
+  var L=p1.getTotalLength(); p1.style.strokeDasharray=L; p1.style.strokeDashoffset=L; p1.style.transition='stroke-dashoffset .3s ease-out';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ p1.style.strokeDashoffset=0; }) });
+  var pd=document.createElement('div'); pd.className='dgpuddle'; pd.style.left=(ex-26*m)+'px'; pd.style.top=(ey-6*m)+'px'; pd.style.width=(52*m)+'px'; pd.style.height=(11*m)+'px'; document.body.appendChild(pd);
+  setTimeout(function(){ pd.classList.add('go') },300);
+  setTimeout(function(){ p1.style.transition='stroke-dashoffset .35s ease-in'; p1.style.strokeDashoffset=-L; p2.style.opacity=0; },3000);
+  setTimeout(function(){ svg.remove() },3500);
+  setTimeout(function(){ pd.classList.add('out') },8500);
+  setTimeout(function(){ pd.remove() },9700);
 }
 
 /* ---- לולאת האנימציה ---- */
@@ -193,6 +227,13 @@ function frame(ts){
     if(m==='angry'&&ts>S.nextBark){ S.nextBark=ts+520; barkOnce(true); }
     place();
     if(ts>S.until){ var back=m==='hop'?S.prev:S.hold; if(back==='sit')startSit(2200); else startWalk(); }
+  }else if(m==='pee'){
+    S.y=g.y; place();
+    var qe=ts-S.t0;
+    if(S.stage===0&&qe>1300){ S.stage=1; setFrame('pee',1); }
+    else if(S.stage===1&&qe>1900){ S.stage=2; setFrame('pee',2); pour(); }
+    else if(S.stage===2&&qe>5200){ S.stage=3; setFrame('pee',1); }
+    else if(S.stage===3&&qe>5700){ startSit(1800); }
   }else if(m==='poop'){
     S.y=g.y; place();
     var pe=ts-S.t0;
@@ -215,9 +256,10 @@ dog.addEventListener('pointerdown',function(e){
 });
 dog.addEventListener('pointerup',function(e){
   e.stopPropagation(); clearTimeout(lpT); if(lpDone)return;
-  if(S.mode==='poop'||S.mode==='slink'||S.mode==='glide'||S.mode==='fly')return;
+  if(S.mode==='poop'||S.mode==='slink'||S.mode==='glide'||S.mode==='fly'||S.mode==='pee')return;
   taps++; clearTimeout(tapT); tapT=setTimeout(function(){taps=0},2500);
-  if(taps>=3){ taps=0; var p=S.mode==='hop'?S.prev:S.mode; S.hold=p==='sit'?'sit':'walk'; startAngry(); }
+  if(taps>=3){ taps=0; clearTimeout(peeT); var p=S.mode==='hop'?S.prev:S.mode; S.hold=p==='sit'?'sit':'walk'; startAngry(); }
+  else if(taps===2){ clearTimeout(peeT); peeT=setTimeout(function(){ if(taps===2){ taps=0; startPee(); } },380); }
   else hop();
 });
 dog.addEventListener('pointercancel',function(){ clearTimeout(lpT); lpDone=true; });
