@@ -121,7 +121,7 @@ function startGlide(){
 function startFly(){
   if(S.mode==='fly')return; var g=ground();
   S.mode='fly'; S.from={x:S.x,y:S.y}; S.t0=performance.now(); S.rot=0;
-  S.dur=Math.min(4000,Math.max(1800,Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y)/.25));
+  S.dur=Math.min(8000,Math.max(3500,Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y)/.1));
   show('climb','flying'); S.curC=-1; place();
 }
 function startAngry(){ if(S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return; S.mode='angry'; S.until=performance.now()+3000; S.nextBark=0; S.rot=0; show('face','angry'); setFrame('face',2); place(); }
@@ -174,7 +174,7 @@ function frame(ts){
   }else if(m==='sit'){
     S.y=g.y; S.x=clamp(S.x,g.l,g.r); place(); if(ts>S.until)startWalk();
   }else if(m==='glide'){
-    if(g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=true; S.mode='fly'; show('climb','flying'); S.curC=-1; requestAnimationFrame(frame); return; }
+    if(g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=3500; S.homeBar=true; S.mode='fly'; show('climb','flying'); S.curC=-1; requestAnimationFrame(frame); return; }
     var A=S.from,Bx=clamp(A.x,g.l,g.r),By=g.y;
     var u=Math.min(1,(ts-S.t0)/S.dur),e=(ts-S.t0)/1000,env=Math.min(1,(1-u)*4,u*5+.25);
     var gi=Math.floor(e/.4)%2; if(gi!==S.curG){S.curG=gi;setFrame('glide',gi)}
@@ -185,7 +185,7 @@ function frame(ts){
     if(!g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=false; S.mode='glide'; show('glide','gliding'); S.curG=-1; requestAnimationFrame(frame); return; }
     var A2=S.from,Bx2=clamp(A2.x,g.l,g.r),By2=g.y;
     var u2=Math.min(1,(ts-S.t0)/S.dur),k=1-Math.pow(1-u2,2);
-    var ci=[0,1,2,1][Math.floor((ts-S.t0)/150)%4]; if(ci!==S.curC){S.curC=ci;setFrame('climb',ci)}
+    var ci=[0,1,2,1][Math.floor((ts-S.t0)/260)%4]; if(ci!==S.curC){S.curC=ci;setFrame('climb',ci)}
     S.x=A2.x+(Bx2-A2.x)*k+Math.sin(u2*9)*10*(1-u2); S.y=A2.y+(By2-A2.y)*k; S.rot=Math.sin(u2*9)*4*(1-u2);
     if(reduce||u2>=1){ S.x=Bx2; S.y=g.y; S.rot=0; S.homeBar=g.bar; startSit(2200); } else place();
   }else if(m==='angry'||m==='hop'){
