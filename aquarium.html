@@ -19,6 +19,13 @@ body{display:flex;justify-content:center}
 .bg{position:absolute;inset:0;background-size:cover;background-position:center bottom;transition:opacity 1.6s}#bgd{background-image:url(icons/aquarium/bg_day.webp)}#bgn{background-image:url(icons/aquarium/bg_night.webp)}.gback{pointer-events:auto;background:#0008;color:#e6fbff;text-decoration:none;font-size:15px;font-weight:800;padding:11px 16px;border-radius:23px;backdrop-filter:blur(4px)}
 #bgn{opacity:0}
 #aq.night #bgn{opacity:1}
+#stg{position:absolute;left:0;top:0;width:800px;height:1421px;transform-origin:0 0;pointer-events:none}
+#stg .pl{position:absolute;transform-origin:50% 100%;animation:sw var(--d,8s) ease-in-out var(--dl,0s) infinite alternate;will-change:transform;filter:none}
+#stg .pl img{display:block;width:100%;height:100%}
+#plw{position:absolute;inset:0;transition:filter 1.6s}#aq.night #plw{filter:brightness(.55) saturate(.8) hue-rotate(8deg)}
+#stg .fg{position:absolute;left:0;top:654px;width:800px;height:767px;transition:opacity 1.6s}#fgn{opacity:0}#aq.night #fgn{opacity:1}
+@keyframes sw{from{transform:rotate(calc(var(--a,1.6deg)*-1)) skewX(calc(var(--a,1.6deg)*1.2))}to{transform:rotate(var(--a,1.6deg)) skewX(calc(var(--a,1.6deg)*-1.2))}}
+#aq.pz .pl{animation-play-state:paused}@media(prefers-reduced-motion:reduce){#stg .pl{animation:none}}
 #world{position:absolute;inset:0;transition:filter 1.6s}
 #aq.night #world{filter:brightness(.82) saturate(.92)}
 .o{position:absolute;left:0;top:0;pointer-events:none;will-change:transform}
@@ -38,6 +45,7 @@ body{display:flex;justify-content:center}
 .bb{position:absolute;pointer-events:none}
 </style></head><body><div id="aq">
 <div class="bg" id="bgd"></div><div class="bg" id="bgn"></div>
+<div id="stg" aria-hidden="true"><div id="plw"><div class="pl" style="left:26px;top:280px;width:159px;height:520px;--d:9s;--a:1.5deg;--dl:-1s"><img src="icons/aquarium/pl1.webp" alt=""></div><div class="pl" style="left:136px;top:320px;width:78px;height:470px;--d:7.5s;--a:1.9deg;--dl:-4s"><img src="icons/aquarium/pl7.webp" alt=""></div><div class="pl" style="left:173px;top:715px;width:154px;height:250px;--d:8.5s;--a:1.6deg;--dl:-2s"><img src="icons/aquarium/pl3.webp" alt=""></div><div class="pl" style="left:678px;top:450px;width:174px;height:560px;--d:10s;--a:1.4deg;--dl:-6s"><img src="icons/aquarium/pl8.webp" alt=""></div><div class="pl" style="left:575px;top:365px;width:230px;height:600px;--d:8s;--a:1.7deg;--dl:-3s"><img src="icons/aquarium/pl4.webp" alt=""></div><div class="pl" style="left:381px;top:665px;width:179px;height:300px;--d:7s;--a:2.0deg;--dl:-5s"><img src="icons/aquarium/pl6.webp" alt=""></div><div class="pl" style="left:528px;top:575px;width:75px;height:400px;--d:9.5s;--a:1.8deg;--dl:-7.5s"><img src="icons/aquarium/pl2.webp" alt=""></div></div><img class="fg" id="fgd" src="icons/aquarium/fg_day.webp" alt=""><img class="fg" id="fgn" src="icons/aquarium/fg_night.webp" alt=""></div>
 <div id="world"></div>
 <div id="ui"><a class="gback" href="games.html">‹ חזרה למשחקים</a>
 <div style="display:flex;gap:8px"><button id="sb" aria-label="סאונד"><svg id="sico" viewBox="0 0 26 26"></svg></button><button id="nb" aria-label="יום ולילה"><svg id="ico" viewBox="0 0 26 26"></svg></button></div></div>
@@ -46,7 +54,7 @@ body{display:flex;justify-content:center}
 <script>
 const A=new Proxy({},{get:(_,k)=>'icons/aquarium/'+k+'.webp'});
 const aq=document.getElementById('aq'),world=document.getElementById('world');
-let W,H;function size(){const r=aq.getBoundingClientRect();W=r.width;H=r.height}size();addEventListener('resize',size);
+let W,H;function size(){const r=aq.getBoundingClientRect();W=r.width;H=r.height;const k=Math.max(W/800,H/1421),sg=document.getElementById('stg');sg.style.transform='translate('+((W-800*k)/2)+'px,'+(H-1421*k)+'px) scale('+k+')'}size();addEventListener('resize',size);
 const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const sandY=()=>H*.70;
 function mkObj(src,w,cls){const d=document.createElement('div');d.className='o '+(cls||'');d.style.width=w+'px';const i=new Image();i.src=src;d.appendChild(i);world.appendChild(d);return d}
@@ -83,8 +91,8 @@ function ico(){document.getElementById('ico').innerHTML=night?'<circle cx="13" c
 let spawnT=6;['clown','gold','blue','angel','yellow'].sort(()=>Math.random()-.5).slice(0,4).forEach(k=>addFish(k,{inside:true}));
 let last=performance.now(),tt=0;
 let running=true,onscreen=true;function resume(){if(!running&&!document.hidden&&onscreen){running=true;last=performance.now();requestAnimationFrame(loop)}}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)running=false;else resume()});
-new IntersectionObserver(es=>{onscreen=es[0].isIntersecting;if(!onscreen){running=false;aud.pause();sndOn=false;sico()}else{resume();if(wantSound)playSnd()}}).observe(aq);
+document.addEventListener('visibilitychange',()=>{aq.classList.toggle('pz',document.hidden);if(document.hidden)running=false;else resume()});
+new IntersectionObserver(es=>{onscreen=es[0].isIntersecting;aq.classList.toggle('pz',!onscreen);if(!onscreen){running=false;aud.pause();sndOn=false;sico()}else{resume();if(wantSound)playSnd()}}).observe(aq);
 function loop(now){if(!running)return;const dt=Math.min(.05,(now-last)/1000);last=now;tt+=dt;
  // flakes
  flakes.forEach(f=>{f.age+=dt;f.y+=f.vy*dt;f.x+=Math.sin(tt*.9+f.ph)*5*dt;f.r+=16*dt;const s=1;const bottom=sandY()+ (1-f.z)*H*.08;if(f.y>bottom){f.y=bottom;f.vy=0;f.rest=(f.rest||0)+dt}
