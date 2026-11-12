@@ -204,12 +204,12 @@ var ct=null,cEl={},C={st:'away',x:0,dir:-1,fdir:1,tx:0,until:0,dist:0,cur:'',nex
 function catInit(){
   if(reduce)return;
   var st2=document.createElement('style');
-  st2.textContent='#ct{position:absolute;left:0;bottom:-14px;width:0;height:0;z-index:2;pointer-events:none;will-change:transform;display:none}#ct.on{display:block}#ct img{position:absolute;left:0;bottom:0;display:none;pointer-events:none;-webkit-user-drag:none;transform:translateX(-50%)}#ct img.cur{display:block}#ct.flip img{transform:translateX(-50%) scaleX(-1)}@media print{#ct{display:none!important}}';
+  st2.textContent='#ctw{position:absolute;left:0;right:0;top:-50px;bottom:-30px;overflow:hidden;z-index:2;pointer-events:none;direction:ltr;contain:paint}#ct{position:absolute;left:0;bottom:16px;width:0;height:0;z-index:2;pointer-events:none;will-change:transform;display:none}#ct.on{display:block}#ct img{position:absolute;left:0;bottom:0;display:none;pointer-events:none;-webkit-user-drag:none;transform:translateX(-50%)}#ct img.cur{display:block}#ct.flip img{transform:translateX(-50%) scaleX(-1)}@media print{#ct{display:none!important}}';
   document.head.appendChild(st2);
   ct=document.createElement('div'); ct.id='ct';
   var L=[['w',6,80,57],['r',6,80,57],['sit',0,52,61],['scare',0,64,65]],ih='';
   L.forEach(function(a){ if(a[1]){ for(var i=0;i<a[1];i++)ih+='<img alt="" draggable="false" data-k="'+a[0]+i+'" width="'+a[2]+'" height="'+a[3]+'" src="icons/cat/'+a[0]+i+'.webp">'; } else ih+='<img alt="" draggable="false" data-k="'+a[0]+'" width="'+a[2]+'" height="'+a[3]+'" src="icons/cat/'+a[0]+'.webp">'; });
-  ct.innerHTML=ih; gr.appendChild(ct);
+  ct.innerHTML=ih; var ctw=document.createElement('div'); ctw.id='ctw'; ctw.appendChild(ct); gr.appendChild(ctw);
   [].forEach.call(ct.children,function(e){cEl[e.getAttribute('data-k')]=e});
   var fr=document.createElement('div'); fr.style.cssText='position:absolute;left:0;right:0;bottom:-20px;height:12px;z-index:3;background:url(icons/grass.webp) repeat-x center bottom/auto 56px'; gr.appendChild(fr);
   C.x=60+Math.random()*Math.max(60,gr.clientWidth-120); C.st='sit'; C.until=performance.now()+2000; C.dir=Math.random()<.5?-1:1; C.nextChase=performance.now()+8000;
