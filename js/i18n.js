@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'google-setup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
+export const TRANSLATED_PAGES = new Set(['aquarium', 'home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'google-setup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -596,6 +596,12 @@ const D = {
   "סיים/ה ✓": "Done ✓",
   "כותב/ת…": "Writing…",
   "‹ חזרה למשחקים": "‹ Back to games",
+  "הבית שלנו | אקווריום": "Our Home | Aquarium",
+  "אקווריום": "Aquarium",
+  "לצפות בדגים, להאכיל ולהירגע": "Watch the fish, feed them and relax",
+  "לחצו על המים כדי להאכיל את הדגים": "Tap the water to feed the fish",
+  "סאונד": "Sound",
+  "יום ולילה": "Day and night",
   "שחקן": "Player",
   "ממתין לאישור": "Waiting for approval",
   "הזמנה אליך": "Invitation for you",
