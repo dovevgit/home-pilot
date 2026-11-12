@@ -17,7 +17,7 @@ var css='#dg{position:fixed;left:0;top:0;width:110px;height:110px;z-index:8;poin
 +'#dgs{position:absolute;inset:0;transform-origin:55px 110px}'
 +'#dgi{position:absolute;inset:0;transform-origin:50% 100%}'
 +'#dgshadow{position:absolute;left:50%;bottom:-3px;width:70px;height:10px;margin-left:-35px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(40,25,10,.35),rgba(40,25,10,0) 70%)}'
-+'#dg .dp{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:none;pointer-events:auto;cursor:pointer;touch-action:manipulation}'
++'#dg .dp{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:none;pointer-events:auto;cursor:pointer;touch-action:none}'
 +'#dg .dp.show{display:block}'
 +'#dg .dp img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}'
 +'#dp-pee{margin-left:-6px}#dp-pee.flip{margin-left:6px}'
@@ -167,7 +167,7 @@ function startSlink(){
 }
 
 
-/* ---- פיפי: שתי נגיעות מהירות ---- */
+/* ---- פיפי: החלקה של האצבע על הכלב ---- */
 var peeT=0;
 function startPee(){
   if(!(S.mode==='walk'||S.mode==='sit'||S.mode==='hop'))return;
@@ -248,18 +248,25 @@ function frame(ts){
   requestAnimationFrame(frame);
 }
 
-/* ---- נגיעות: לחיצה קצרה = נביחה, שלוש מהירות = כעס, לחיצה ארוכה = קקי ---- */
+/* ---- נגיעות: לחיצה קצרה = נביחה, שלוש מהירות = כעס, לחיצה ארוכה = קקי, החלקה = פיפי ---- */
 var lpT=0,lpDone=false,taps=0,tapT=0;
+var sx=0,sy=0,swiped=false;
 dog.addEventListener('pointerdown',function(e){
-  e.preventDefault(); lpDone=false; clearTimeout(lpT);
+  e.preventDefault(); lpDone=false; swiped=false; sx=e.clientX; sy=e.clientY; clearTimeout(lpT);
   lpT=setTimeout(function(){ lpDone=true; if(S.mode==='walk'||S.mode==='sit'||S.mode==='hop')startPoop(); },650);
 });
+dog.addEventListener('pointermove',function(e){
+  if(swiped||lpDone||!e.buttons&&e.pointerType==='mouse')return;
+  if(Math.hypot(e.clientX-sx,e.clientY-sy)>28){
+    swiped=true; clearTimeout(lpT); taps=0; clearTimeout(tapT);
+    if(S.mode==='walk'||S.mode==='sit'||S.mode==='hop')startPee();
+  }
+});
 dog.addEventListener('pointerup',function(e){
-  e.stopPropagation(); clearTimeout(lpT); if(lpDone)return;
+  e.stopPropagation(); clearTimeout(lpT); if(lpDone||swiped)return;
   if(S.mode==='poop'||S.mode==='slink'||S.mode==='glide'||S.mode==='fly'||S.mode==='pee')return;
   taps++; clearTimeout(tapT); tapT=setTimeout(function(){taps=0},2500);
   if(taps>=3){ taps=0; clearTimeout(peeT); var p=S.mode==='hop'?S.prev:S.mode; S.hold=p==='sit'?'sit':'walk'; startAngry(); }
-  else if(taps===2){ clearTimeout(peeT); peeT=setTimeout(function(){ if(taps===2){ taps=0; startPee(); } },380); }
   else hop();
 });
 dog.addEventListener('pointercancel',function(){ clearTimeout(lpT); lpDone=true; });
