@@ -9,6 +9,14 @@ famReady(function(f){ if(f===OWNER)main(); });
 function main(){
 if(document.getElementById('dg'))return;
 var BASE='icons/dog/';
+/* דשא בתחתית הדף (מתחת לכלב ולמה שהוא משאיר: שכבה 1 מול 7 ו-8) */
+(function(){
+  var gr=document.createElement('div'); gr.setAttribute('aria-hidden','true');
+  gr.style.cssText='position:relative;z-index:1;height:36px;pointer-events:none;margin-top:8px';
+  var im=document.createElement('div');
+  im.style.cssText='position:absolute;left:0;right:0;bottom:-20px;height:56px;background:url(icons/grass.webp) repeat-x center bottom/auto 56px';
+  gr.appendChild(im); document.body.appendChild(gr);
+})();
 var SZ={walk:[95.7,96.9],face:[86,104.7],glide:[104,108.8],climb:[71.1,106],poop:[114.7,100.8],pee:[134.4,99.8]};
 var N={walk:6,face:4,glide:2,climb:3,poop:4,pee:3};
 var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
