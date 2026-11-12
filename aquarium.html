@@ -135,7 +135,7 @@ function loop(now){if(!running)return;const dt=Math.min(.05,(now-last)/1000);las
  requestAnimationFrame(loop)}
 
 // sound
-const TRACKS=[{n:'Weightless Aquarian',s:'icons/aquarium/loop.mp3'},{n:'Crystal Bell Meditation',s:'icons/aquarium/crystal.mp3'}];let cur=0;try{const c=parseInt(localStorage.getItem('aqTrack'),10);if(c>=0&&c<TRACKS.length)cur=c}catch(e){}
+const TRACKS=[{n:'Weightless Aquarian',s:'icons/aquarium/loop.mp3'},{n:'Crystal Bell Meditation',s:'icons/aquarium/crystal.mp3'},{n:'Weightless Waters',s:'icons/aquarium/waters.mp3'}];let cur=0;try{const c=parseInt(localStorage.getItem('aqTrack'),10);if(c>=0&&c<TRACKS.length)cur=c}catch(e){}
 const aud=new Audio(TRACKS[cur].s);aud.loop=true;aud.preload='none';aud.volume=0;
 let wantSound=false; /* המוזיקה מתחילה רק בלחיצה על הכפתור, ולא נזכרת בכניסה הבאה */
 let sndOn=false;
