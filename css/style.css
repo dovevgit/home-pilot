@@ -372,6 +372,8 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .s-fog{background-image:url(../icons/weather/sky-fog.webp)}
 .s-snow{background-image:url(../icons/weather/sky-snow.webp)}
 .s-night{background-image:url(../icons/weather/sky-night.webp)}
+.s-dawn{background-image:url(../icons/weather/sky-dawn.webp);animation-name:wxpanLow}
+.s-dusk{background-image:url(../icons/weather/sky-dusk.webp);animation-name:wxpanLow}
 .s-storm::after{content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:wxflash 7s linear infinite}
 .s-night::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.18),transparent 40%),radial-gradient(circle at 75% 60%,rgba(255,255,255,.14),transparent 35%);animation:wxtwinkle 4s ease-in-out infinite alternate}
 .wxscene{position:relative;overflow:hidden;border-radius:18px;height:172px;margin-bottom:8px;color:#0B2A4A}
@@ -387,14 +389,17 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxflapB{0%{opacity:0}50%{opacity:1}}
 @keyframes wxfly{from{transform:translateX(-12vw)}to{transform:translateX(105vw)}}
 @keyframes wxbob{from{transform:translateY(-5px)}to{transform:translateY(6px)}}
+@keyframes wxpanLow{from{background-position:35% 92%}to{background-position:65% 92%}}
 @keyframes wxpan{from{background-position:35% 50%}to{background-position:65% 50%}}
 @keyframes wxflash{0%,90%,100%{opacity:0}92%{opacity:.55}94%{opacity:.05}96%{opacity:.4}98%{opacity:0}}
 @keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
 @keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}
-@media (prefers-reduced-motion:reduce){.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
+@media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
 #wxmodal .modal-x{z-index:5}
 /* ים עם גולשת */
 .wxsea{position:relative;overflow:hidden;border-radius:18px;height:176px;margin:6px 0 4px;background:url(../icons/weather/sea-bg.webp) 50% 78%/cover}
+.wxsea.ws-night{background-image:url(../icons/weather/sea-night.webp)}
+.wxsea.ws-dawn,.wxsea.ws-dusk{background-image:url(../icons/weather/sea-dusk.webp)}
 .wxgirl{position:absolute;left:50%;bottom:60px;width:140px;height:128px;margin-left:-70px;z-index:1;animation:wxride var(--sp) ease-in-out infinite alternate}
 .wxgirl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 .wxgirl .bb{opacity:0;animation:wxflapB calc(var(--sp)*.8) steps(1,end) infinite}

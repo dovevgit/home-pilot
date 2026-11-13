@@ -43,7 +43,7 @@ async function loadData(loc, force = false) {
   const c = coordsOf(loc);
   const ck = `wxCache:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
   if (!force) { try { const v = JSON.parse(sessionStorage.getItem(ck)); if (v && Date.now() - v.t < MAX_AGE) return v.d; } catch (_) {} }
-  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
+  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
   const mUrl = c.sea ? `https://marine-api.open-meteo.com/v1/marine?latitude=${c.mlat}&longitude=${c.mlon}&current=wave_height,wave_direction,wave_period,sea_surface_temperature&timezone=auto` : null;
   const [w, m] = await Promise.all([fetchJson(wUrl), mUrl ? fetchJson(mUrl).catch(() => null) : Promise.resolve(null)]);
   const sc = m?.current;
@@ -68,19 +68,30 @@ const wcode = c => {
 const wimg = (name, size) => `<img class="wximg" src="icons/weather/${name}.webp" alt="" width="${size}" height="${size}" decoding="async">`;
 // ביום שמשי (שמיים בהירים ובהירים ברובו, בשעות היום) מציגים שמיים יפים וציפורים
 // איזה שמיים ואייקון מציגים: לפי סוג מזג האוויר, ובשמיים בהירים או מעונן חלקית גם לפי יום או לילה
-function look(cur) {
-  const c = cur.weather_code, night = cur.is_day === 0;
+// שלב ביממה לפי זריחה ושקיעה במקום עצמו: dawn סביב הזריחה, dusk סביב השקיעה, אחרת day או night
+function phaseOf(cur, day) {
+  const t = Date.parse(cur.time), sr = Date.parse(day.sunrise?.[0]), ss = Date.parse(day.sunset?.[0]), M = 60000;
+  if (isFinite(t) && isFinite(sr) && isFinite(ss)) {
+    if (t >= sr - 30 * M && t <= sr + 45 * M) return 'dawn';
+    if (t >= ss - 45 * M && t <= ss + 30 * M) return 'dusk';
+  }
+  return cur.is_day === 0 ? 'night' : 'day';
+}
+// איזה שמיים ואייקון מציגים: לפי סוג מזג האוויר, ובשמיים בהירים או מעונן חלקית גם לפי שעה ביממה
+function look(cur, day = {}) {
+  const c = cur.weather_code, night = cur.is_day === 0, phase = phaseOf(cur, day);
   const [icon0, desc] = wcode(c);
+  const twi = phase === 'dawn' || phase === 'dusk';
   let icon = icon0, sky;
-  if (c === 0 || c === 1) { sky = night ? 'night' : 'sun'; if (night) icon = 'moon'; }
-  else if (c === 2) { sky = night ? 'night' : 'partly'; if (night) icon = 'moon-cloud'; }
+  if (c === 0 || c === 1) { sky = twi ? phase : night ? 'night' : 'sun'; if (night) icon = 'moon'; }
+  else if (c === 2) { sky = twi ? phase : night ? 'night' : 'partly'; if (night) icon = 'moon-cloud'; }
   else if (c === 3) sky = 'cloud';
   else if (c === 45 || c === 48) sky = 'fog';
   else if (icon0 === 'rain') sky = 'rain';
   else if (icon0 === 'snow') sky = 'snow';
   else if (icon0 === 'storm') sky = 'storm';
-  else sky = night ? 'night' : 'partly';
-  return { icon, desc, sky, dark: sky === 'rain' || sky === 'storm' || sky === 'night', glow: icon === 'sun' || icon === 'moon', birds: sky === 'sun' };
+  else sky = twi ? phase : night ? 'night' : 'partly';
+  return { icon, desc, sky, phase, dark: ['rain', 'storm', 'night', 'dawn', 'dusk'].includes(sky), glow: icon === 'sun' || icon === 'moon', birds: sky === 'sun' };
 }
 const skyHtml = sky => `<span class="wxsky s-${sky}" aria-hidden="true"></span>`;
 const bird = (t, size, dur, delay, x) => `<span class="wxbird" style="--t:${t}%;--s:${size}px;--d:${dur}s;--w:${delay}s;--x:${x}%"><span class="wxbob"><img class="ba" src="icons/weather/bird1.webp" alt="" width="${size}" height="${size}" decoding="async"><img class="bb" src="icons/weather/bird2.webp" alt="" width="${size}" height="${size}" decoding="async"></span></span>`;
@@ -109,14 +120,14 @@ const val = s => `<b dir="ltr">${s}</b>`;
 const row = (label, v) => `<div class="wxrow"><span>${label}</span>${v}</div>`;
 
 // חלון ים: רקע, גולשת וגלים נעים. כשהגלים נמוכים היא יושבת על הלוח, וכשהם גבוהים היא עומדת ורוכבת
-function seaScene(sea) {
+function seaScene(sea, phase) {
   const h = Number(sea.wave_height) || 0, ride = h >= 0.5;
   const sp = ride ? Math.max(1.2, Math.min(2.4, 2.8 - h)) : 4;
   const wv = Math.max(7, 16 - h * 6);
   const girl = ride
     ? `<span class="wxgirl"><img class="ba" src="icons/weather/surf1.webp" alt=""><img class="bb" src="icons/weather/surf2.webp" alt=""></span>`
     : `<span class="wxgirl wxsit"><img src="icons/weather/sit.webp" alt=""></span>`;
-  return `<div class="wxsea" style="--sp:${sp}s;--wv:${wv}s" aria-hidden="true">${girl}<span class="wxwaves"></span></div>`;
+  return `<div class="wxsea ws-${phase}" style="--sp:${sp}s;--wv:${wv}s" aria-hidden="true">${girl}<span class="wxwaves"></span></div>`;
 }
 export async function mountWeather(host) {
   if (!host) return;
@@ -148,7 +159,7 @@ export async function mountWeather(host) {
       return;
     }
     const cur = data.w.current, day = data.w.daily || {};
-    const lk = look(cur);
+    const lk = look(cur, day);
     const tp = tips(cur.apparent_temperature, day.precipitation_probability_max?.[0], cur.weather_code, cur.wind_gusts_10m);
     host.innerHTML = `<button type="button" class="card wxcard sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}" id="wxOpen" aria-haspopup="dialog">${skyHtml(lk.sky)}
       <span class="wxemo" aria-hidden="true">${wimg(lk.icon, 88)}</span>
@@ -161,11 +172,11 @@ export async function mountWeather(host) {
   function renderModal() {
     if (!data) return;
     const cur = data.w.current, day = data.w.daily || {}, sea = data.sea;
-    const lk = look(cur);
+    const lk = look(cur, day);
     const opts = Object.keys(CITIES).map(n => `<option value="${esc(n)}"${loc.type === 'city' && loc.name === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
     const seaHtml = sea ? `
       <div class="wxsec">הים</div>
-      ${seaScene(sea)}
+      ${seaScene(sea, lk.phase)}
       ${sea.wave_height != null ? row('מצב הים', `<b>${seaState(sea.wave_height)}</b>`) : ''}
       ${row('טמפרטורת המים', val(n1(sea.sea_surface_temperature) + ' °C'))}
       ${row('גובה הגלים', val(n1(sea.wave_height) + ' m'))}
