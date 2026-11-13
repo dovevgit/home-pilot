@@ -1,6 +1,7 @@
 // כרטיס מזג אוויר בדף הבית: מזג אוויר, רוח, ים וגלים מ-Open-Meteo (חינמי, בלי מפתח).
 // המיקום שנבחר נשמר רק במכשיר (localStorage), לא במסד הנתונים.
 import { esc, icon } from './common.js';
+import { findCountry } from './countries.js';
 
 const CITIES = {
   'חיפה':     { lat: 32.82, lon: 34.98, mlat: 32.83, mlon: 34.90, sea: true },
@@ -20,11 +21,13 @@ const getLoc = () => {
     const v = JSON.parse(localStorage.getItem(KEY));
     if (v?.type === 'city' && CITIES[v.name]) return v;
     if (v?.type === 'gps' && isFinite(v.lat) && isFinite(v.lon)) return v;
+    if (v?.type === 'place' && isFinite(v.lat) && isFinite(v.lon) && v.name) return v;
   } catch (_) {}
   return DEFAULT_LOC;
 };
 const saveLoc = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (_) {} };
 const coordsOf = l => l.type === 'city' ? CITIES[l.name] : { lat: l.lat, lon: l.lon, mlat: l.lat, mlon: l.lon, sea: true };
+const placeLabel = l => (l.he && uiLang() === 'he') ? l.he : (l.en && uiLang() === 'en') ? l.en : l.name;
 
 async function fetchJson(url) {
   const c = new AbortController(); const id = setTimeout(() => c.abort(), 10000);
@@ -37,6 +40,14 @@ const uiLang = () => { try { return localStorage.getItem('lang') === 'en' ? 'en'
 async function findPlace(lat, lon) {
   const j = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${uiLang()}`);
   return String(j.city || j.locality || j.principalSubdivision || j.countryName || '').trim().slice(0, 40);
+}
+
+// חיפוש עיר בעולם (Open-Meteo, חינמי ובלי מפתח). נשלח רק הטקסט שהוקלד בשדה החיפוש.
+async function searchPlaces(q) {
+  const ctry = findCountry(q);
+  if (ctry) return { country: uiLang() === 'en' ? ctry.en : ctry.he, list: ctry.cities.map(c => ({ name: uiLang() === 'en' ? c.en : c.he, he: c.he, en: c.en, sub: uiLang() === 'en' ? ctry.en : ctry.he, lat: c.lat, lon: c.lon })) };
+  const j = await fetchJson(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=${uiLang()}&format=json`);
+  return { country: '', list: (j.results || []).map(r => ({ name: String(r.name || '').slice(0, 40), sub: [r.admin1, r.country].filter(Boolean).join(', ').slice(0, 60), lat: +(+r.latitude).toFixed(2), lon: +(+r.longitude).toFixed(2) })).filter(r => r.name && isFinite(r.lat) && isFinite(r.lon)) };
 }
 
 async function loadData(loc, force = false) {
@@ -137,9 +148,9 @@ export async function mountWeather(host) {
   modal.innerHTML = '<div class="modal-card" id="wxcard2" role="dialog" aria-modal="true"></div>';
   document.body.append(modal);
   const mc = modal.querySelector('#wxcard2');
-  const locName = () => loc.type === 'city' ? loc.name : 'המיקום שלי';
+  const locName = () => loc.type === 'city' ? loc.name : loc.type === 'place' ? placeLabel(loc) : 'המיקום שלי';
   const placeNow = () => loc.type === 'gps' && loc.place && loc.placeLang === uiLang() ? loc.place : '';
-  let placeTried = '';
+  let placeTried = '', qText = '', results = null, resCountry = '', resNote = '', searching = false;
   async function resolvePlace() {
     if (loc.type !== 'gps' || placeNow()) return;
     const key = `${loc.lat},${loc.lon},${uiLang()}`; if (placeTried === key) return; placeTried = key;
@@ -163,7 +174,7 @@ export async function mountWeather(host) {
     const tp = tips(cur.apparent_temperature, day.precipitation_probability_max?.[0], cur.weather_code, cur.wind_gusts_10m);
     host.innerHTML = `<button type="button" class="card wxcard sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}" id="wxOpen" aria-haspopup="dialog">${skyHtml(lk.sky)}
       <span class="wxemo" aria-hidden="true">${wimg(lk.icon, 88)}</span>
-      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${lk.desc}</span>${loc.type === 'city' ? `<span class="wxplace">${esc(locName())}</span>` : ''}</span>${loc.type === 'gps' ? `<span class="wxbadge"><span class="wxb1">המיקום שלי</span>${placeNow() ? `<b class="wxb2" dir="auto">${esc(placeNow())}</b>` : ''}</span>` : ''}
+      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${lk.desc}</span>${loc.type !== 'gps' ? `<span class="wxplace" dir="auto">${esc(locName())}</span>` : ''}</span>${loc.type === 'gps' ? `<span class="wxbadge"><span class="wxb1">המיקום שלי</span>${placeNow() ? `<b class="wxb2" dir="auto">${esc(placeNow())}</b>` : ''}</span>` : ''}
       <span class="wxtips">${tp.map(x => `<span>${x}</span>`).join('')}</span>
       <span class="wxmore">למידע נוסף</span></button>`;
     host.querySelector('#wxOpen').onclick = openModal;
@@ -187,10 +198,15 @@ export async function mountWeather(host) {
     mc.innerHTML = `<button type="button" class="modal-x" id="wxX" aria-label="סגירה">${icon('x', 20)}</button>
       <div class="wxscene sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}">${skyHtml(lk.sky)}${lk.birds ? birdsHtml() : ''}<div class="wxscene-in"><span class="wxemo" aria-hidden="true">${wimg(lk.icon, 112)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${lk.desc}</div></div></div></div>
       <div class="wxloc"><label for="wxSel">מיקום</label>
-        <select id="wxSel">${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : '<option value="gps" selected>המיקום שלי</option>') : ''}${opts}</select>
+        <select id="wxSel">${loc.type === 'place' ? `<option value="place" selected>🌍 ${esc(placeLabel(loc))}</option>` : ''}${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : '<option value="gps" selected>המיקום שלי</option>') : ''}${opts}</select>
         <button class="btn secondary" id="wxGps" type="button">📍 המיקום שלי</button>
+        <form class="wxfind" id="wxFindF" autocomplete="off"><input type="search" id="wxQ" placeholder="חפשו עיר או מדינה בעולם" maxlength="40" value="${esc(qText)}" dir="auto"><button class="btn secondary" type="submit">חיפוש</button></form>
+        <div class="wxres" id="wxRes">${resHtml()}</div>
         <p class="error" id="wxMsg" role="alert">${esc(msg)}</p></div>
       <div class="wxsec">מזג אוויר</div>
+      ${cur.time ? row('השעה במקום', val(String(cur.time).slice(11, 16))) : ''}
+      ${day.sunrise?.[0] ? row('זריחה', val(String(day.sunrise[0]).slice(11, 16))) : ''}
+      ${day.sunset?.[0] ? row('שקיעה', val(String(day.sunset[0]).slice(11, 16))) : ''}
       ${row('מרגיש כמו', val(n0(cur.apparent_temperature) + ' °C'))}
       ${row('היום בין', val(`${n0(day.temperature_2m_min?.[0])} - ${n0(day.temperature_2m_max?.[0])} °C`))}
       ${day.precipitation_probability_max?.[0] != null ? row('סיכוי לגשם', val(n0(day.precipitation_probability_max[0]) + '%')) : ''}
@@ -201,8 +217,31 @@ export async function mountWeather(host) {
       ${seaHtml}
       <p class="wxsrc">Open-Meteo</p>`;
     mc.querySelector('#wxX').onclick = closeModal;
-    mc.querySelector('#wxSel').onchange = e => { if (e.target.value === 'gps') return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
+    mc.querySelector('#wxSel').onchange = e => { if (e.target.value === 'gps' || e.target.value === 'place') return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
     mc.querySelector('#wxGps').onclick = useGps;
+    mc.querySelector('#wxFindF').onsubmit = e => { e.preventDefault(); doSearch(mc.querySelector('#wxQ').value); };
+    mc.querySelector('#wxRes').onclick = e => {
+      const b = e.target.closest('[data-i]'); const r = results[+b?.dataset.i]; if (!r) return;
+      msg = ''; qText = ''; results = null; resNote = '';
+      setLoc({ type: 'place', name: r.name, he: r.he, en: r.en, sub: r.sub, lat: r.lat, lon: r.lon });
+    };
+  }
+  function resHtml() {
+    if (searching) return '<p class="wxnote">מחפש...</p>';
+    if (resNote) return `<p class="wxnote">${esc(resNote)}</p>`;
+    if (!results) return '';
+    return (resCountry ? `<p class="wxnote">${esc(resCountry)}: ערים מרכזיות</p>` : '') + results.map((r, i) => `<button type="button" class="wxresb" data-i="${i}"><b dir="auto">${esc(r.name)}</b><span dir="auto">${esc(r.sub)}</span></button>`).join('');
+  }
+  async function doSearch(q) {
+    q = String(q || '').trim().slice(0, 40); qText = q;
+    if (q.length < 2) { results = null; resNote = 'כתבו לפחות שתי אותיות'; renderModal(); return; }
+    searching = true; resNote = ''; renderModal();
+    try {
+      const r = await searchPlaces(q); results = r.list; resCountry = r.country;
+      resNote = r.list.length ? '' : 'לא נמצאו תוצאות';
+    } catch (_) { results = null; resNote = 'החיפוש לא הצליח. נסו שוב.'; }
+    searching = false; renderModal();
+    mc.querySelector('#wxQ')?.focus();
   }
 
   const openModal = () => { msg = ''; renderModal(); modal.classList.remove('hidden'); };

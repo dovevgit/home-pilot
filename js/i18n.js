@@ -1225,6 +1225,7 @@ const D = {
   "ים סוער": "Stormy sea",
   "ים רגוע": "Calm sea",
   "לא הצלחנו לטעון את מזג האוויר": "We could not load the weather",
+  "חפשו עיר או מדינה בעולם": "Search a city or country", "חיפוש": "Search", "מחפש...": "Searching...", "כתבו לפחות שתי אותיות": "Type at least two letters", "לא נמצאו תוצאות": "No results found", "החיפוש לא הצליח. נסו שוב.": "The search failed. Please try again.", "השעה במקום": "Local time", "זריחה": "Sunrise", "שקיעה": "Sunset",
   "לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.": "We could not get your location. You can allow location access or choose a city from the list.",
   "לחצו לנסות שוב": "Tap to try again",
   "למידע נוסף": "More info",
@@ -1259,6 +1260,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(.+): ערים מרכזיות$/, '$1: main cities'],
   [/^היי (.+), מה תרצי לדעת\?$/, 'Hi $1, what would you like to know?'],
   [/^✅ דיווחתי שאת לא בבית: (.+)$/, '✅ I reported that you are not home: $1'],
   [/^היי (.+), שמח שאתם כאן, מה בא לכם להכין היום\?$/, 'Hi $1, glad you are here, what do you feel like making today?'],
