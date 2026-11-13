@@ -108,6 +108,16 @@ const n1 = x => x == null ? '–' : Number(x).toFixed(1);
 const val = s => `<b dir="ltr">${s}</b>`;
 const row = (label, v) => `<div class="wxrow"><span>${label}</span>${v}</div>`;
 
+// חלון ים: רקע, גולשת וגלים נעים. כשהגלים נמוכים היא יושבת על הלוח, וכשהם גבוהים היא עומדת ורוכבת
+function seaScene(sea) {
+  const h = Number(sea.wave_height) || 0, ride = h >= 0.5;
+  const sp = ride ? Math.max(1.2, Math.min(2.4, 2.8 - h)) : 4;
+  const wv = Math.max(7, 16 - h * 6);
+  const girl = ride
+    ? `<span class="wxgirl"><img class="ba" src="icons/weather/surf1.webp" alt=""><img class="bb" src="icons/weather/surf2.webp" alt=""></span>`
+    : `<span class="wxgirl wxsit"><img src="icons/weather/sit.webp" alt=""></span>`;
+  return `<div class="wxsea" style="--sp:${sp}s;--wv:${wv}s" aria-hidden="true">${girl}<span class="wxwaves"></span></div>`;
+}
 export async function mountWeather(host) {
   if (!host) return;
   let loc = getLoc(), data = null, failed = false, msg = '';
@@ -155,6 +165,7 @@ export async function mountWeather(host) {
     const opts = Object.keys(CITIES).map(n => `<option value="${esc(n)}"${loc.type === 'city' && loc.name === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
     const seaHtml = sea ? `
       <div class="wxsec">הים</div>
+      ${seaScene(sea)}
       ${sea.wave_height != null ? row('מצב הים', `<b>${seaState(sea.wave_height)}</b>`) : ''}
       ${row('טמפרטורת המים', val(n1(sea.sea_surface_temperature) + ' °C'))}
       ${row('גובה הגלים', val(n1(sea.wave_height) + ' m'))}
