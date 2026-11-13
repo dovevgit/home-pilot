@@ -200,23 +200,36 @@ function pour(){
 }
 
 /* ---- החתול: חי רק על הדשא. הכלב מגרש אותו כשהוא למטה ---- */
-var ct=null,cEl={},C={st:'away',x:0,dir:-1,fdir:1,tx:0,until:0,dist:0,cur:'',nextChase:0};
+var ct=null,ctwEl=null,cEl={},C={st:'away',x:0,dy:0,dir:-1,fdir:1,tx:0,until:0,dist:0,cur:'',nextChase:0,j0:0,jx0:0,jx1:0,topEnd:0};
 function catInit(){
   if(reduce)return;
   var st2=document.createElement('style');
-  st2.textContent='#ctw{position:absolute;left:0;right:0;top:-50px;bottom:-30px;overflow:hidden;z-index:2;pointer-events:none;direction:ltr;contain:paint}#ct{position:absolute;left:0;bottom:16px;width:0;height:0;z-index:2;pointer-events:none;will-change:transform;display:none}#ct.on{display:block}#ct img{position:absolute;left:0;bottom:0;display:none;pointer-events:none;-webkit-user-drag:none;transform:translateX(-50%)}#ct img.cur{display:block}#ct.flip img{transform:translateX(-50%) scaleX(-1)}@media print{#ct{display:none!important}}';
+  st2.textContent='#ctw{position:absolute;left:0;right:0;top:-260px;bottom:-30px;overflow:hidden;z-index:2;pointer-events:none;direction:ltr;contain:paint}#ct{position:absolute;left:0;bottom:16px;width:0;height:0;z-index:2;pointer-events:none;will-change:transform;display:none}#ct.on{display:block}#ct img{position:absolute;left:0;bottom:0;display:none;pointer-events:none;-webkit-user-drag:none;transform:translateX(-50%)}#ct img.cur{display:block}#ct.flip img{transform:translateX(-50%) scaleX(-1)}@media print{#ct{display:none!important}}';
   document.head.appendChild(st2);
   ct=document.createElement('div'); ct.id='ct';
   var L=[['w',6,80,57],['r',6,80,57],['sit',0,52,61],['scare',0,64,65]],ih='';
   L.forEach(function(a){ if(a[1]){ for(var i=0;i<a[1];i++)ih+='<img alt="" draggable="false" data-k="'+a[0]+i+'" width="'+a[2]+'" height="'+a[3]+'" src="icons/cat/'+a[0]+i+'.webp">'; } else ih+='<img alt="" draggable="false" data-k="'+a[0]+'" width="'+a[2]+'" height="'+a[3]+'" src="icons/cat/'+a[0]+'.webp">'; });
-  ct.innerHTML=ih; var ctw=document.createElement('div'); ctw.id='ctw'; ctw.appendChild(ct); gr.appendChild(ctw);
+  [[1,58,47],[2,56,70],[3,45,77],[4,59,65],[5,64,47]].forEach(function(a){ ih+='<img alt="" draggable="false" data-k="j'+a[0]+'" width="'+a[1]+'" height="'+a[2]+'" src="icons/cat/j'+a[0]+'.webp">'; });
+  [[0,60,54],[1,58,48],[2,71,43],[3,60,55],[4,60,58],[5,61,50]].forEach(function(a){ ih+='<img alt="" draggable="false" data-k="d'+a[0]+'" width="'+a[1]+'" height="'+a[2]+'" src="icons/cat/d'+a[0]+'.webp">'; });
+  ct.innerHTML=ih; var ctw=document.createElement('div'); ctw.id='ctw'; ctwEl=ctw; ctw.appendChild(ct); gr.appendChild(ctw);
   [].forEach.call(ct.children,function(e){cEl[e.getAttribute('data-k')]=e});
   var fr=document.createElement('div'); fr.style.cssText='position:absolute;left:0;right:0;bottom:-20px;height:12px;z-index:3;background:url(icons/grass.webp) repeat-x center bottom/auto 56px'; gr.appendChild(fr);
   C.x=60+Math.random()*Math.max(60,gr.clientWidth-120); C.st='sit'; C.until=performance.now()+2000; C.dir=Math.random()<.5?-1:1; C.nextChase=performance.now()+8000;
   cShow('sit'); ct.classList.add('on');
 }
 function cShow(k){ if(C.cur===k)return; if(cEl[C.cur])cEl[C.cur].classList.remove('cur'); C.cur=k; if(cEl[k])cEl[k].classList.add('cur'); }
-function cPlace(){ ct.style.transform='translateX('+C.x.toFixed(1)+'px)'; ct.classList.toggle('flip',C.dir>0); }
+function cPlace(){ ct.style.transform='translate('+C.x.toFixed(1)+'px,'+C.dy.toFixed(1)+'px)'; ct.classList.toggle('flip',C.dir>0); }
+/* שדה "כתבו הודעה למשפחה": החתול קופץ אליו ומטייל על קצהו העליון. מחזיר את הטווח ואת גובה הקפיצה מהדשא, או null אם אי אפשר */
+function cField(){
+  var q=document.getElementById('qtext'); if(!q||!ctwEl)return null;
+  var r=q.getBoundingClientRect(),gR=gr.getBoundingClientRect(); if(r.width<150||r.height<20)return null;
+  var base=ctwEl.getBoundingClientRect().bottom-16,lift=base-(r.top+3);
+  if(lift<12||lift>230||r.top<40||r.top>innerHeight-10)return null;
+  return {l:r.left-gR.left+36,r:r.right-gR.left-36,lift:lift};
+}
+function cTopWalk(f){ var tx=f.l+Math.random()*Math.max(40,f.r-f.l); if(Math.abs(tx-C.x)<50)tx=C.x<(f.l+f.r)/2?C.x+90:C.x-90; C.tx=Math.min(Math.max(tx,f.l),f.r); C.dir=C.tx>C.x?1:-1; C.st='topwalk'; C.dist=0; }
+function cJumpUp(ts,f){ C.st='jup'; C.j0=ts; C.jx0=C.x; C.jx1=Math.min(Math.max(C.x,f.l),f.r); if(Math.abs(C.jx1-C.x)>8)C.dir=C.jx1>C.x?1:-1; C.topEnd=ts+25000+Math.random()*20000; }
+function cJumpDown(ts){ var GW=gr.clientWidth; C.st='jdown'; C.j0=ts; C.jx0=C.x; C.jx1=Math.min(Math.max(C.x+(Math.random()<.5?-1:1)*(50+Math.random()*60),40),GW-40); C.dir=C.jx1>C.x?1:-1; }
 function cWalk(){ var GW=gr.clientWidth,tx=40+Math.random()*Math.max(40,GW-80); if(Math.abs(tx-C.x)<50)tx=C.x<GW/2?C.x+90:C.x-90; C.tx=Math.min(Math.max(tx,30),GW-30); C.dir=C.tx>C.x?1:-1; C.st='walk'; C.dist=0; }
 function cVisible(){ var r=gr.getBoundingClientRect(); return r.bottom>30&&r.top<innerHeight&&C.x>-10&&C.x<innerWidth+10; }
 function cUpdate(ts,dt){
@@ -230,7 +243,32 @@ function cUpdate(ts,dt){
   }else if(C.st==='sit'){
     if(ts>C.until)cWalk(); cPlace();
   }else if(C.st==='scare'){
-    cPlace(); if(ts>C.until){ C.st='flee'; C.dir=C.fdir; C.dist=0; }
+    cPlace(); if(ts>C.until){ var f0=cField(); if(f0)cJumpUp(ts,f0); else { C.st='flee'; C.dir=C.fdir; C.dist=0; } }
+  }else if(C.st==='jup'||C.st==='jdown'||C.st==='topsit'||C.st==='topwalk'){
+    var f=cField();
+    if(!f){ C.dy=0; C.st='sit'; C.until=ts+2000; C.nextChase=ts+12000; cShow('sit'); cPlace(); return; }
+    if(C.st==='jup'){
+      var u=(ts-C.j0)/950;
+      if(u<.18){ C.dy=0; cShow('j1'); }
+      else if(u<.86){ var v=(u-.18)/.68; C.x=C.jx0+(C.jx1-C.jx0)*v; C.dy=-(f.lift*v+46*4*v*(1-v)); cShow(v<.35?'j2':v<.65?'j3':'j4'); }
+      else if(u<1){ C.x=C.jx1; C.dy=-f.lift; cShow('j5'); }
+      else { C.x=C.jx1; C.dy=-f.lift; C.st='topsit'; C.until=ts+1800; cShow('sit'); }
+    }else if(C.st==='topsit'){
+      C.dy=-f.lift; C.x=Math.min(Math.max(C.x,f.l),f.r);
+      if(ts>C.topEnd)cJumpDown(ts); else if(ts>C.until)cTopWalk(f);
+    }else if(C.st==='topwalk'){
+      C.dy=-f.lift; var tdx=C.tx-C.x,tst=34*dt;
+      if(ts>C.topEnd){ cJumpDown(ts); }
+      else if(Math.abs(tdx)<=tst){ C.x=C.tx; C.st='topsit'; C.until=ts+2500+Math.random()*3500; cShow('sit'); }
+      else { C.x+=Math.sign(tdx)*tst; C.dist+=tst; cShow('w'+(Math.floor(C.dist/4.5)%6)); }
+    }else{
+      var w=(ts-C.j0)/1000;
+      if(w>=1){ C.x=C.jx1; C.dy=0; C.st='sit'; C.until=ts+2500; C.nextChase=ts+12000; cShow('sit'); }
+      else if(w<.15){ C.dy=-f.lift; cShow('d0'); }
+      else if(w<.85){ var vd=(w-.15)/.7; C.x=C.jx0+(C.jx1-C.jx0)*vd; C.dy=-(f.lift*(1-vd)+24*4*vd*(1-vd)); cShow(vd<.2?'d1':vd<.45?'d2':vd<.7?'d3':'d4'); }
+      else { C.x=C.jx1; C.dy=0; cShow('d5'); }
+    }
+    cPlace();
   }else if(C.st==='flee'){
     C.x+=C.fdir*240*dt; C.dist+=240*dt; cShow('r'+(Math.floor(C.dist/15)%6)); cPlace();
     if(C.x<-70||C.x>GW+70){ C.st='away'; C.until=ts+40000+Math.random()*50000; }
@@ -300,7 +338,7 @@ function frame(ts){
       var nn=Math.floor(S.dist/9)%6; if(nn!==S.curStep){ S.curStep=nn; setFrame('walk',nn); }
       var edge=(S.face>0&&S.x>=g.r)||(S.face<0&&S.x<=g.l);
       S.x=clamp(S.x,g.l,g.r); place();
-      if(C.st==='away'||edge||ce>8000){ S.rot=0; S.mode='walk'; S.prev='walk'; S.noChaseUntil=ts+12000; hop(); }
+      if(C.st==='away'||C.st==='topsit'||C.st==='topwalk'||edge||ce>8000){ S.rot=0; S.mode='walk'; S.prev='walk'; S.noChaseUntil=ts+12000; hop(); }
     }
   }else if(m==='slink'){
     S.y=g.y;
