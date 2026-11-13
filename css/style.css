@@ -380,3 +380,4 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxdrift{from{transform:translateX(0)}to{transform:translateX(110vw)}}
 @keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}
 @media (prefers-reduced-motion:reduce){.wxsky i,.wxbird,.wxbob,.wxsunny .wxemo::before,.wxscene .wxemo::before{animation:none}.wxbird{left:var(--x)}.wxsky .c1{left:12%}.wxsky .c2{left:55%}.wxsky .c3{left:78%}}
+#wxmodal .modal-x{z-index:5}
