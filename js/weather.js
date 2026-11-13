@@ -55,10 +55,13 @@ async function loadData(loc, force = false) {
   const ck = `wxCache:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
   if (!force) { try { const v = JSON.parse(sessionStorage.getItem(ck)); if (v && Date.now() - v.t < MAX_AGE) return v.d; } catch (_) {} }
   const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
-  const mUrl = c.sea ? `https://marine-api.open-meteo.com/v1/marine?latitude=${c.mlat}&longitude=${c.mlon}&current=wave_height,wave_direction,wave_period,sea_surface_temperature&timezone=auto` : null;
+  // לערים מהרשימה יש נקודה בים. לכל מקום אחר (חיפוש או "המיקום שלי") נקודת העיר היא על היבשה ולכן אין שם נתוני ים,
+  // אז שואלים בבת אחת כמה נקודות סביבה (קרובות ואז רחוקות יותר) ולוקחים את הקרובה ביותר שיש בה ים
+  const pts = [[c.mlat, c.mlon]];
+  if (c.sea && loc.type !== 'city') for (const r of [0.15, 0.4]) for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) pts.push([+(c.mlat + a * r).toFixed(2), +(c.mlon + b * r).toFixed(2)]);
+  const mUrl = c.sea ? `https://marine-api.open-meteo.com/v1/marine?latitude=${pts.map(p => p[0]).join(',')}&longitude=${pts.map(p => p[1]).join(',')}&current=wave_height,wave_direction,wave_period,sea_surface_temperature&timezone=auto${loc.type !== 'city' ? '&cell_selection=sea' : ''}` : null;
   const [w, m] = await Promise.all([fetchJson(wUrl), mUrl ? fetchJson(mUrl).catch(() => null) : Promise.resolve(null)]);
-  const sc = m?.current;
-  const sea = sc && (sc.wave_height != null || sc.sea_surface_temperature != null) ? sc : null;
+  const sea = (Array.isArray(m) ? m : [m]).map(x => x?.current).find(x => x && (x.wave_height != null || x.sea_surface_temperature != null)) || null;
   const d = { w, sea };
   try { sessionStorage.setItem(ck, JSON.stringify({ t: Date.now(), d })); } catch (_) {}
   return d;
