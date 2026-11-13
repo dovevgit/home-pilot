@@ -363,7 +363,7 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .wxdark .wxtemp,.wxdark .wxdesc,.wxdark .wxtips,.wxdark .wxmore,.wxdark .wxplace{text-shadow:0 1px 4px rgba(0,0,0,.55)}
 .wxglow .wxemo::before{content:"";position:absolute;inset:-28px;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,247,196,.9) 0%,rgba(255,247,196,0) 66%);animation:wxpulse 5s ease-in-out infinite}
 .wxemo{position:relative;z-index:1}
-.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-size:cover;background-position:50% 50%;animation:wxpan 40s ease-in-out infinite alternate}
+.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-size:130% auto;background-position:50% 50%;animation:wxpan 40s ease-in-out infinite alternate}
 .s-sun{background-image:url(../icons/weather/sky-sun.webp)}
 .s-partly{background-image:url(../icons/weather/sky-partly.webp)}
 .s-cloud{background-image:url(../icons/weather/sky-cloud.webp)}
@@ -389,8 +389,8 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxflapB{0%{opacity:0}50%{opacity:1}}
 @keyframes wxfly{from{transform:translateX(-12vw)}to{transform:translateX(105vw)}}
 @keyframes wxbob{from{transform:translateY(-5px)}to{transform:translateY(6px)}}
-@keyframes wxpanLow{from{background-position:35% 92%}to{background-position:65% 92%}}
-@keyframes wxpan{from{background-position:35% 50%}to{background-position:65% 50%}}
+@keyframes wxpanLow{from{background-position:15% 92%}to{background-position:85% 92%}}
+@keyframes wxpan{from{background-position:15% 50%}to{background-position:85% 50%}}
 @keyframes wxflash{0%,90%,100%{opacity:0}92%{opacity:.55}94%{opacity:.05}96%{opacity:.4}98%{opacity:0}}
 @keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
 @keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}

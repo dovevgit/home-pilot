@@ -52,8 +52,8 @@ document.getElementById('qsend').innerHTML = icon('send', 22);
 const { me, profiles } = await initPage({ active: 'home', title: 'הבית שלנו' });
 
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
-// כרטיס מזג אוויר: כרגע רק בבית של הבעלים
-if (me?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80') import('./js/weather.js').then(m => m.mountWeather(document.getElementById('weather'))).catch(() => {});
+// כרטיס מזג אוויר: לכל הבתים
+import('./js/weather.js').then(m => m.mountWeather(document.getElementById('weather'))).catch(() => {});
 
 const today = ilDate(new Date());
 if (me?.role === 'admin') {

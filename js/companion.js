@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 function famReady(cb){var n=0;(function w(){var f=null;try{f=localStorage.getItem('myFam')}catch(_){}if(f||n++>20)cb(f);else setTimeout(w,150)})()} /* מחכים עד שנודע לאיזה בית שייכים (נשמר אחרי טעינת הפרופיל) */
-famReady(function(f){ if(f==='40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80')return; main(); }); /* בבית של הבעלים הדמות היא הכלב (js/dog.js) */
+/* הדמות הישנה הוחלפה בכלב (js/dog.js) בכל הבתים */
 function main(){
 if(document.querySelector('#ch'))return;
 /* הדמות של האתר (dovev-offers), בגרסה לאפליקציה: הולכת על קו מעל התפריט התחתון. */

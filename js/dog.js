@@ -5,7 +5,7 @@
    נובח ומתעצבן כשלוחצים עליו, ועושה קקי בלחיצה ארוכה. */
 var OWNER='40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
 function famReady(cb){var n=0;(function w(){var f=null;try{f=localStorage.getItem('myFam')}catch(_){}if(f||n++>20)cb(f);else setTimeout(w,150)})()} /* מחכים עד שנודע לאיזה בית שייכים (נשמר אחרי טעינת הפרופיל) */
-famReady(function(f){ if(f===OWNER)main(); });
+main(); /* עכשיו לכל הבתים */
 function main(){
 if(document.getElementById('dg'))return;
 var BASE='icons/dog/';

@@ -3,7 +3,7 @@
 /* הציפור של הבית: מדי פעם חוצה את מסך הבית מצד לצד. רק בבית של הבעלים. לא נוגעת בלחיצות ולא מפריעה לחלונות */
 var OWNER='40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
 function famReady(cb){var n=0;(function w(){var f=null;try{f=localStorage.getItem('myFam')}catch(_){}if(f||n++>20)cb(f);else setTimeout(w,150)})()}
-famReady(function(f){ if(f===OWNER&&!matchMedia('(prefers-reduced-motion: reduce)').matches)start(); });
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches)start(); /* עכשיו לכל הבתים */
 function start(){
 var st=document.createElement('style');
 st.textContent='.fbird{position:fixed;left:0;top:0;z-index:6;pointer-events:none;will-change:transform;direction:ltr}'
