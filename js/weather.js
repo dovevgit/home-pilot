@@ -61,11 +61,9 @@ const wcode = c => {
 const wimg = (name, size) => `<img class="wximg" src="icons/weather/${name}.webp" alt="" width="${size}" height="${size}" decoding="async">`;
 // ביום שמשי (שמיים בהירים ובהירים ברובו, בשעות היום) מציגים שמיים יפים וציפורים
 const isSunny = cur => (cur.weather_code === 0 || cur.weather_code === 1) && cur.is_day !== 0;
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } };
 const skyHtml = () => '<span class="wxsky" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i></span>';
-const FLAP = ['M0 7 Q5 -1 10 7 Q15 -1 20 7', 'M0 2 Q5 9 10 2 Q15 9 20 2'];
-const bird = (t, size, dur, delay, x) => `<span class="wxbird" style="--t:${t}%;--s:${size}px;--d:${dur}s;--w:${delay}s;--x:${x}%"><span class="wxbob"><svg viewBox="0 0 20 10" width="${size}" height="${size / 2}" fill="none" stroke="#1D3B5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${FLAP[0]}">${calm() ? '' : `<animate attributeName="d" dur="${(0.55 + size / 80).toFixed(2)}s" repeatCount="indefinite" values="${FLAP[0]};${FLAP[1]};${FLAP[0]}"/>`}</path></svg></span></span>`;
-const birdsHtml = () => '<span class="wxbirds" aria-hidden="true">' + [bird(10, 40, 8, 0.1, 62), bird(36, 30, 10, 0.7, 30), bird(16, 24, 11, 1.3, 78), bird(44, 34, 9, 2.1, 12), bird(24, 22, 12, 3, 48)].join('') + '</span>';
+const bird = (t, size, dur, delay, x) => `<span class="wxbird" style="--t:${t}%;--s:${size}px;--d:${dur}s;--w:${delay}s;--x:${x}%"><span class="wxbob"><img class="ba" src="icons/weather/bird1.webp" alt="" width="${size}" height="${size}" decoding="async"><img class="bb" src="icons/weather/bird2.webp" alt="" width="${size}" height="${size}" decoding="async"></span></span>`;
+const birdsHtml = () => '<span class="wxbirds" aria-hidden="true">' + [bird(3, 60, 9, 0.1, 62), bird(14, 46, 11, 0.8, 30), bird(24, 36, 12, 1.5, 78), bird(6, 52, 10, 2.3, 12), bird(28, 32, 13, 3.2, 48)].join('') + '</span>';
 const isRainy = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
 
 function tips(feels, rainP, code, gust) {
