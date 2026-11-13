@@ -36,7 +36,7 @@ async function loadData(loc, force = false) {
   const c = coordsOf(loc);
   const ck = `wxCache:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
   if (!force) { try { const v = JSON.parse(sessionStorage.getItem(ck)); if (v && Date.now() - v.t < MAX_AGE) return v.d; } catch (_) {} }
-  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
+  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
   const mUrl = c.sea ? `https://marine-api.open-meteo.com/v1/marine?latitude=${c.mlat}&longitude=${c.mlon}&current=wave_height,wave_direction,wave_period,sea_surface_temperature&timezone=auto` : null;
   const [w, m] = await Promise.all([fetchJson(wUrl), mUrl ? fetchJson(mUrl).catch(() => null) : Promise.resolve(null)]);
   const sc = m?.current;
@@ -59,6 +59,13 @@ const wcode = c => {
   return ['partly', 'מזג אוויר משתנה'];
 };
 const wimg = (name, size) => `<img class="wximg" src="icons/weather/${name}.webp" alt="" width="${size}" height="${size}" decoding="async">`;
+// ביום שמשי (שמיים בהירים ובהירים ברובו, בשעות היום) מציגים שמיים יפים וציפורים
+const isSunny = cur => (cur.weather_code === 0 || cur.weather_code === 1) && cur.is_day !== 0;
+const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } };
+const skyHtml = () => '<span class="wxsky" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i></span>';
+const FLAP = ['M0 7 Q5 -1 10 7 Q15 -1 20 7', 'M0 2 Q5 9 10 2 Q15 9 20 2'];
+const bird = (t, size, dur, delay, x) => `<span class="wxbird" style="--t:${t}%;--s:${size}px;--d:${dur}s;--w:${delay}s;--x:${x}%"><span class="wxbob"><svg viewBox="0 0 20 10" width="${size}" height="${size / 2}" fill="none" stroke="#1D3B5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${FLAP[0]}">${calm() ? '' : `<animate attributeName="d" dur="${(0.55 + size / 80).toFixed(2)}s" repeatCount="indefinite" values="${FLAP[0]};${FLAP[1]};${FLAP[0]}"/>`}</path></svg></span></span>`;
+const birdsHtml = () => '<span class="wxbirds" aria-hidden="true">' + [bird(10, 40, 8, 0.1, 62), bird(36, 30, 10, 0.7, 30), bird(16, 24, 11, 1.3, 78), bird(44, 34, 9, 2.1, 12), bird(24, 22, 12, 3, 48)].join('') + '</span>';
 const isRainy = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
 
 function tips(feels, rainP, code, gust) {
@@ -101,7 +108,8 @@ export async function mountWeather(host) {
     const cur = data.w.current, day = data.w.daily || {};
     const [img, desc] = wcode(cur.weather_code);
     const tp = tips(cur.apparent_temperature, day.precipitation_probability_max?.[0], cur.weather_code, cur.wind_gusts_10m);
-    host.innerHTML = `<button type="button" class="card wxcard" id="wxOpen" aria-haspopup="dialog">
+    const sunny = isSunny(cur);
+    host.innerHTML = `<button type="button" class="card wxcard${sunny ? ' wxsunny' : ''}" id="wxOpen" aria-haspopup="dialog">${sunny ? skyHtml() : ''}
       <span class="wxemo" aria-hidden="true">${wimg(img, 88)}</span>
       <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${desc}</span><span class="wxplace">${esc(locName())}</span></span>
       <span class="wxtips">${tp.map(x => `<span>${x}</span>`).join('')}</span>
@@ -113,6 +121,7 @@ export async function mountWeather(host) {
     if (!data) return;
     const cur = data.w.current, day = data.w.daily || {}, sea = data.sea;
     const [img, desc] = wcode(cur.weather_code);
+    const sunny = isSunny(cur);
     const opts = Object.keys(CITIES).map(n => `<option value="${esc(n)}"${loc.type === 'city' && loc.name === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
     const seaHtml = sea ? `
       <div class="wxsec">הים</div>
@@ -124,7 +133,8 @@ export async function mountWeather(host) {
       <p class="wxnote">נתוני הים הם הערכה של מודל ולא מדידה בחוף. לפני כניסה למים כדאי להסתכל גם על הים עצמו.</p>`
       : '<p class="wxnote">אין נתוני ים למקום הזה.</p>';
     mc.innerHTML = `<button type="button" class="modal-x" id="wxX" aria-label="סגירה">${icon('x', 20)}</button>
-      <div class="wxhead"><span class="wxemo" aria-hidden="true">${wimg(img, 92)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div>
+      ${sunny ? `<div class="wxscene">${skyHtml()}${birdsHtml()}<div class="wxscene-in"><span class="wxemo" aria-hidden="true">${wimg(img, 112)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div></div>`
+      : `<div class="wxhead"><span class="wxemo" aria-hidden="true">${wimg(img, 92)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div>`}
       <div class="wxloc"><label for="wxSel">מיקום</label>
         <select id="wxSel">${loc.type === 'gps' ? '<option value="gps" selected>המיקום שלי</option>' : ''}${opts}</select>
         <button class="btn secondary" id="wxGps" type="button">📍 המיקום שלי</button>
