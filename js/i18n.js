@@ -1227,6 +1227,7 @@ const D = {
   "לא הצלחנו לטעון את מזג האוויר": "We could not load the weather",
   "מאתר עיר...": "Finding city...", "מאתר מיקום...": "Finding location...",
   "חפשו עיר או מדינה בעולם": "Search a city or country", "חיפוש": "Search", "מחפש...": "Searching...", "כתבו לפחות שתי אותיות": "Type at least two letters", "לא נמצאו תוצאות": "No results found", "החיפוש לא הצליח. נסו שוב.": "The search failed. Please try again.", "השעה במקום": "Local time", "זריחה": "Sunrise", "שקיעה": "Sunset",
+  "אין אישור מיקום. בהגדרות הטלפון: הרשאות, מיקום, לאשר לאפליקציה או לדפדפן. אחר כך לנסות שוב, או לבחור עיר מהרשימה.": "Location is not allowed. In your phone settings: Permissions, Location, allow it for the app or browser. Then try again, or choose a city from the list.", "האיתור לקח יותר מדי זמן. אפשר לנסות שוב או לבחור עיר מהרשימה.": "Finding your location took too long. You can try again or choose a city from the list.", "הטלפון לא הצליח לאתר מיקום. אפשר לנסות שוב במקום פתוח או לבחור עיר מהרשימה.": "The phone could not find your location. You can try again in an open area or choose a city from the list.",
   "לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.": "We could not get your location. You can allow location access or choose a city from the list.",
   "לחצו לנסות שוב": "Tap to try again",
   "למידע נוסף": "More info",

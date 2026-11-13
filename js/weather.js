@@ -271,10 +271,19 @@ export async function mountWeather(host) {
     if (gpsBusy) return;
     if (!navigator.geolocation) { msg = 'המכשיר לא מאפשר לקבל מיקום. אפשר לבחור עיר מהרשימה.'; renderModal(); return; }
     msg = ''; gpsBusy = true; renderModal();
-    navigator.geolocation.getCurrentPosition(
-      p => { gpsBusy = false; msg = ''; setLoc({ type: 'gps', lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2) }); },
-      () => { gpsBusy = false; msg = 'לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.'; renderModal(); },
-      { timeout: 10000, maximumAge: 600000 });
+    const ok = p => { gpsBusy = false; msg = ''; setLoc({ type: 'gps', lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2) }); };
+    const fail = e => {
+      gpsBusy = false;
+      msg = e?.code === 1 ? 'אין אישור מיקום. בהגדרות הטלפון: הרשאות, מיקום, לאשר לאפליקציה או לדפדפן. אחר כך לנסות שוב, או לבחור עיר מהרשימה.'
+        : e?.code === 3 ? 'האיתור לקח יותר מדי זמן. אפשר לנסות שוב או לבחור עיר מהרשימה.'
+        : 'הטלפון לא הצליח לאתר מיקום. אפשר לנסות שוב במקום פתוח או לבחור עיר מהרשימה.';
+      renderModal();
+    };
+    // ניסיון ראשון מהיר ובדיוק נמוך (מספיק לעיר). אם נכשל, ניסיון שני עם יותר זמן ודיוק גבוה. בלי אישור מיקום לא מנסים שוב
+    navigator.geolocation.getCurrentPosition(ok, e => {
+      if (e?.code === 1) return fail(e);
+      navigator.geolocation.getCurrentPosition(ok, fail, { timeout: 20000, maximumAge: 3600000, enableHighAccuracy: true });
+    }, { timeout: 12000, maximumAge: 3600000, enableHighAccuracy: false });
   }
 
   await refresh();
