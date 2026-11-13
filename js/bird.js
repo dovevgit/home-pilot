@@ -34,6 +34,6 @@ function next(ms){
     next(30000+Math.random()*60000);
   },ms);
 }
-next(12000+Math.random()*13000);
+next(window.BIRD_FIRST!=null?window.BIRD_FIRST:12000+Math.random()*13000); /* בהיסטוריה: מיד בכניסה */
 }
 })();
