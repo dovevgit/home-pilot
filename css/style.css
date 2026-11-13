@@ -356,21 +356,26 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .wxmain>*{align-self:flex-start}
 
 /* יום שמשי: שמיים, עננים וציפורים */
-.wxcard{position:relative;overflow:hidden}
-.wxcard>*:not(.wxsky){position:relative;z-index:1}
-.wxcard.wxsunny{background:linear-gradient(180deg,#4DB0FF 0%,#86CFFF 55%,#D2EEFF 100%);color:#0B2A4A}
-.wxsunny .wxplace{color:#123B63}
-.wxsunny .wxemo::before,.wxscene .wxemo::before{content:"";position:absolute;inset:-28px;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,247,196,.95) 0%,rgba(255,247,196,0) 66%);animation:wxpulse 5s ease-in-out infinite}
-.wxsunny .wxemo,.wxscene .wxemo{position:relative;z-index:1}
-.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.wxsky i{position:absolute;display:block;width:76px;height:22px;border-radius:22px;background:#fff;opacity:.88;animation:wxdrift 80s linear infinite}
-.wxsky i::before,.wxsky i::after{content:"";position:absolute;background:#fff;border-radius:50%}
-.wxsky i::before{width:34px;height:34px;left:12px;top:-17px}
-.wxsky i::after{width:26px;height:26px;left:38px;top:-11px}
-.wxsky .c1{top:16%;left:-110px;animation-duration:90s;animation-delay:-35s}
-.wxsky .c2{top:58%;left:-110px;animation-duration:120s;animation-delay:-80s;scale:.8}
-.wxsky .c3{top:34%;left:-110px;animation-duration:105s;animation-delay:-8s;scale:.6;opacity:.7}
-.wxscene{position:relative;overflow:hidden;border-radius:18px;height:172px;margin-bottom:8px;background:linear-gradient(180deg,#3FA9FF 0%,#7FCBFF 58%,#CFEBFF 100%);color:#0B2A4A}
+.wxcard{position:relative;overflow:hidden;color:#0B2A4A}
+.wxcard>*:not(.wxsky):not(.wxbirds){position:relative;z-index:1}
+.wxcard .wxplace{color:#123B63}
+.wxdark,.wxdark .wxplace,.wxdark .wxmore{color:#fff}
+.wxdark .wxtemp,.wxdark .wxdesc,.wxdark .wxtips,.wxdark .wxmore,.wxdark .wxplace{text-shadow:0 1px 4px rgba(0,0,0,.55)}
+.wxglow .wxemo::before{content:"";position:absolute;inset:-28px;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,247,196,.9) 0%,rgba(255,247,196,0) 66%);animation:wxpulse 5s ease-in-out infinite}
+.wxemo{position:relative;z-index:1}
+.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-size:cover;background-position:50% 50%;animation:wxpan 40s ease-in-out infinite alternate}
+.s-sun{background-image:url(../icons/weather/sky-sun.webp)}
+.s-partly{background-image:url(../icons/weather/sky-partly.webp)}
+.s-cloud{background-image:url(../icons/weather/sky-cloud.webp)}
+.s-rain{background-image:url(../icons/weather/sky-rain.webp)}
+.s-storm{background-image:url(../icons/weather/sky-storm.webp)}
+.s-fog{background-image:url(../icons/weather/sky-fog.webp)}
+.s-snow{background-image:url(../icons/weather/sky-snow.webp)}
+.s-night{background-image:url(../icons/weather/sky-night.webp)}
+.s-storm::after{content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:wxflash 7s linear infinite}
+.s-night::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.18),transparent 40%),radial-gradient(circle at 75% 60%,rgba(255,255,255,.14),transparent 35%);animation:wxtwinkle 4s ease-in-out infinite alternate}
+.wxscene{position:relative;overflow:hidden;border-radius:18px;height:172px;margin-bottom:8px;color:#0B2A4A}
+.wxscene.wxdark{color:#fff}
 .wxscene-in{position:relative;z-index:2;display:flex;align-items:center;gap:14px;height:100%;padding:0 18px}
 .wxbirds{position:absolute;inset:0;z-index:1;pointer-events:none}
 .wxbird{position:absolute;top:var(--t);left:0;animation:wxfly var(--d) linear var(--w) infinite both}
@@ -382,9 +387,11 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxflapB{0%{opacity:0}50%{opacity:1}}
 @keyframes wxfly{from{transform:translateX(-12vw)}to{transform:translateX(105vw)}}
 @keyframes wxbob{from{transform:translateY(-5px)}to{transform:translateY(6px)}}
-@keyframes wxdrift{from{transform:translateX(0)}to{transform:translateX(110vw)}}
+@keyframes wxpan{from{background-position:35% 50%}to{background-position:65% 50%}}
+@keyframes wxflash{0%,90%,100%{opacity:0}92%{opacity:.55}94%{opacity:.05}96%{opacity:.4}98%{opacity:0}}
+@keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
 @keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}
-@media (prefers-reduced-motion:reduce){.wxsky i,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxsunny .wxemo::before,.wxscene .wxemo::before{animation:none}.wxbird{left:var(--x)}.wxsky .c1{left:12%}.wxsky .c2{left:55%}.wxsky .c3{left:78%}}
+@media (prefers-reduced-motion:reduce){.wxsky,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
 #wxmodal .modal-x{z-index:5}
 /* שם המקום שזוהה (המיקום שלי), בצד הרחוק מהאייקון */
 .wxcard>.wxbadge{position:absolute;top:10px;inset-inline-end:12px;z-index:2;max-width:42%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 10px;border-radius:14px;background:rgba(255,255,255,.74);color:#0B2A4A;font-size:12px;font-weight:700;line-height:1.2;text-align:center}
