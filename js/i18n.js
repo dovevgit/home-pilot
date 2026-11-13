@@ -1225,6 +1225,7 @@ const D = {
   "ים סוער": "Stormy sea",
   "ים רגוע": "Calm sea",
   "לא הצלחנו לטעון את מזג האוויר": "We could not load the weather",
+  "מאתר עיר...": "Finding city...", "מאתר מיקום...": "Finding location...",
   "חפשו עיר או מדינה בעולם": "Search a city or country", "חיפוש": "Search", "מחפש...": "Searching...", "כתבו לפחות שתי אותיות": "Type at least two letters", "לא נמצאו תוצאות": "No results found", "החיפוש לא הצליח. נסו שוב.": "The search failed. Please try again.", "השעה במקום": "Local time", "זריחה": "Sunrise", "שקיעה": "Sunset",
   "לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.": "We could not get your location. You can allow location access or choose a city from the list.",
   "לחצו לנסות שוב": "Tap to try again",

@@ -151,16 +151,25 @@ export async function mountWeather(host) {
   const locName = () => loc.type === 'city' ? loc.name : loc.type === 'place' ? placeLabel(loc) : 'המיקום שלי';
   const placeNow = () => loc.type === 'gps' && loc.place && loc.placeLang === uiLang() ? loc.place : '';
   let placeTried = '', qText = '', results = null, resCountry = '', resNote = '', searching = false;
+  let placeBusy = false, placeRetry = 0, gpsBusy = false;
   async function resolvePlace() {
     if (loc.type !== 'gps' || placeNow()) return;
     const key = `${loc.lat},${loc.lon},${uiLang()}`; if (placeTried === key) return; placeTried = key;
-    const at = loc;
-    try {
-      const name = await findPlace(at.lat, at.lon);
-      if (!name || loc !== at) return;
-      loc = { ...at, place: name, placeLang: uiLang() }; saveLoc(loc);
+    const at = loc; placeBusy = true; renderCard();
+    let name = '';
+    try { name = await findPlace(at.lat, at.lon); } catch (_) {}
+    placeBusy = false;
+    if (loc !== at) return;
+    if (!name) {
+      // לא הצלחנו: מנקים כדי שרענון או ניסיון נוסף יבדקו שוב, ומנסים שוב עוד רגע (עד 3 פעמים)
+      placeTried = '';
       renderCard(); if (!modal.classList.contains('hidden')) renderModal();
-    } catch (_) {}
+      if (placeRetry++ < 3) setTimeout(() => { if (loc === at) resolvePlace(); }, 2500 * placeRetry);
+      return;
+    }
+    placeRetry = 0;
+    loc = { ...at, place: name, placeLang: uiLang() }; saveLoc(loc);
+    renderCard(); if (!modal.classList.contains('hidden')) renderModal();
   }
 
   function renderCard() {
@@ -174,7 +183,7 @@ export async function mountWeather(host) {
     const tp = tips(cur.apparent_temperature, day.precipitation_probability_max?.[0], cur.weather_code, cur.wind_gusts_10m);
     host.innerHTML = `<button type="button" class="card wxcard sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}" id="wxOpen" aria-haspopup="dialog">${skyHtml(lk.sky)}
       <span class="wxemo" aria-hidden="true">${wimg(lk.icon, 88)}</span>
-      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${lk.desc}</span>${loc.type !== 'gps' ? `<span class="wxplace" dir="auto">${esc(locName())}</span>` : ''}</span>${loc.type === 'gps' ? `<span class="wxbadge"><span class="wxb1">המיקום שלי</span>${placeNow() ? `<b class="wxb2" dir="auto">${esc(placeNow())}</b>` : ''}</span>` : ''}
+      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${lk.desc}</span>${loc.type !== 'gps' ? `<span class="wxplace" dir="auto">${esc(locName())}</span>` : ''}</span>${loc.type === 'gps' ? `<span class="wxbadge"><span class="wxb1">המיקום שלי</span>${placeNow() ? `<b class="wxb2" dir="auto">${esc(placeNow())}</b>` : placeBusy ? '<b class="wxb2">מאתר עיר...</b>' : ''}</span>` : ''}
       <span class="wxtips">${tp.map(x => `<span>${x}</span>`).join('')}</span>
       <span class="wxmore">למידע נוסף</span></button>`;
     host.querySelector('#wxOpen').onclick = openModal;
@@ -199,7 +208,7 @@ export async function mountWeather(host) {
       <div class="wxscene sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}">${skyHtml(lk.sky)}${lk.birds ? birdsHtml() : ''}<div class="wxscene-in"><span class="wxemo" aria-hidden="true">${wimg(lk.icon, 112)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${lk.desc}</div></div></div></div>
       <div class="wxloc"><label for="wxSel">מיקום</label>
         <select id="wxSel">${loc.type === 'place' ? `<option value="place" selected>🌍 ${esc(placeLabel(loc))}</option>` : ''}${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : '<option value="gps" selected>המיקום שלי</option>') : ''}${opts}</select>
-        <button class="btn secondary" id="wxGps" type="button">📍 המיקום שלי</button>
+        <button class="btn secondary" id="wxGps" type="button"${gpsBusy ? ' disabled' : ''}>${gpsBusy ? 'מאתר מיקום...' : '📍 המיקום שלי'}</button>
         <form class="wxfind" id="wxFindF" autocomplete="off"><input type="search" id="wxQ" placeholder="חפשו עיר או מדינה בעולם" maxlength="40" value="${esc(qText)}" dir="auto"><button class="btn secondary" type="submit">חיפוש</button></form>
         <div class="wxres" id="wxRes">${resHtml()}</div>
         <p class="error" id="wxMsg" role="alert">${esc(msg)}</p></div>
@@ -255,14 +264,15 @@ export async function mountWeather(host) {
     renderCard(); if (!modal.classList.contains('hidden')) renderModal();
     resolvePlace();
   }
-  function setLoc(l) { loc = l; saveLoc(l); data = null; renderCard(); refresh(); }
+  function setLoc(l) { loc = l; placeRetry = 0; placeBusy = false; saveLoc(l); data = null; renderCard(); refresh(); }
 
   function useGps() {
+    if (gpsBusy) return;
     if (!navigator.geolocation) { msg = 'המכשיר לא מאפשר לקבל מיקום. אפשר לבחור עיר מהרשימה.'; renderModal(); return; }
-    mc.querySelector('#wxMsg').textContent = '';
+    msg = ''; gpsBusy = true; renderModal();
     navigator.geolocation.getCurrentPosition(
-      p => { msg = ''; setLoc({ type: 'gps', lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2) }); },
-      () => { msg = 'לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.'; renderModal(); },
+      p => { gpsBusy = false; msg = ''; setLoc({ type: 'gps', lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2) }); },
+      () => { gpsBusy = false; msg = 'לא הצלחנו לקבל מיקום. אפשר לאשר גישה למיקום או לבחור עיר מהרשימה.'; renderModal(); },
       { timeout: 10000, maximumAge: 600000 });
   }
 

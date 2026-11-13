@@ -396,6 +396,13 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}
 @media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
 #wxmodal .modal-x{z-index:5}
+/* הדגשה שהכפתור נלחץ */
+.wxcard,.wxloc .btn,.wxfind .btn,.wxresb,#wxmodal .modal-x{transition:transform .12s,filter .12s,box-shadow .12s}
+.wxcard:active{transform:scale(.97);filter:brightness(.9)}
+.wxloc .btn:active,.wxfind .btn:active{transform:scale(.94);filter:brightness(.82);box-shadow:inset 0 3px 8px rgba(0,0,0,.28)}
+.wxresb:active{transform:scale(.97);background:#dbeafe;border-color:#3b82f6}
+#wxmodal .modal-x:active{transform:scale(.88);filter:brightness(.8)}
+.wxloc .btn:disabled{opacity:.65;filter:none}
 .wxfind{display:flex;align-items:stretch;gap:8px;margin-top:8px}
 .wxfind input{width:auto;flex:1 1 0;min-width:0;height:46px;margin:0;box-sizing:border-box;font:inherit;border:2px solid var(--field);border-radius:14px;padding:0 12px;background:#fff}
 .wxfind .btn{flex:none;width:auto;min-width:84px;height:46px;margin:0;padding-block:0;box-sizing:border-box}
