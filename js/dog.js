@@ -200,7 +200,7 @@ function pour(){
 }
 
 /* ---- החתול: חי רק על הדשא. הכלב מגרש אותו כשהוא למטה ---- */
-var ct=null,ctwEl=null,cEl={},C={st:'away',x:0,dy:0,dir:-1,fdir:1,tx:0,until:0,dist:0,cur:'',nextChase:0,a0:0,j0:0,jx0:0,jx1:0,topEnd:0};
+var ct=null,ctwEl=null,cEl={},C={st:'away',x:0,dy:0,dir:-1,fdir:1,tx:0,until:0,dist:0,cur:'',nextChase:0,a0:0,leg:0,j0:0,jx0:0,jx1:0,topEnd:0};
 function catInit(){
   if(reduce)return;
   var st2=document.createElement('style');
@@ -252,7 +252,7 @@ function cUpdate(ts,dt){
     if(ts>C.until)cWalk(); cPlace();
   }else if(C.st==='scare'){
     cPlace(); if(ts>C.until){ var f0=cField(); if(f0)cJumpUp(ts,f0); else { C.st='flee'; C.dir=C.fdir; C.dist=0; } }
-  }else if(C.st==='jup'||C.st==='jdown'||C.st==='topsit'||C.st==='topwalk'||C.st==='topangry'){
+  }else if(C.st==='jup'||C.st==='jdown'||C.st==='topsit'||C.st==='topwalk'||C.st==='topangry'||C.st==='toprun'){
     var f=cField();
     if(!f){ C.dy=0; C.st='sit'; C.until=ts+2000; C.nextChase=ts+12000; cShow('sit'); cPlace(); return; }
     if(C.st==='jup'){
@@ -266,7 +266,12 @@ function cUpdate(ts,dt){
       if(ae<160)cShow('e0'); else if(ae<320)cShow('e1'); else if(ae<620)cShow('e2');
       else if(ae<1700){ var ph=(ae-620)%540; cShow(ph<180?'e3':ph<360?'e4':'e5'); }
       else if(ae<2600)cShow(Math.floor(ae/140)%2?'e2':'e5');
-      else { C.st='topsit'; C.until=ts+1500; cShow('sit'); }
+      else { C.st='toprun'; C.leg=0; C.dist=0; C.dir=1; cShow('r0'); }
+    }else if(C.st==='toprun'){
+      /* אחרי שהתעצבן: רץ ימינה עד קצה השדה, ואז שמאלה עד הקצה השני, ורק אז נרגע */
+      C.dy=-f.lift; var rt=C.leg===0?f.r-8:f.l+8,rdx=rt-C.x,rst=190*dt; C.dir=rdx>0?1:-1;
+      if(Math.abs(rdx)<=rst){ C.x=rt; C.leg++; C.dist=0; if(C.leg>=2){ C.st='topsit'; C.until=ts+1800; cShow('sit'); } }
+      else { C.x+=Math.sign(rdx)*rst; C.dist+=rst; cShow('r'+(Math.floor(C.dist/14)%6)); }
     }else if(C.st==='topsit'){
       C.dy=-f.lift; C.x=Math.min(Math.max(C.x,f.l),f.r);
       if(ts>C.topEnd)cJumpDown(ts); else if(ts>C.until)cTopWalk(f);
