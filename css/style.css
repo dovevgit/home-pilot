@@ -361,9 +361,12 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .wxcard .wxplace{color:#123B63}
 .wxdark,.wxdark .wxplace,.wxdark .wxmore{color:#fff}
 .wxdark .wxtemp,.wxdark .wxdesc,.wxdark .wxtips,.wxdark .wxmore,.wxdark .wxplace{text-shadow:0 1px 4px rgba(0,0,0,.55)}
-.wxglow .wxemo::before{content:"";position:absolute;inset:-28px;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,247,196,.9) 0%,rgba(255,247,196,0) 66%);animation:wxpulse 5s ease-in-out infinite}
+.wxglow .wxemo::before{content:"";position:absolute;inset:-28px;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,247,196,.9) 0%,rgba(255,247,196,0) 66%);animation:wxpulse 2.6s ease-in-out infinite}
+.wxglow .wxemo::after{content:"";position:absolute;inset:-38px;z-index:-1;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,240,170,.55) 0 8deg,rgba(255,240,170,0) 8deg 24deg);-webkit-mask:radial-gradient(circle,transparent 24%,#000 38%,transparent 70%);mask:radial-gradient(circle,transparent 24%,#000 38%,transparent 70%);animation:wxrays 22s linear infinite,wxtwinkle 1.7s ease-in-out infinite alternate}
+@keyframes wxrays{to{transform:rotate(360deg)}}
 .wxemo{position:relative;z-index:1}
-.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-size:130% auto;background-position:50% 50%;animation:wxpan 40s ease-in-out infinite alternate}
+.wxsky{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-size:130% auto;background-position:50% 50%;animation:wxpan 16s ease-in-out infinite alternate}
+.wxsky::before{content:"";position:absolute;inset:0;background-image:inherit;background-repeat:no-repeat;background-size:175% auto;background-position:100% 30%;opacity:.5;animation:wxpan2 11s ease-in-out infinite alternate}
 .s-sun{background-image:url(../icons/weather/sky-sun.webp)}
 .s-partly{background-image:url(../icons/weather/sky-partly.webp)}
 .s-cloud{background-image:url(../icons/weather/sky-cloud.webp)}
@@ -390,11 +393,12 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxfly{from{transform:translateX(-12vw)}to{transform:translateX(105vw)}}
 @keyframes wxbob{from{transform:translateY(-5px)}to{transform:translateY(6px)}}
 @keyframes wxpanLow{from{background-position:15% 92%}to{background-position:85% 92%}}
+@keyframes wxpan2{from{background-position:100% 30%}to{background-position:0% 55%}}
 @keyframes wxpan{from{background-position:15% 50%}to{background-position:85% 50%}}
 @keyframes wxflash{0%,90%,100%{opacity:0}92%{opacity:.55}94%{opacity:.05}96%{opacity:.4}98%{opacity:0}}
 @keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
-@keyframes wxpulse{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1.08);opacity:1}}
-@media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
+@keyframes wxpulse{0%,100%{transform:scale(.82);opacity:.6}35%{transform:scale(1.2);opacity:1}60%{transform:scale(1.02);opacity:.78}}
+@media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.wxsky::before,.wxglow .wxemo::after,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
 #wxmodal .modal-x{z-index:5}
 /* הדגשה שהכפתור נלחץ */
 .wxcard,.wxloc .btn,.wxfind .btn,.wxresb,#wxmodal .modal-x{transition:transform .12s,filter .12s,box-shadow .12s}
