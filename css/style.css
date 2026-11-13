@@ -335,3 +335,21 @@ html[dir=ltr] .calnav .sqbtn svg{transform:scaleX(-1)}
 header.bar.hasBub h1{inset-inline-start:116px}
 header.bar.hasBubEn h1{inset-inline-end:116px}
 #homeBubble:active{transform:scale(.94)}
+/* כרטיס מזג אוויר בדף הבית */
+.wxcard{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;width:100%;margin:0 0 8px;padding:12px 14px;border:0;text-align:start;font:inherit;color:#0B2A4A;cursor:pointer;background:linear-gradient(135deg,#DDF1FF,#BFE4FF)}
+.wxcard .wxemo,.wxhead .wxemo{font-size:44px;line-height:1}
+.wxmain{display:flex;flex-direction:column;flex:1;min-width:110px}
+.wxtemp{font-size:34px;font-weight:800;line-height:1}
+.wxdesc{font-size:17px;font-weight:700}
+.wxplace{font-size:14px;color:var(--text2)}
+.wxtips{display:flex;flex-direction:column;flex-basis:100%;font-size:16px;font-weight:700}
+.wxmore{flex-basis:100%;font-size:14px;font-weight:700;color:var(--blue-dark)}
+.wxhead{display:flex;align-items:center;gap:12px;margin-bottom:8px;padding-inline-end:44px}
+.wxloc{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.wxloc select{height:46px;font:inherit;border:2px solid var(--field);border-radius:14px;padding:0 10px;background:#fff}
+.wxsec{margin:12px 0 4px;font-weight:800;font-size:19px}
+.wxrow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.wxnote{font-size:14px;color:var(--text2);margin:8px 0 0}
+.wxsrc{font-size:12px;color:var(--text2);text-align:center;margin:10px 0 0;direction:ltr}
+.wxloc .error:empty{display:none}
+.wxmain>*{align-self:flex-start}
