@@ -32,6 +32,13 @@ async function fetchJson(url) {
   finally { clearTimeout(id); }
 }
 
+// שם המקום לפי קואורדינטות (BigDataCloud, חינמי ובלי מפתח). נקרא רק אחרי לחיצה על "המיקום שלי".
+const uiLang = () => { try { return localStorage.getItem('lang') === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
+async function findPlace(lat, lon) {
+  const j = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${uiLang()}`);
+  return String(j.city || j.locality || j.principalSubdivision || j.countryName || '').trim().slice(0, 40);
+}
+
 async function loadData(loc, force = false) {
   const c = coordsOf(loc);
   const ck = `wxCache:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
@@ -96,6 +103,19 @@ export async function mountWeather(host) {
   document.body.append(modal);
   const mc = modal.querySelector('#wxcard2');
   const locName = () => loc.type === 'city' ? loc.name : 'המיקום שלי';
+  const placeNow = () => loc.type === 'gps' && loc.place && loc.placeLang === uiLang() ? loc.place : '';
+  let placeTried = '';
+  async function resolvePlace() {
+    if (loc.type !== 'gps' || placeNow()) return;
+    const key = `${loc.lat},${loc.lon},${uiLang()}`; if (placeTried === key) return; placeTried = key;
+    const at = loc;
+    try {
+      const name = await findPlace(at.lat, at.lon);
+      if (!name || loc !== at) return;
+      loc = { ...at, place: name, placeLang: uiLang() }; saveLoc(loc);
+      renderCard(); if (!modal.classList.contains('hidden')) renderModal();
+    } catch (_) {}
+  }
 
   function renderCard() {
     if (failed || !data) {
@@ -109,7 +129,7 @@ export async function mountWeather(host) {
     const sunny = isSunny(cur);
     host.innerHTML = `<button type="button" class="card wxcard${sunny ? ' wxsunny' : ''}" id="wxOpen" aria-haspopup="dialog">${sunny ? skyHtml() : ''}
       <span class="wxemo" aria-hidden="true">${wimg(img, 88)}</span>
-      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${desc}</span><span class="wxplace">${esc(locName())}</span></span>
+      <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${desc}</span>${loc.type === 'city' ? `<span class="wxplace">${esc(locName())}</span>` : ''}</span>${loc.type === 'gps' ? `<span class="wxbadge"><span class="wxb1">המיקום שלי</span>${placeNow() ? `<b class="wxb2" dir="auto">${esc(placeNow())}</b>` : ''}</span>` : ''}
       <span class="wxtips">${tp.map(x => `<span>${x}</span>`).join('')}</span>
       <span class="wxmore">למידע נוסף</span></button>`;
     host.querySelector('#wxOpen').onclick = openModal;
@@ -134,7 +154,7 @@ export async function mountWeather(host) {
       ${sunny ? `<div class="wxscene">${skyHtml()}${birdsHtml()}<div class="wxscene-in"><span class="wxemo" aria-hidden="true">${wimg(img, 112)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div></div>`
       : `<div class="wxhead"><span class="wxemo" aria-hidden="true">${wimg(img, 92)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div>`}
       <div class="wxloc"><label for="wxSel">מיקום</label>
-        <select id="wxSel">${loc.type === 'gps' ? '<option value="gps" selected>המיקום שלי</option>' : ''}${opts}</select>
+        <select id="wxSel">${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : '<option value="gps" selected>המיקום שלי</option>') : ''}${opts}</select>
         <button class="btn secondary" id="wxGps" type="button">📍 המיקום שלי</button>
         <p class="error" id="wxMsg" role="alert">${esc(msg)}</p></div>
       <div class="wxsec">מזג אוויר</div>
@@ -161,6 +181,7 @@ export async function mountWeather(host) {
     failed = false; if (!data) renderCard();
     try { data = await loadData(loc, force); } catch (_) { failed = true; if (!data) data = null; }
     renderCard(); if (!modal.classList.contains('hidden')) renderModal();
+    resolvePlace();
   }
   function setLoc(l) { loc = l; saveLoc(l); data = null; renderCard(); refresh(); }
 
