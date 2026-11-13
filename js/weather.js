@@ -158,16 +158,17 @@ export async function mountWeather(host) {
     const at = loc; placeBusy = true; renderCard();
     let name = '';
     try { name = await findPlace(at.lat, at.lon); } catch (_) {}
-    placeBusy = false;
     if (loc !== at) return;
     if (!name) {
       // לא הצלחנו: מנקים כדי שרענון או ניסיון נוסף יבדקו שוב, ומנסים שוב עוד רגע (עד 3 פעמים)
       placeTried = '';
+      const again = placeRetry++ < 3;
+      placeBusy = again;
       renderCard(); if (!modal.classList.contains('hidden')) renderModal();
-      if (placeRetry++ < 3) setTimeout(() => { if (loc === at) resolvePlace(); }, 2500 * placeRetry);
+      if (again) setTimeout(() => { if (loc === at) resolvePlace(); }, 2500 * placeRetry);
       return;
     }
-    placeRetry = 0;
+    placeBusy = false; placeRetry = 0;
     loc = { ...at, place: name, placeLang: uiLang() }; saveLoc(loc);
     renderCard(); if (!modal.classList.contains('hidden')) renderModal();
   }
@@ -207,7 +208,7 @@ export async function mountWeather(host) {
     mc.innerHTML = `<button type="button" class="modal-x" id="wxX" aria-label="סגירה">${icon('x', 20)}</button>
       <div class="wxscene sk-${lk.sky}${lk.dark ? ' wxdark' : ''}${lk.glow ? ' wxglow' : ''}">${skyHtml(lk.sky)}${lk.birds ? birdsHtml() : ''}<div class="wxscene-in"><span class="wxemo" aria-hidden="true">${wimg(lk.icon, 112)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${lk.desc}</div></div></div></div>
       <div class="wxloc"><label for="wxSel">מיקום</label>
-        <select id="wxSel">${loc.type === 'place' ? `<option value="place" selected>🌍 ${esc(placeLabel(loc))}</option>` : ''}${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : '<option value="gps" selected>המיקום שלי</option>') : ''}${opts}</select>
+        <select id="wxSel">${loc.type === 'place' ? `<option value="place" selected>🌍 ${esc(placeLabel(loc))}</option>` : ''}${loc.type === 'gps' ? (placeNow() ? `<option value="gps" selected>📍 ${esc(placeNow())}</option>` : placeBusy ? '<option value="gps" selected>📍 מאתר עיר...</option>' : '<option value="gps" selected>המיקום שלי</option>') : gpsBusy ? '<option value="busy" selected>📍 מאתר מיקום...</option>' : ''}${opts}</select>
         <button class="btn secondary" id="wxGps" type="button"${gpsBusy ? ' disabled' : ''}>${gpsBusy ? 'מאתר מיקום...' : '📍 המיקום שלי'}</button>
         <form class="wxfind" id="wxFindF" autocomplete="off"><input type="search" id="wxQ" placeholder="חפשו עיר או מדינה בעולם" maxlength="40" value="${esc(qText)}" dir="auto"><button class="btn secondary" type="submit">חיפוש</button></form>
         <div class="wxres" id="wxRes">${resHtml()}</div>
@@ -226,7 +227,7 @@ export async function mountWeather(host) {
       ${seaHtml}
       <p class="wxsrc">Open-Meteo</p>`;
     mc.querySelector('#wxX').onclick = closeModal;
-    mc.querySelector('#wxSel').onchange = e => { if (e.target.value === 'gps' || e.target.value === 'place') return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
+    mc.querySelector('#wxSel').onchange = e => { if (['gps', 'place', 'busy'].includes(e.target.value)) return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
     mc.querySelector('#wxGps').onclick = useGps;
     mc.querySelector('#wxFindF').onsubmit = e => { e.preventDefault(); doSearch(mc.querySelector('#wxQ').value); };
     mc.querySelector('#wxRes').onclick = e => {

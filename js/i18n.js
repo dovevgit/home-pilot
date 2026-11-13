@@ -1261,6 +1261,7 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^📍 מאתר (עיר|מיקום)\.\.\.$/, (m, w) => '📍 Finding ' + (w === 'עיר' ? 'city' : 'location') + '...'],
   [/^(.+): ערים מרכזיות$/, '$1: main cities'],
   [/^היי (.+), מה תרצי לדעת\?$/, 'Hi $1, what would you like to know?'],
   [/^✅ דיווחתי שאת לא בבית: (.+)$/, '✅ I reported that you are not home: $1'],
