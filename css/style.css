@@ -337,7 +337,8 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 #homeBubble:active{transform:scale(.94)}
 /* כרטיס מזג אוויר בדף הבית */
 .wxcard{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;width:100%;margin:0 0 8px;padding:12px 14px;border:0;text-align:start;font:inherit;color:#0B2A4A;cursor:pointer;background:linear-gradient(135deg,#DDF1FF,#BFE4FF)}
-.wxcard .wxemo,.wxhead .wxemo{font-size:44px;line-height:1}
+.wxcard .wxemo,.wxhead .wxemo{line-height:0;flex:none}
+.wximg{display:block;object-fit:contain;filter:drop-shadow(0 3px 4px rgba(20,60,110,.25))}
 .wxmain{display:flex;flex-direction:column;flex:1;min-width:110px}
 .wxtemp{font-size:34px;font-weight:800;line-height:1}
 .wxdesc{font-size:17px;font-weight:700}

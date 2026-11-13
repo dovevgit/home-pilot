@@ -47,18 +47,18 @@ async function loadData(loc, force = false) {
 }
 
 const wcode = c => {
-  if (c === 0) return ['☀️', 'שמיים בהירים'];
-  if (c === 1) return ['🌤️', 'בהיר ברובו'];
-  if (c === 2) return ['⛅', 'מעונן חלקית'];
-  if (c === 3) return ['☁️', 'מעונן'];
-  if (c === 45 || c === 48) return ['🌫️', 'ערפל'];
-  if (c >= 51 && c <= 57) return ['🌦️', 'טפטוף'];
-  if ((c >= 61 && c <= 67)) return ['🌧️', 'גשם'];
-  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ['🌨️', 'שלג'];
-  if (c >= 80 && c <= 82) return ['🌦️', 'ממטרים'];
-  if (c >= 95) return ['⛈️', 'סופת רעמים'];
-  return ['⛅', 'מזג אוויר משתנה'];
+  if (c === 0 || c === 1) return ['sun', c === 0 ? 'שמיים בהירים' : 'בהיר ברובו'];
+  if (c === 2) return ['partly', 'מעונן חלקית'];
+  if (c === 3) return ['cloud', 'מעונן'];
+  if (c === 45 || c === 48) return ['fog', 'ערפל'];
+  if (c >= 51 && c <= 57) return ['rain', 'טפטוף'];
+  if (c >= 61 && c <= 67) return ['rain', 'גשם'];
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ['snow', 'שלג'];
+  if (c >= 80 && c <= 82) return ['rain', 'ממטרים'];
+  if (c >= 95) return ['storm', 'סופת רעמים'];
+  return ['partly', 'מזג אוויר משתנה'];
 };
+const wimg = (name, size) => `<img class="wximg" src="icons/weather/${name}.webp" alt="" width="${size}" height="${size}" decoding="async">`;
 const isRainy = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
 
 function tips(feels, rainP, code, gust) {
@@ -94,15 +94,15 @@ export async function mountWeather(host) {
 
   function renderCard() {
     if (failed || !data) {
-      host.innerHTML = `<button type="button" class="card wxcard" id="wxRetry"><span class="wxemo" aria-hidden="true">🌤️</span><span class="wxmain"><span class="wxdesc">${failed ? 'לא הצלחנו לטעון את מזג האוויר' : 'טוען מזג אוויר...'}</span></span>${failed ? '<span class="wxmore">לחצו לנסות שוב</span>' : ''}</button>`;
+      host.innerHTML = `<button type="button" class="card wxcard" id="wxRetry"><span class="wxemo" aria-hidden="true">${wimg('partly', 88)}</span><span class="wxmain"><span class="wxdesc">${failed ? 'לא הצלחנו לטעון את מזג האוויר' : 'טוען מזג אוויר...'}</span></span>${failed ? '<span class="wxmore">לחצו לנסות שוב</span>' : ''}</button>`;
       host.querySelector('#wxRetry').onclick = () => { if (failed) refresh(true); };
       return;
     }
     const cur = data.w.current, day = data.w.daily || {};
-    const [emo, desc] = wcode(cur.weather_code);
+    const [img, desc] = wcode(cur.weather_code);
     const tp = tips(cur.apparent_temperature, day.precipitation_probability_max?.[0], cur.weather_code, cur.wind_gusts_10m);
     host.innerHTML = `<button type="button" class="card wxcard" id="wxOpen" aria-haspopup="dialog">
-      <span class="wxemo" aria-hidden="true">${emo}</span>
+      <span class="wxemo" aria-hidden="true">${wimg(img, 88)}</span>
       <span class="wxmain"><span class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</span><span class="wxdesc">${desc}</span><span class="wxplace">${esc(locName())}</span></span>
       <span class="wxtips">${tp.map(x => `<span>${x}</span>`).join('')}</span>
       <span class="wxmore">למידע נוסף</span></button>`;
@@ -112,7 +112,7 @@ export async function mountWeather(host) {
   function renderModal() {
     if (!data) return;
     const cur = data.w.current, day = data.w.daily || {}, sea = data.sea;
-    const [emo, desc] = wcode(cur.weather_code);
+    const [img, desc] = wcode(cur.weather_code);
     const opts = Object.keys(CITIES).map(n => `<option value="${esc(n)}"${loc.type === 'city' && loc.name === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
     const seaHtml = sea ? `
       <div class="wxsec">הים</div>
@@ -124,7 +124,7 @@ export async function mountWeather(host) {
       <p class="wxnote">נתוני הים הם הערכה של מודל ולא מדידה בחוף. לפני כניסה למים כדאי להסתכל גם על הים עצמו.</p>`
       : '<p class="wxnote">אין נתוני ים למקום הזה.</p>';
     mc.innerHTML = `<button type="button" class="modal-x" id="wxX" aria-label="סגירה">${icon('x', 20)}</button>
-      <div class="wxhead"><span class="wxemo" aria-hidden="true">${emo}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div>
+      <div class="wxhead"><span class="wxemo" aria-hidden="true">${wimg(img, 92)}</span><div><div class="wxtemp" dir="ltr">${n0(cur.temperature_2m)}°</div><div class="wxdesc">${desc}</div></div></div>
       <div class="wxloc"><label for="wxSel">מיקום</label>
         <select id="wxSel">${loc.type === 'gps' ? '<option value="gps" selected>המיקום שלי</option>' : ''}${opts}</select>
         <button class="btn secondary" id="wxGps" type="button">📍 המיקום שלי</button>
