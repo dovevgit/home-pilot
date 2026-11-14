@@ -12,6 +12,7 @@ function build(){
   st.textContent='#gfw{position:absolute;left:0;right:0;top:-260px;bottom:-30px;overflow:hidden;z-index:1;pointer-events:none;direction:ltr;contain:paint}'
   +'#gf{position:absolute;left:0;bottom:16px;display:none;will-change:transform;pointer-events:none;-webkit-user-select:none;user-select:none}'
   +'#gf .gfi{position:absolute;inset:0;overflow:hidden}#gf.r .gfi{transform:scaleX(-1)}'
+  +'#gf img.rn{display:none}#gf.fl img.rn{display:block}#gf.fl img.wk{display:none}'
   +'#gf img{position:absolute;left:0;top:0;height:100%;width:'+(N*100)+'%;max-width:none;-webkit-user-drag:none;animation:gfstep .95s steps('+N+',end) infinite}'
   +'@keyframes gfstep{from{transform:translateX(0)}to{transform:translateX(-100%)}}'
   +'#gf .gh{position:absolute;left:18%;right:18%;top:12%;bottom:0;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}'
@@ -19,8 +20,8 @@ function build(){
   document.head.appendChild(st);
   wrap=document.createElement('div'); wrap.id='gfw'; wrap.setAttribute('aria-hidden','true');
   box=document.createElement('div'); box.id='gf';
-  box.innerHTML='<div class="gfi"><img alt="" draggable="false" src="icons/giraffe/walk.webp"></div><div class="gh"></div>';
-  img=box.querySelector('img');
+  box.innerHTML='<div class="gfi"><img class="wk" alt="" draggable="false" src="icons/giraffe/walk.webp"><img class="rn" alt="" draggable="false" src="icons/giraffe/run.webp"></div><div class="gh"></div>';
+  img=box.querySelector('img.rn');
   box.querySelector('.gh').addEventListener('pointerdown',flee);
   wrap.appendChild(box); gr.appendChild(wrap);
   document.addEventListener('visibilitychange',function(){ if(!anim)return; if(document.visibilityState==='visible')anim.play(); else anim.pause(); });
@@ -30,7 +31,7 @@ function build(){
 function flee(e){
   if(e){ e.stopPropagation(); }
   if(!anim||fleeing)return; fleeing=true;
-  anim.playbackRate=5; img.style.animationDuration='.2s';
+  anim.playbackRate=5; box.classList.add('fl'); img.style.animationDuration='.24s';
   if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}
 }
 /* גובה הג'ירפה: מהדשא עד קצה העליון של שדה ההודעה (כמו קפיצת החתול). בלי שדה: גובה רגיל */
@@ -52,7 +53,7 @@ function go(){
   var xs=fromLeft?-W-12:GW+12,xe=fromLeft?GW+12:-W-12;
   box.style.display='block';
   anim=box.animate([{transform:'translateX('+xs+'px)'},{transform:'translateX('+xe+'px)'}],{duration:Math.abs(xe-xs)/SPEED*1000,easing:'linear',fill:'forwards'});
-  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; fleeing=false; img.style.animationDuration=''; next(25000+Math.random()*35000); };
+  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; fleeing=false; box.classList.remove('fl'); img.style.animationDuration=''; next(25000+Math.random()*35000); };
 }
 find(0);
 })();
