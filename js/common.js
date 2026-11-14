@@ -280,6 +280,8 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
     }));
   }
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  // לחיצה על התראה כשהאפליקציה הייתה סגורה: אם נפתחנו במקום אחר, עוברים ליעד ששמר ה-Service Worker
+  try { if ('caches' in window) caches.open('habayit-goto').then(async gc => { const r = await gc.match('./__goto'); if (!r) return; await gc.delete('./__goto'); const g = await r.json(); if (g && g.url && Date.now() - g.t < 60000 && g.url !== location.href && new URL(g.url).origin === location.origin) location.replace(g.url); }).catch(() => {}); } catch (_) {}
   if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { const g = ev.data && ev.data.goto; if (g && g !== location.href) location.href = g; });
   showPendingToast();
   if (me) import('./game.js').then(m => m.startGame(me, profiles || [])).catch(() => {});
