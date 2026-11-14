@@ -21,7 +21,7 @@
 .ftray h3{margin:0 0 6px;font-size:15px;color:#1F2937}
 .ftray .chips{display:flex;flex-wrap:wrap;gap:6px}
 .ftray .hint{font-size:13px;color:#6B7280;margin:0}
-.fridge-box{position:relative;line-height:0;user-select:none;-webkit-user-select:none}
+.fridge-box{position:relative;margin-top:76px;line-height:0;user-select:none;-webkit-user-select:none}
 .fridge-box img{width:100%;display:block;border-radius:14px;pointer-events:none}
 .fzone{position:absolute;display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;gap:4px;padding:3px 4px 4px;box-sizing:border-box;overflow:hidden;line-height:1.2;border-radius:8px}
 .fzone .zl{position:absolute;top:2px;inset-inline-start:6px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,40,.7);pointer-events:none}
@@ -62,7 +62,7 @@
 <main>
   <div class="fwrap">
     <div class="ftray" data-zone="__tray"><h3>אוכל מוכן</h3><div class="chips" id="tray"></div></div>
-    <div class="fridge-box" id="fridge"><img src="fridge-food.jpg" alt="המקרר" draggable="false"></div>
+    <div class="fridge-box" id="form"><img src="fridge-food.jpg" alt="המקרר" draggable="false"></div>
     <button class="btn" id="add" type="button">הוספת אוכל חדש</button>
   </div>
 </main>
@@ -143,7 +143,7 @@ function chip(r) {
 function render() {
   const zoneOf = r => { const l = locs.find(x => x.id === r.location_id); return l && ZONES[l.name] ? l.name : null; };
   $('tray').innerHTML = items.filter(r => !zoneOf(r)).map(chip).join('') || '<p class="hint">הכול כבר במקרר. הוסיפו אוכל חדש בכפתור שמתחת.</p>';
-  const box = $('fridge');
+  const box = $('form');
   box.querySelectorAll('.fzone').forEach(z => z.remove());
   for (const l of locs) {
     const z = ZONES[l.name]; if (!z) continue;
@@ -339,5 +339,6 @@ function openForm(r) {
 $('add').onclick = () => openForm();
 await load();
 </script>
+<script src="js/parrot.js" defer></script>
 </body>
 </html>
