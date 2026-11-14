@@ -30,6 +30,16 @@
 .fchip{display:inline-flex;align-items:center;gap:4px;max-width:46%;background:rgba(255,255,255,.95);border:2px solid #fff;border-radius:11px;padding:3px 8px;font-size:12px;font-weight:700;color:#1F2937;box-shadow:0 1px 3px rgba(0,0,0,.35);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;white-space:nowrap}
 .ftray .fchip{max-width:100%;font-size:14px;padding:5px 10px}
 .fchip span{overflow:hidden;text-overflow:ellipsis}
+.fchip{position:relative}
+.flies{position:absolute;left:0;right:0;top:-16px;height:18px;pointer-events:none;font-style:normal}
+.flies b{position:absolute;font-size:12px;line-height:1;font-weight:400;animation:fly1 1.7s ease-in-out infinite}
+.flies b:nth-child(1){left:12%}
+.flies b:nth-child(2){left:42%;animation:fly2 2.1s ease-in-out infinite}
+.flies b:nth-child(3){left:72%;animation:fly3 1.4s ease-in-out infinite}
+@keyframes fly1{0%{transform:translate(0,2px) rotate(-10deg)}25%{transform:translate(9px,-5px) rotate(15deg)}50%{transform:translate(18px,1px) rotate(-5deg)}75%{transform:translate(6px,-7px) rotate(20deg)}100%{transform:translate(0,2px) rotate(-10deg)}}
+@keyframes fly2{0%{transform:translate(0,-3px)}30%{transform:translate(-12px,2px) rotate(-20deg)}60%{transform:translate(8px,-6px) rotate(10deg)}100%{transform:translate(0,-3px)}}
+@keyframes fly3{0%{transform:translate(0,0) rotate(5deg)}20%{transform:translate(-8px,-6px)}50%{transform:translate(-16px,1px) rotate(-15deg)}80%{transform:translate(-4px,-7px)}100%{transform:translate(0,0) rotate(5deg)}}
+@media (prefers-reduced-motion:reduce){.flies b{animation:none}.flies b:nth-child(n+2){display:none}}
 .fchip.warn{border-color:#F59E0B}
 .fchip.old{border-color:#DC2626;background:#FEE2E2}
 .fth{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:none;pointer-events:none}
@@ -134,11 +144,18 @@ async function load() {
   render();
 }
 
+// מנה שעברו עליה 3 ימים או יותר (מתאריך ההכנה, ואם אין אז מיום ההוספה): זבובים מעליה
+function ageDays(r) {
+  const ds = r.made_on || (r.created_at || '').slice(0, 10); if (!ds) return 0;
+  const [y, m, d] = ds.split('-').map(Number), n = new Date();
+  return Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(y, m - 1, d)) / 864e5);
+}
+const fliesHtml = r => ageDays(r) >= 3 ? '<i class="flies" aria-hidden="true"><b>🪰</b><b>🪰</b><b>🪰</b></i>' : '';
 function chip(r) {
   const d = daysLeft(r.eat_by);
   const cls = d !== null && d < 0 ? ' old' : d !== null && d <= 2 ? ' warn' : '';
   const fresh = seen.has(r.id) ? '' : ' fresh';
-  return `<div class="fchip${cls}${fresh}" data-id="${r.id}">${r.photo_path && urls[r.photo_path] ? `<img class="fth" src="${esc(urls[r.photo_path])}" alt="" draggable="false">` : '🥘'}<span>${esc(r.name)}</span>${avg[r.id] ? `<b class="fstar">★${avg[r.id].toFixed(1).replace('.0', '')}</b>` : ''}</div>`;
+  return `<div class="fchip${cls}${fresh}" data-id="${r.id}">${r.photo_path && urls[r.photo_path] ? `<img class="fth" src="${esc(urls[r.photo_path])}" alt="" draggable="false">` : '🥘'}<span>${esc(r.name)}</span>${fliesHtml(r)}${avg[r.id] ? `<b class="fstar">★${avg[r.id].toFixed(1).replace('.0', '')}</b>` : ''}</div>`;
 }
 
 function render() {
