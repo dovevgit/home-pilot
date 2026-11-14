@@ -1258,6 +1258,7 @@ const D = {
   "מה יש לאכול": "What's to eat",
   "אוכל מוכן": "Ready food", "הכול כבר במקרר. הוסיפו אוכל חדש בכפתור שמתחת.": "Everything is already in the fridge. Add new food with the button below.",
   "תמונה של האוכל (לא חובה)": "Photo of the food (optional)", "לא הצלחנו לקרוא את התמונה": "Could not read the photo", "הסרת תמונה": "Remove photo", "החלפת תמונה": "Replace photo", "צילום או בחירת תמונה": "Take or choose a photo",
+  "מי הכין (לא חובה)": "Who made it (optional)", "לא צוין": "Not specified", "דירוג והערות": "Rating and comments", "עוד אין דירוגים": "No ratings yet", "הדירוג שלי": "My rating", "שמירת הדירוג שלי": "Save my rating", "מחיקת הדירוג שלי": "Delete my rating", "אתה הכנת את האוכל הזה, אז אי אפשר לדרג אותו.": "You made this food, so you cannot rate it.", "בחרו כוכבים או כתבו הערה": "Choose stars or write a comment", "הדירוג נשמר": "Rating saved", "למחוק את הדירוג וההערה שלך?": "Delete your rating and comment?",
   "הוספת אוכל חדש": "Add new food", "ללא מקום (במגש)": "No place (in the tray)", "נגמר, להוריד מהמקרר": "Finished, remove from the fridge", "ההעברה נכשלה": "Moving failed",
   "הוספת אוכל למקרר": "Add food to the fridge",
   "המקרר עוד ריק במערכת. לחצו על \"הוספת אוכל למקרר\".": "The fridge is still empty here. Tap \"Add food to the fridge\".",
@@ -1275,6 +1276,8 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^הוכן על ידי (.+)$/, 'Made by $1'],
+  [/^★ (\S+) \((\d+) דירוגים\)$/, '★ $1 ($2 ratings)'],
   [/^לאכול עד (\d+\.\d+) \(עוד (\d+) ימים\)$/, 'Eat by $1 ($2 days left)'],
   [/^לאכול עד (\d+\.\d+)$/, 'Eat by $1'],
   [/^עבר התאריך \((\d+\.\d+)\)$/, 'Past the date ($1)'],
