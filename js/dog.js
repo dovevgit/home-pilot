@@ -174,7 +174,15 @@ function startSlink(){
 
 
 /* ---- פיפי: החלקה של האצבע על הכלב ---- */
-var peeT=0;
+var peeT=0,PR=null;
+/* בזמן הפיפי הזרם והשלולית עוקבים אחרי הכלב גם כשגוללים (הכלב צמוד למסך, הדף זז) */
+function peeFollow(){
+  if(!PR)return; var m=PR.m,d=PR.d;
+  var sx=S.x+d*43.7*m+scrollX, sy=S.y-32.8*m+scrollY, ex=S.x+d*70*m+scrollX, ey=S.y+scrollY;
+  var dd='M'+sx+' '+sy+' Q'+(sx+d*20*m)+' '+(sy-14*m)+' '+ex+' '+ey;
+  PR.p1.setAttribute('d',dd); PR.p2.setAttribute('d',dd);
+  PR.pd.style.left=(ex-26*m)+'px'; PR.pd.style.top=(ey-6*m)+'px';
+}
 function startPee(){
   if(!(S.mode==='walk'||S.mode==='sit'||S.mode==='hop'))return;
   S.mode='pee'; S.rot=0; S.y=ground().y; S.t0=performance.now(); S.stage=0;
@@ -192,6 +200,7 @@ function pour(){
   var L=p1.getTotalLength(); p1.style.strokeDasharray=L; p1.style.strokeDashoffset=L; p1.style.transition='stroke-dashoffset .3s ease-out';
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ p1.style.strokeDashoffset=0; }) });
   var pd=document.createElement('div'); pd.className='dgpuddle'; pd.style.left=(ex-26*m)+'px'; pd.style.top=(ey-6*m)+'px'; pd.style.width=(52*m)+'px'; pd.style.height=(11*m)+'px'; document.body.appendChild(pd);
+  PR={p1:p1,p2:p2,pd:pd,m:m,d:d};
   setTimeout(function(){ pd.classList.add('go') },300);
   setTimeout(function(){ p1.style.transition='stroke-dashoffset .35s ease-in'; p1.style.strokeDashoffset=-L; p2.style.opacity=0; },3000);
   setTimeout(function(){ svg.remove() },3500);
@@ -336,12 +345,12 @@ function frame(ts){
     place();
     if(ts>S.until){ var back=m==='hop'?S.prev:S.hold; if(back==='sit')startSit(2200); else startWalk(); }
   }else if(m==='pee'){
-    S.y=g.y; place();
+    S.y=g.y; place(); peeFollow();
     var qe=ts-S.t0;
     if(S.stage===0&&qe>1300){ S.stage=1; setFrame('pee',1); }
     else if(S.stage===1&&qe>1900){ S.stage=2; setFrame('pee',2); pour(); }
     else if(S.stage===2&&qe>5200){ S.stage=3; setFrame('pee',1); }
-    else if(S.stage===3&&qe>5700){ startSit(1800); }
+    else if(S.stage===3&&qe>5700){ PR=null; startSit(1800); }
   }else if(m==='poop'){
     S.y=g.y; place();
     var pe=ts-S.t0;
