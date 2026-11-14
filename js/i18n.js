@@ -1257,6 +1257,7 @@ const D = {
   // מסך "מה יש לאכול"
   "מה יש לאכול": "What's to eat",
   "אוכל מוכן": "Ready food", "הכול כבר במקרר. הוסיפו אוכל חדש בכפתור שמתחת.": "Everything is already in the fridge. Add new food with the button below.",
+  "תמונה של האוכל (לא חובה)": "Photo of the food (optional)", "לא הצלחנו לקרוא את התמונה": "Could not read the photo", "הסרת תמונה": "Remove photo", "החלפת תמונה": "Replace photo", "צילום או בחירת תמונה": "Take or choose a photo",
   "הוספת אוכל חדש": "Add new food", "ללא מקום (במגש)": "No place (in the tray)", "נגמר, להוריד מהמקרר": "Finished, remove from the fridge", "ההעברה נכשלה": "Moving failed",
   "הוספת אוכל למקרר": "Add food to the fridge",
   "המקרר עוד ריק במערכת. לחצו על \"הוספת אוכל למקרר\".": "The fridge is still empty here. Tap \"Add food to the fridge\".",

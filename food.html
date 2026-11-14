@@ -31,6 +31,11 @@
 .fchip span{overflow:hidden;text-overflow:ellipsis}
 .fchip.warn{border-color:#F59E0B}
 .fchip.old{border-color:#DC2626;background:#FEE2E2}
+.fth{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:none;pointer-events:none}
+.ftray .fth{width:30px;height:30px}
+.fprev{width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin:6px 0}
+.fpbtns{display:flex;gap:8px}
+.fpbtns .btn{flex:1;margin:0}
 .fchip.ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.92;transform:scale(1.12);max-width:none}
 .fchip.src{opacity:.3}
 #add{margin-top:14px}
@@ -68,19 +73,42 @@ function daysLeft(eatBy) {
 }
 const fmt = d => { if (!d) return ''; const [, m, dd] = d.split('-'); return dd + '.' + m; };
 
+const urls = {};
+async function signFood(paths) {
+  const now = Date.now(); let cache = {};
+  try { cache = JSON.parse(localStorage.getItem('foodSgn') || '{}'); } catch (_) {}
+  const need = [];
+  [...new Set((paths || []).filter(Boolean))].forEach(p => { const c = cache[p]; if (c && c[1] > now) urls[p] = c[0]; else need.push(p); });
+  if (need.length) {
+    const { data } = await supabase.storage.from('food-photos').createSignedUrls(need, 604800);
+    (data || []).forEach(sg => { if (sg.path && sg.signedUrl) { urls[sg.path] = sg.signedUrl; cache[sg.path] = [sg.signedUrl, now + 6 * 864e5]; } });
+    Object.keys(cache).forEach(k => { if (cache[k][1] < now) delete cache[k]; });
+    try { localStorage.setItem('foodSgn', JSON.stringify(cache)); } catch (_) {}
+  }
+}
+async function shrink(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const k = Math.min(1, 900 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+}
+
 async function load() {
   const [l, i] = await Promise.all([
     supabase.from('food_locations').select('*').order('sort_order'),
     supabase.from('food_items').select('*').eq('status', 'available').order('created_at')
   ]);
   if (l.error || i.error) { showToast('לא הצלחנו לטעון', true); return; }
-  locs = l.data || []; items = i.data || []; render();
+  locs = l.data || []; items = i.data || [];
+  try { await signFood(items.map(x => x.photo_path)); } catch (_) {}
+  render();
 }
 
 function chip(r) {
   const d = daysLeft(r.eat_by);
   const cls = d !== null && d < 0 ? ' old' : d !== null && d <= 2 ? ' warn' : '';
-  return `<div class="fchip${cls}" data-id="${r.id}">🥘<span>${esc(r.name)}</span></div>`;
+  return `<div class="fchip${cls}" data-id="${r.id}">${r.photo_path && urls[r.photo_path] ? `<img class="fth" src="${esc(urls[r.photo_path])}" alt="" draggable="false">` : '🥘'}<span>${esc(r.name)}</span></div>`;
 }
 
 function render() {
@@ -147,18 +175,51 @@ function openForm(r) {
     <label>הוכן בתאריך</label><input id="fMade" type="date" value="${r.made_on || ''}">
     <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
     <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
+    <label>תמונה של האוכל (לא חובה)</label>
+    <img class="fprev hidden" id="fPrev" alt="">
+    <div class="fpbtns"><button class="btn secondary" id="fPick" type="button">צילום או בחירת תמונה</button><button class="btn secondary hidden" id="fNoPic" type="button">הסרת תמונה</button></div>
+    <input type="file" id="fFile" accept="image/*" class="hidden">
     <button class="btn" id="fSave" type="button">שמירה</button>
     ${r.id ? `<button class="btn secondary" id="fFin" type="button">נגמר, להוריד מהמקרר</button><button class="btn secondary" id="fDel" type="button" style="color:#991B1B;border-color:#991B1B">מחיקה</button>` : ''}`;
   $('modal').classList.remove('hidden');
   $('mx').onclick = close;
+  let newBlob = null, removePhoto = false, prevUrl = null;
+  const showPrev = () => {
+    const src = newBlob ? prevUrl : (!removePhoto && r.photo_path ? urls[r.photo_path] : null);
+    $('fPrev').classList.toggle('hidden', !src); if (src) $('fPrev').src = src;
+    $('fNoPic').classList.toggle('hidden', !src);
+    $('fPick').textContent = src ? 'החלפת תמונה' : 'צילום או בחירת תמונה';
+  };
+  showPrev();
+  $('fPick').onclick = () => $('fFile').click();
+  $('fNoPic').onclick = () => { newBlob = null; removePhoto = true; showPrev(); };
+  $('fFile').onchange = async () => {
+    const f = $('fFile').files[0]; if (!f) return;
+    try { newBlob = await shrink(f); if (prevUrl) URL.revokeObjectURL(prevUrl); prevUrl = URL.createObjectURL(newBlob); removePhoto = false; showPrev(); }
+    catch (_) { showToast('לא הצלחנו לקרוא את התמונה', true); }
+    $('fFile').value = '';
+  };
   $('fSave').onclick = async () => {
     const p = parseInt($('fPort').value);
     const row = { name: $('fName').value.trim(), location_id: $('fLoc').value || null, container: $('fCont').value.trim() || null,
       portions: Number.isFinite(p) && p > 0 ? p : null, made_on: $('fMade').value || null, eat_by: $('fEat').value || null, notes: $('fNotes').value.trim() || null };
     if (!row.name) { showToast('חסר שם לאוכל', true); return; }
     $('fSave').disabled = true;
+    let photoPath = r.photo_path || null, oldPath = null, newPath = null;
+    if (removePhoto) { oldPath = photoPath; photoPath = null; }
+    if (newBlob) {
+      newPath = `${me.family_id}/${crypto.randomUUID()}.jpg`;
+      const up = await supabase.storage.from('food-photos').upload(newPath, newBlob, { contentType: 'image/jpeg', upsert: false });
+      if (up.error) { showToast('העלאת התמונה נכשלה', true); $('fSave').disabled = false; return; }
+      oldPath = oldPath || r.photo_path || null; photoPath = newPath;
+    }
+    row.photo_path = photoPath;
     const { error } = r.id ? await supabase.from('food_items').update({ ...row, updated_at: new Date().toISOString() }).eq('id', r.id) : await supabase.from('food_items').insert(row);
-    if (error) { showToast('השמירה נכשלה', true); $('fSave').disabled = false; return; }
+    if (error) {
+      if (newPath) { try { await supabase.storage.from('food-photos').remove([newPath]); } catch (_) {} }
+      showToast('השמירה נכשלה', true); $('fSave').disabled = false; return;
+    }
+    if (oldPath) { try { await supabase.storage.from('food-photos').remove([oldPath]); } catch (_) {} }
     close(); await load();
   };
   if (r.id) $('fFin').onclick = async () => {
@@ -170,6 +231,7 @@ function openForm(r) {
     if (!confirm('למחוק את "' + r.name + '"?')) return;
     const { error } = await supabase.from('food_items').delete().eq('id', r.id);
     if (error) { showToast('המחיקה נכשלה', true); return; }
+    if (r.photo_path) { try { await supabase.storage.from('food-photos').remove([r.photo_path]); } catch (_) {} }
     close(); await load();
   };
 }
