@@ -219,7 +219,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       <a href="important.html" class="imp-link">${icon('bell')} הודעה חשובה</a>
       <a href="games.html">${icon('star')} משחקים</a>
       <a href="chat.html">${icon('message-circle')} הודעות משפחתיות</a>
-      ${me?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80' ? `<a href="ai.html#chef">${icon('utensils')} השף של הבית</a>` : ''}
+      ${me?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80' ? `<a href="ai.html#chef">${icon('chef-hat')} השף של הבית</a>` : ''}
       ${isAdmin && me?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80' ? `<a href="lessons.html">${icon('graduation-cap')} שיעורי אנגלית</a>` : ''}
       ${me?.family_id === '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80' ? `<a href="food.html">${icon('utensils')} מה יש לאכול</a>` : ''}
       <a href="fridge.html">${icon('sticky-note')} פתקים על המקרר</a>
