@@ -2,7 +2,7 @@
 'use strict';
 /* התוכי של הצ'אט: עומד על הקצה העליון של שדה הכתיבה.
    מנקה נוצות, מצייץ, מסתובב לאורך הקצה ומנפנף בכנפיים.
-   לחיצה = ציוץ וכנפיים. לחיצה ארוכה = קערת גרגירים והוא אוכל. החלקה עליו = הוא עף ברחבי המסך ונוחת חזרה. שליחת הודעה = הוא מנפנף.
+   לחיצה = ריקוד. לחיצה ארוכה = קערת גרגירים והוא אוכל. החלקה עליו = הוא עף ברחבי המסך ונוחת חזרה. שליחת הודעה = הוא מנפנף.
    לא חוסם את שדה הכתיבה והכפתורים (הוא עומד מעליהם). */
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 var form=document.getElementById('form'); if(!form)return;
@@ -11,7 +11,7 @@ var CW=100.65*SC, CH=75.9*SC;   /* תא אחד בגיליון בגודל CSS (ב
 function active(){ if(!HASH)return true; var h=location.hash.slice(1); try{h=decodeURIComponent(h)}catch(_){} return h===HASH; }
 var st=document.createElement('style');
 st.textContent='#pk{position:absolute;left:0;bottom:100%;margin-bottom:'+(-4*SC)+'px;width:'+CW+'px;height:'+CH+'px;pointer-events:none;direction:ltr;z-index:2;will-change:transform;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}'
-+'#pk .sp{position:absolute;inset:0;background:url('+SHEET+') no-repeat;background-size:'+(CW*6)+'px '+(CH*4)+'px;background-position:0 0}'
++'#pk .sp{position:absolute;inset:0;background:url('+SHEET+') no-repeat;background-size:'+(CW*6)+'px '+(CH*5)+'px;background-position:0 0}'
 +'#pk.r .sp{transform:scaleX(-1)}'
 +'#pk.fly{position:fixed;left:0;top:0;bottom:auto;margin:0;z-index:40}#pk.fly .hit{pointer-events:none}'
 +'#pk .hit{position:absolute;left:20%;right:14%;top:16%;bottom:0;pointer-events:auto;touch-action:none;cursor:pointer;-webkit-tap-highlight-color:transparent}'
@@ -42,6 +42,7 @@ function chirp(){ busy=true; play([[0,1,230],[0,3,230],[0,1,230],[0,3,230],[0,0,
 function wink(){ busy=true; play([[0,2,1000]],end); }
 function preen(){ busy=true; play([[0,5,1500]],end); }
 function flap(){ busy=true; play([[2,0,120],[2,1,120],[2,2,120],[2,3,120],[2,2,120],[2,3,120],[2,2,120],[2,3,120],[2,4,130],[2,5,160]],end); }
+function dance(){ busy=true; var s=[],o=[0,1,2,3,4,5,4,3,2,1]; for(var k=0;k<2;k++)o.forEach(function(c){ s.push([4,c,150]); }); s.push([4,0,150]); play(s,end); }
 function eat(){
   if(eating)return; stopWalk(); busy=true; eating=true;
   var s=[[3,0,700]]; for(var k=0;k<4;k++){ s.push([3,1,330]); s.push([3,2,330]); }
@@ -128,7 +129,7 @@ hit.addEventListener('pointermove',function(e){
 hit.addEventListener('pointerup',function(e){
   e.stopPropagation(); clearTimeout(lp); down=false;
   if(lpDone||swiped||eating||flying)return;
-  stopWalk(); flap(); if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}
+  stopWalk(); dance(); if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}
 });
 hit.addEventListener('pointercancel',function(){ clearTimeout(lp); lpDone=true; down=false; });
 hit.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); });
