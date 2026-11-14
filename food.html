@@ -51,6 +51,8 @@
 .fslot img{width:100%;height:100%;object-fit:cover;display:block}
 .fslot.sel{border:3px solid #0D6EFD}
 .fslot .mainbadge{position:absolute;top:3px;inset-inline-start:3px;background:#F59E0B;color:#fff;border-radius:8px;font-size:11px;font-weight:800;padding:1px 6px}
+.fnotify{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-weight:700}
+.fnotify input{width:22px;height:22px;flex:none}
 .fchip.ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.92;transform:scale(1.12);max-width:none}
 .fchip.src{opacity:.3}
 #add{margin-top:14px}
@@ -249,6 +251,7 @@ function openForm(r) {
     <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
     <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
     <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${cooks().map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(dn(p.name))}</option>`).join('')}</select>
+    ${r.id ? '' : '<label class="fnotify"><input type="checkbox" id="fNotify" checked> לשלוח הודעה למשפחה על המנה החדשה</label>'}
     <button class="btn" id="fSave" type="button">שמירה</button>
     ${r.id ? '<div class="fsec" id="fRev"></div>' : ''}
     ${r.id ? `<button class="btn secondary" id="fFin" type="button">נגמר, להוריד מהמקרר</button><button class="btn secondary" id="fDel" type="button" style="color:#991B1B;border-color:#991B1B">מחיקה</button>` : ''}`;
@@ -295,6 +298,7 @@ function openForm(r) {
     const p = parseInt($('fPort').value);
     const row = { name: $('fName').value.trim(), location_id: $('fLoc').value || null, container: $('fCont').value.trim() || null,
       portions: Number.isFinite(p) && p > 0 ? p : null, made_on: $('fMade').value || null, eat_by: $('fEat').value || null, notes: $('fNotes').value.trim() || null, cook_id: $('fCook').value || null };
+    if (!r.id) row.notify = !!$('fNotify')?.checked;
     if (!row.name) { showToast('חסר שם לאוכל', true); return; }
     $('fSave').disabled = true;
     const uploaded = [];

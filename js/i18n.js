@@ -1261,6 +1261,7 @@ const D = {
   "מי הכין (לא חובה)": "Who made it (optional)", "לא צוין": "Not specified", "דירוג והערות": "Rating and comments", "עוד אין דירוגים": "No ratings yet", "הדירוג שלי": "My rating", "שמירת הדירוג שלי": "Save my rating", "מחיקת הדירוג שלי": "Delete my rating", "אתה הכנת את האוכל הזה, אז אי אפשר לדרג אותו.": "You made this food, so you cannot rate it.", "בחרו כוכבים או כתבו הערה": "Choose stars or write a comment", "הדירוג נשמר": "Rating saved", "למחוק את הדירוג וההערה שלך?": "Delete your rating and comment?",
   "תמונות של האוכל, עד 3 (לא חובה)": "Photos of the food, up to 3 (optional)", "כדאי לצלם גם את הכלי וגם את המנה. מסמנים איזו תמונה תופיע במקרר.": "It helps to photograph both the container and the dish. Mark which photo appears in the fridge.", "במקרר": "In fridge", "זו תופיע במקרר": "Show this one in the fridge", "החלפה": "Replace", "הסרה": "Remove", "הוספת תמונה": "Add photo",
   "אמא": "Mom", "אבא": "Dad",
+  "לשלוח הודעה למשפחה על המנה החדשה": "Notify the family about the new dish",
   "הוספת אוכל חדש": "Add new food", "ללא מקום (במגש)": "No place (in the tray)", "נגמר, להוריד מהמקרר": "Finished, remove from the fridge", "ההעברה נכשלה": "Moving failed",
   "הוספת אוכל למקרר": "Add food to the fridge",
   "המקרר עוד ריק במערכת. לחצו על \"הוספת אוכל למקרר\".": "The fridge is still empty here. Tap \"Add food to the fridge\".",
@@ -1278,6 +1279,8 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(אמא|אבא|נועה|מאיה) (?:הוסיפה|הוסיף) מנה חדשה: (.+)$/, (m, n, d) => ({ 'אמא': 'Mom', 'אבא': 'Dad' }[n] || n) + ' added a new dish: ' + d],
+  [/^(אמא|אבא|נועה|מאיה) (?:הוסיפה|הוסיף) (\d+) מנות חדשות$/, (m, n, c) => ({ 'אמא': 'Mom', 'אבא': 'Dad' }[n] || n) + ' added ' + c + ' new dishes'],
   [/^הוכן על ידי (.+)$/, (m, n) => 'Made by ' + ({ 'אמא': 'Mom', 'אבא': 'Dad' }[n] || n)],
   [/^★ (\S+) \((\d+) דירוגים\)$/, '★ $1 ($2 ratings)'],
   [/^לאכול עד (\d+\.\d+) \(עוד (\d+) ימים\)$/, 'Eat by $1 ($2 days left)'],
