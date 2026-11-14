@@ -75,6 +75,8 @@ const $ = id => document.getElementById(id);
 let locs = [], items = [], seen = new Set(), avg = {};
 // במסך הזה קוראים להורים אמא ואבא
 const dn = n => ({ 'ויקי': 'אמא', 'דובב': 'אבא' })[n] || n;
+const ORDER = ['ויקי', 'דובב', 'נועה', 'מאיה'];
+const cooks = () => (profiles || []).filter(p => p.is_user !== false).sort((a, b) => { const x = ORDER.indexOf(a.name), y = ORDER.indexOf(b.name); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
 const nameOf = id => dn((profiles || []).find(p => p.id === id)?.name) || 'מישהו';
 const starsTxt = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 // אזורי השחרור על תמונת המקרר (באחוזים מהתמונה): [שמאל, למעלה, רוחב, גובה]
@@ -246,7 +248,7 @@ function openForm(r) {
     <label>הוכן בתאריך</label><input id="fMade" type="date" value="${r.made_on || ''}">
     <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
     <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
-    <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${(profiles || []).filter(p => p.is_user !== false).map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(dn(p.name))}</option>`).join('')}</select>
+    <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${cooks().map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(dn(p.name))}</option>`).join('')}</select>
     <button class="btn" id="fSave" type="button">שמירה</button>
     ${r.id ? '<div class="fsec" id="fRev"></div>' : ''}
     ${r.id ? `<button class="btn secondary" id="fFin" type="button">נגמר, להוריד מהמקרר</button><button class="btn secondary" id="fDel" type="button" style="color:#991B1B;border-color:#991B1B">מחיקה</button>` : ''}`;
