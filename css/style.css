@@ -403,7 +403,7 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
 @keyframes wxpulse{0%,100%{transform:scale(.82);opacity:.6}35%{transform:scale(1.2);opacity:1}60%{transform:scale(1.02);opacity:.78}}
 @media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.wxsky::before,.wxglow .wxemo::after,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
-#wxmodal .modal-x{z-index:5}
+#wxmodal .modal-x{z-index:5;width:44px;height:44px;background:#fff;color:#111827;border:1.5px solid rgba(17,24,39,.25);box-shadow:0 2px 8px rgba(0,0,0,.35)}
 /* הדגשה שהכפתור נלחץ */
 .wxcard,.wxloc .btn,.wxfind .btn,.wxresb,#wxmodal .modal-x{transition:transform .12s,filter .12s,box-shadow .12s}
 .wxcard:active{transform:scale(.97);filter:brightness(.9)}
