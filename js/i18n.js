@@ -1327,6 +1327,8 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^(.+) ניצח\/ה בסבב (\d+)$/, '$1 won round $2'],
+  [/^התשובות לאות (.+)$/, 'Answers for the letter $1'],
   [/^הצטרפו \((\d+)\)$/, 'Joined ($1)'],
   [/^(.+) הפסיק\/ה את המשחק$/, '$1 stopped the game'],
   [/^הצטרפת למשחק של (.+)$/, 'You joined $1\'s game'],

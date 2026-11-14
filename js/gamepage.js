@@ -162,6 +162,32 @@ async function runBot(round) {
   await refresh(true);
 }
 
+// בסוף סבב: חלון קופץ עם התשובות של מי שניצח (לכולם). אצל המארח, כשהבוט שפט, מוצגות גם הנקודות לכל תשובה.
+let winShown = '';
+function showWinnerPopup(w) {
+  const r = ST?.room;
+  if (!r || !w) return;
+  const k = roomId + ':' + r.round;
+  if (winShown === k) return;
+  winShown = k;
+  $('#gWinM')?.remove();
+  const ans = ST.answers?.[w] || [];
+  const cells = (BOT.round === r.round && BOT.info) ? (BOT.info.scores.find(x => x.id === w)?.cells || []) : [];
+  const rows = CATS.map(([n, kk], i) => {
+    const t = ans[i], c = cells[i];
+    const mark = c ? (c.ok ? `<span class="gpts ok">+${c.pts}</span>` : '<span class="gpts no">0</span>') : '';
+    return `<div class="gwrow" style="--k:var(${kk})"><span class="gico sm">${ICO[n]}</span><b>${catName(n)}</b><span class="t${t ? '' : ' nada'}">${t ? esc(t) : '—'}</span>${mark}</div>`;
+  }).join('');
+  const m = document.createElement('div');
+  m.className = 'modal'; m.id = 'gWinM'; m.style.zIndex = 98;
+  m.innerHTML = `<div class="modal-card" style="text-align:center"><div style="display:grid;place-items:center">${av(w, 72)}</div>
+    <h2 style="margin:8px 0 2px">${nm(w)} ניצח/ה בסבב ${r.round}</h2><p class="ghint" style="margin:0 0 8px">התשובות לאות ${esc(r.letter)}</p>
+    <div class="gwinans">${rows}</div><button class="btn" id="gWinX" type="button" style="margin-top:12px">סגור</button></div>`;
+  document.body.append(m);
+  m.querySelector('#gWinX').onclick = () => m.remove();
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
 function confirmHalt() {
   if ($('#gHaltM')) return;
   const m = document.createElement('div');
@@ -203,6 +229,7 @@ function computeKey() {
 
 function build(key) {
   const r = ST?.room, host = r && r.host_id === me.id;
+  if (!key.startsWith('win')) $('#gWinM')?.remove();
   const set = (html, after) => {
     viewKey = key; clearInterval(cnt); cnt = null; G.innerHTML = html; if (after) after();
     // כפתור "מי במשחק": בכל מסך של משחק פתוח, גם למי שעוד לא הצטרף
@@ -345,7 +372,7 @@ function build(key) {
       ${w ? `<div style="display:grid;place-items:center;margin:8px 0">${av(w, 72)}</div>` : ''}
       <p class="ghint">המנצח הכללי יוכרז רק בסיום המשחק</p>${prizeBadge(r)}${botSummary}
       ${host ? `<button class="gbtn go" id="gNext" type="button">סבב הבא</button><button class="gbtn ghost" id="gEnd" type="button">סיום משחק</button>`
-             : `<p class="ghint">מחכים שהמנהל ימשיך</p><button class="gbtn ghost" id="gLeave" type="button">יציאה מהמשחק</button>`}</div>`, () => { sfx.ok(); confetti(50); window.scrollTo({ top: 0 }); });
+             : `<p class="ghint">מחכים שהמנהל ימשיך</p><button class="gbtn ghost" id="gLeave" type="button">יציאה מהמשחק</button>`}</div>`, () => { sfx.ok(); confetti(50); window.scrollTo({ top: 0 }); showWinnerPopup(w); });
     bind('#gNext', () => act('game_start_round', { p_room: roomId }));
     bind('#gLeave', () => act('game_leave', { p_room: roomId }));
     bind('#gEnd', async () => {
