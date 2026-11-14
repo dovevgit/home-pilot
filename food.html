@@ -238,7 +238,7 @@ function openForm(r) {
     <label>הוכן בתאריך</label><input id="fMade" type="date" value="${r.made_on || ''}">
     <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
     <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
-    <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${(profiles || []).map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+    <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${(profiles || []).filter(p => p.is_user !== false).map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
     <label>תמונות של האוכל, עד 3 (לא חובה)</label>
     <div class="note">כדאי לצלם גם את הכלי וגם את המנה. מסמנים איזו תמונה תופיע במקרר.</div>
     <img class="fprev hidden" id="fPrev" alt="">
