@@ -10,7 +10,7 @@ function main(){
 if(document.getElementById('dg'))return;
 var BASE='icons/dog/';
 /* דשא בתחתית הדף (מתחת לכלב ולמה שהוא משאיר: שכבה 1 מול 7 ו-8) */
-var gr=document.createElement('div'); gr.setAttribute('aria-hidden','true');
+var gr=document.createElement('div'); gr.setAttribute('aria-hidden','true'); gr.id='dgGrass';
 gr.style.cssText='position:relative;z-index:1;height:36px;pointer-events:none;margin-top:8px';
 var gim=document.createElement('div');
 gim.style.cssText='position:absolute;left:0;right:0;bottom:-20px;height:56px;background:url(icons/grass.webp) repeat-x center bottom/auto 56px';
