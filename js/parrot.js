@@ -13,7 +13,7 @@ st.textContent='#pk{position:absolute;left:0;bottom:100%;margin-bottom:-4px;widt
 +'#pk.r .sp{transform:scaleX(-1)}'
 +'#pk.fly{position:fixed;left:0;top:0;bottom:auto;margin:0;z-index:40}#pk.fly .hit{pointer-events:none}'
 +'#pk .hit{position:absolute;left:20%;right:14%;top:16%;bottom:0;pointer-events:auto;touch-action:none;cursor:pointer;-webkit-tap-highlight-color:transparent}'
-+'#pk.walk .sp{background-position-y:'+(-CH)+'px;animation:pkw .75s steps(6,end) infinite}'
++'#pk.walk .sp{background-position-y:'+(-CH)+'px;animation:pkw .72s steps(6,end) infinite}'
 +'@keyframes pkw{from{background-position-x:0}to{background-position-x:'+(-CW*6)+'px}}'
 +'@media print{#pk{display:none!important}}';
 document.head.appendChild(st);
@@ -35,7 +35,7 @@ function play(steps,done){
     var s=steps[i++]; frame(s[0],s[1]); setTimeout(go,s[2]);
   })();
 }
-function end(){ busy=false; eating=false; next(rnd(2500,7000)); }
+function end(){ busy=false; eating=false; next(rnd(800,2500)); }
 function chirp(){ busy=true; play([[0,1,230],[0,3,230],[0,1,230],[0,3,230],[0,0,200]],end); }
 function wink(){ busy=true; play([[0,2,1000]],end); }
 function preen(){ busy=true; play([[0,5,1500]],end); }
@@ -54,15 +54,25 @@ function stopWalk(){
     pk.classList.remove('walk'); setX(nx,0); stand();
   }
 }
-function walk(){
+function walkTo(tx,after){
   busy=true;
-  var min=6,max=Math.max(min+40,form.clientWidth-CW-6),tx=rnd(min,max);
-  if(Math.abs(tx-X)<50)tx=X<(min+max)/2?Math.min(max,X+90):Math.max(min,X-90);
-  var dist=Math.abs(tx-X); if(dist<10){ end(); return; }
-  var ms=dist/32*1000;
+  var dist=Math.abs(tx-X); if(dist<10){ after(); return; }
+  var ms=dist/36*1000;
   pk.classList.toggle('r',tx>X); sp.style.backgroundPosition='';
   pk.classList.add('walk'); void pk.offsetWidth; setX(tx,ms);
-  walkT=setTimeout(function(){ pk.classList.remove('walk'); stand(); end(); },ms+30);
+  walkT=setTimeout(function(){ pk.classList.remove('walk'); stand(); after(); },ms+30);
+}
+/* סיור: הולך לקצה השני של המסך, לפעמים עוצר באמצע הדרך, ושם מנוח */
+function patrol(){
+  var min=6,max=Math.max(min+40,form.clientWidth-CW-6),far=X<(min+max)/2?rnd(max-50,max):rnd(min,min+50);
+  var mid=Math.random()<.3, tx=mid?X+(far-X)*rnd(.35,.7):far;
+  walkTo(tx,function(){ busy=false; next(mid?rnd(300,900):rnd(600,1800)); });
+}
+/* מנוחה: עומד בשקט או מצייץ, קורץ ומנקה נוצות */
+function rest(){
+  busy=true; var r=Math.random();
+  if(r<.35){ stand(); var my=seq; setTimeout(function(){ if(my===seq&&!flying&&!eating)end(); },rnd(3500,7000)); }
+  else if(r<.6)chirp(); else if(r<.8)wink(); else preen();
 }
 /* טיסה: מהקצה של שדה הכתיבה, דרך כמה נקודות במסך, ונחיתה חזרה על הקצה */
 var FL=[2,3,2,3,4,3];
@@ -99,7 +109,7 @@ function fly(vx,vy){
 function tick(){
   if(document.visibilityState!=='visible'||!form.getClientRects().length||busy){ next(3000); return; }
   var r=Math.random();
-  if(r<.3)chirp(); else if(r<.45)wink(); else if(r<.6)preen(); else if(r<.85)walk(); else flap();
+  if(r<.08)flap(); else if(r<.30)rest(); else patrol();
 }
 function next(ms){ clearTimeout(T); T=setTimeout(tick,ms); }
 /* לחיצה = ציוץ וכנפיים, לחיצה ארוכה = אוכל */
@@ -126,5 +136,5 @@ form.addEventListener('submit',function(){
   var t=document.getElementById('text');
   if(t&&t.value.trim()&&!eating&&!flying){ stopWalk(); flap(); }
 },true);
-setX(X,0); stand(); next(rnd(2000,4000));
+setX(X,0); stand(); next(rnd(1500,3000));
 })();
