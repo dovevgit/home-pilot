@@ -350,6 +350,10 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .wxloc select{height:46px;font:inherit;border:2px solid var(--field);border-radius:14px;padding:0 10px;background:#fff}
 .wxsec{margin:12px 0 4px;font-weight:800;font-size:19px}
 .wxrow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.wxday{display:grid;grid-template-columns:1fr 34px auto 46px;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)}
+.wxday .wximg{display:block}
+.wxdn{font-weight:600}
+.wxdr{color:var(--text2);font-size:14px;text-align:end}
 .wxnote{font-size:14px;color:var(--text2);margin:8px 0 0}
 .wxsrc{font-size:12px;color:var(--text2);text-align:center;margin:10px 0 0;direction:ltr}
 .wxloc .error:empty{display:none}

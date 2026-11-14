@@ -52,9 +52,9 @@ async function searchPlaces(q) {
 
 async function loadData(loc, force = false) {
   const c = coordsOf(loc);
-  const ck = `wxCache:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
+  const ck = `wxCache2:${c.lat.toFixed(2)},${c.lon.toFixed(2)}`;
   if (!force) { try { const v = JSON.parse(sessionStorage.getItem(ck)); if (v && Date.now() - v.t < MAX_AGE) return v.d; } catch (_) {} }
-  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=kmh&timezone=auto&forecast_days=1`;
+  const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&wind_speed_unit=kmh&timezone=auto&forecast_days=6`;
   // לערים מהרשימה יש נקודה בים. לכל מקום אחר (חיפוש או "המיקום שלי") נקודת העיר היא על היבשה ולכן אין שם נתוני ים,
   // אז שואלים בבת אחת כמה נקודות סביבה (קרובות ואז רחוקות יותר) ולוקחים את הקרובה ביותר שיש בה ים
   const pts = [[c.mlat, c.mlon]];
@@ -131,6 +131,17 @@ const seaState = h => h == null ? '' : h < 0.5 ? 'ים רגוע' : h < 1 ? 'גל
 const n0 = x => x == null ? '–' : String(Math.round(x));
 const n1 = x => x == null ? '–' : Number(x).toFixed(1);
 const val = s => `<b dir="ltr">${s}</b>`;
+const daysHtml = day => {
+  const t = day.time || [], codes = day.weather_code || [];
+  if (t.length < 2 || !codes.length) return '';
+  const loc = uiLang() === 'en' ? 'en-US' : 'he-IL';
+  const rows = t.slice(1, 6).map((d, k) => {
+    const i = k + 1, name = i === 1 ? 'מחר' : new Date(d + 'T12:00:00').toLocaleDateString(loc, { weekday: 'long' });
+    const p = day.precipitation_probability_max?.[i];
+    return `<div class="wxday"><span class="wxdn">${name}</span>${wimg(wcode(codes[i])[0], 34)}<b dir="ltr">${n0(day.temperature_2m_min?.[i])}° - ${n0(day.temperature_2m_max?.[i])}°</b><span class="wxdr" dir="ltr">${p != null ? n0(p) + '%' : ''}</span></div>`;
+  }).join('');
+  return `<div class="wxsec">הימים הקרובים</div>${rows}`;
+};
 const row = (label, v) => `<div class="wxrow"><span>${label}</span>${v}</div>`;
 
 // חלון ים: רקע, גולשת וגלים נעים. כשהגלים נמוכים היא יושבת על הלוח, וכשהם גבוהים היא עומדת ורוכבת
@@ -223,6 +234,7 @@ export async function mountWeather(host) {
       ${row('מרגיש כמו', val(n0(cur.apparent_temperature) + ' °C'))}
       ${row('היום בין', val(`${n0(day.temperature_2m_min?.[0])} - ${n0(day.temperature_2m_max?.[0])} °C`))}
       ${day.precipitation_probability_max?.[0] != null ? row('סיכוי לגשם', val(n0(day.precipitation_probability_max[0]) + '%')) : ''}
+      ${daysHtml(day)}
       <div class="wxsec">רוח</div>
       ${row('מהירות הרוח', val(n0(cur.wind_speed_10m) + ' km/h'))}
       ${row('משבים', val(n0(cur.wind_gusts_10m) + ' km/h'))}
