@@ -231,6 +231,12 @@ function openForm(r) {
   r = r || { name: '', container: '', portions: '', made_on: today(), eat_by: '', notes: '', location_id: '' };
   $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 20)}</button>
     <h2 style="margin:0 0 6px">${r.id ? 'עריכת אוכל' : 'הוספת אוכל'}</h2>
+    <label>תמונות של האוכל, עד 3 (לא חובה)</label>
+    <div class="note">כדאי לצלם גם את הכלי וגם את המנה. מסמנים איזו תמונה תופיע במקרר.</div>
+    <img class="fprev hidden" id="fPrev" alt="">
+    <div class="fslots" id="fSlots"></div>
+    <div class="fpbtns" id="fSlotBtns"></div>
+    <input type="file" id="fFile" accept="image/*" class="hidden">
     <label>מה האוכל</label><input id="fName" maxlength="80" value="${esc(r.name)}" placeholder="למשל: מרק עוף">
     <label>איפה הוא נמצא</label><select id="fLoc"><option value="">ללא מקום (במגש)</option>${locs.filter(l => ZONES[l.name]).map(l => `<option value="${l.id}" ${l.id === r.location_id ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select>
     <label>באיזה מכל (לא חובה)</label><input id="fCont" maxlength="60" value="${esc(r.container || '')}" placeholder="למשל: קופסה כחולה גדולה">
@@ -239,16 +245,11 @@ function openForm(r) {
     <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
     <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
     <label>מי הכין (לא חובה)</label><select id="fCook"><option value="">לא צוין</option>${(profiles || []).filter(p => p.is_user !== false).map(p => `<option value="${p.id}" ${p.id === r.cook_id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
-    <label>תמונות של האוכל, עד 3 (לא חובה)</label>
-    <div class="note">כדאי לצלם גם את הכלי וגם את המנה. מסמנים איזו תמונה תופיע במקרר.</div>
-    <img class="fprev hidden" id="fPrev" alt="">
-    <div class="fslots" id="fSlots"></div>
-    <div class="fpbtns" id="fSlotBtns"></div>
-    <input type="file" id="fFile" accept="image/*" class="hidden">
     <button class="btn" id="fSave" type="button">שמירה</button>
     ${r.id ? '<div class="fsec" id="fRev"></div>' : ''}
     ${r.id ? `<button class="btn secondary" id="fFin" type="button">נגמר, להוריד מהמקרר</button><button class="btn secondary" id="fDel" type="button" style="color:#991B1B;border-color:#991B1B">מחיקה</button>` : ''}`;
   $('modal').classList.remove('hidden');
+  $('modalCard').scrollTop = 0;
   $('mx').onclick = close;
   // תמונות: עד 3, אחת מהן מסומנת כתמונה שמופיעה במקרר
   const origPaths = (r.photo_paths && r.photo_paths.length ? r.photo_paths : (r.photo_path ? [r.photo_path] : []));
