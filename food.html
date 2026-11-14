@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<script>try{if(localStorage.getItem('lang')==='en'){document.documentElement.dir='ltr';document.documentElement.lang='en'}}catch(e){}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הבית שלנו | מה יש לאכול</title>
+<meta name="theme-color" content="#0D6EFD">
+<meta name="color-scheme" content="only light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/home-favicon.png">
+<link rel="apple-touch-icon" href="icons/home-apple.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="js/splash.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.fwrap{max-width:520px;margin:0 auto}
+.ftray{background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(31,41,55,.15);padding:10px 12px;margin-bottom:10px;min-height:84px;transition:box-shadow .15s}
+.ftray h3{margin:0 0 6px;font-size:15px;color:#1F2937}
+.ftray .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ftray .hint{font-size:13px;color:#6B7280;margin:0}
+.fridge-box{position:relative;line-height:0;user-select:none;-webkit-user-select:none}
+.fridge-box img{width:100%;display:block;border-radius:14px;pointer-events:none}
+.fzone{position:absolute;display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;gap:4px;padding:3px 4px 4px;box-sizing:border-box;overflow:hidden;line-height:1.2;border-radius:8px}
+.fzone .zl{position:absolute;top:2px;inset-inline-start:6px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,40,.7);pointer-events:none}
+.fzone.over,.ftray.over{outline:3px dashed #0D6EFD;background:rgba(13,110,253,.22)}
+.fchip{display:inline-flex;align-items:center;gap:4px;max-width:46%;background:rgba(255,255,255,.95);border:2px solid #fff;border-radius:11px;padding:3px 8px;font-size:12px;font-weight:700;color:#1F2937;box-shadow:0 1px 3px rgba(0,0,0,.35);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;white-space:nowrap}
+.ftray .fchip{max-width:100%;font-size:14px;padding:5px 10px}
+.fchip span{overflow:hidden;text-overflow:ellipsis}
+.fchip.warn{border-color:#F59E0B}
+.fchip.old{border-color:#DC2626;background:#FEE2E2}
+.fchip.ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.92;transform:scale(1.12);max-width:none}
+.fchip.src{opacity:.3}
+#add{margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+  <div class="fwrap">
+    <div class="ftray" data-zone="__tray"><h3>אוכל מוכן</h3><div class="chips" id="tray"></div></div>
+    <div class="fridge-box" id="fridge"><img src="fridge-food.jpg" alt="המקרר" draggable="false"></div>
+    <button class="btn" id="add" type="button">הוספת אוכל חדש</button>
+  </div>
+</main>
+<div class="modal hidden" id="modal"><div class="modal-card" id="modalCard"></div></div>
+<script type="module">
+import { initPage, supabase, esc, icon, showToast, ilDate } from './js/common.js';
+const OWNER_FAMILY = '40f12cb3-3fa9-4f99-a7fd-ad5a10e00b80';
+const { me } = await initPage({ active: 'food', title: 'מה יש לאכול', back: 'index.html' });
+// בשלב הזה המסך פתוח רק לבית של הבעלים
+if (me?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new Promise(() => {}); }
+const $ = id => document.getElementById(id);
+let locs = [], items = [];
+// אזורי השחרור על תמונת המקרר (באחוזים מהתמונה): [שמאל, למעלה, רוחב, גובה]
+const ZONES = {
+  'מדף עליון': [14, 16.2, 72, 7.5],
+  'מדף אמצעי': [14, 24.3, 72, 9.7],
+  'מדף תחתון': [14, 34.5, 72, 9.5],
+  'מגירת ירקות': [14, 47.2, 72, 16.9],
+  'מקפיא': [5, 70.1, 90, 28]
+};
+const today = () => ilDate(new Date());
+function daysLeft(eatBy) {
+  if (!eatBy) return null;
+  return Math.round((new Date(eatBy + 'T00:00:00Z') - new Date(today() + 'T00:00:00Z')) / 86400000);
+}
+const fmt = d => { if (!d) return ''; const [, m, dd] = d.split('-'); return dd + '.' + m; };
+
+async function load() {
+  const [l, i] = await Promise.all([
+    supabase.from('food_locations').select('*').order('sort_order'),
+    supabase.from('food_items').select('*').eq('status', 'available').order('created_at')
+  ]);
+  if (l.error || i.error) { showToast('לא הצלחנו לטעון', true); return; }
+  locs = l.data || []; items = i.data || []; render();
+}
+
+function chip(r) {
+  const d = daysLeft(r.eat_by);
+  const cls = d !== null && d < 0 ? ' old' : d !== null && d <= 2 ? ' warn' : '';
+  return `<div class="fchip${cls}" data-id="${r.id}">🥘<span>${esc(r.name)}</span></div>`;
+}
+
+function render() {
+  const zoneOf = r => { const l = locs.find(x => x.id === r.location_id); return l && ZONES[l.name] ? l.name : null; };
+  $('tray').innerHTML = items.filter(r => !zoneOf(r)).map(chip).join('') || '<p class="hint">הכול כבר במקרר. הוסיפו אוכל חדש בכפתור שמתחת.</p>';
+  const box = $('fridge');
+  box.querySelectorAll('.fzone').forEach(z => z.remove());
+  for (const l of locs) {
+    const z = ZONES[l.name]; if (!z) continue;
+    const el = document.createElement('div');
+    el.className = 'fzone'; el.dataset.zone = l.id;
+    el.style.cssText = `left:${z[0]}%;top:${z[1]}%;width:${z[2]}%;height:${z[3]}%`;
+    el.innerHTML = `<span class="zl">${esc(l.name)}</span>` + items.filter(r => r.location_id === l.id).map(chip).join('');
+    box.append(el);
+  }
+}
+
+// גרירה באצבע או בעכבר. לחיצה קצרה בלי גרירה פותחת את פרטי האוכל
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  const c = e.target.closest('.fchip'); if (!c || c.classList.contains('ghost') || e.button) return;
+  drag = { id: c.dataset.id, el: c, x: e.clientX, y: e.clientY, on: false, ghost: null, zone: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.on) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 7) return;
+    drag.on = true;
+    const g = drag.el.cloneNode(true); g.classList.add('ghost'); document.body.append(g); drag.ghost = g;
+    drag.el.classList.add('src');
+  }
+  const g = drag.ghost; g.style.left = (e.clientX - g.offsetWidth / 2) + 'px'; g.style.top = (e.clientY - g.offsetHeight / 2) + 'px';
+  const z = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-zone]') || null;
+  if (z !== drag.zone) { drag.zone?.classList.remove('over'); z?.classList.add('over'); drag.zone = z; }
+  e.preventDefault();
+}, { passive: false });
+async function endDrag(cancel) {
+  const d = drag; drag = null; if (!d) return;
+  if (!d.on) { if (!cancel) openForm(items.find(x => x.id === d.id)); return; }
+  d.ghost.remove(); d.el.classList.remove('src'); d.zone?.classList.remove('over');
+  if (cancel || !d.zone) return;
+  const r = items.find(x => x.id === d.id); if (!r) return;
+  const target = d.zone.dataset.zone === '__tray' ? null : d.zone.dataset.zone;
+  if ((r.location_id || null) === target) return;
+  const prev = r.location_id; r.location_id = target; render();
+  const { error } = await supabase.from('food_items').update({ location_id: target, updated_at: new Date().toISOString() }).eq('id', r.id);
+  if (error) { r.location_id = prev; render(); showToast('ההעברה נכשלה', true); }
+}
+document.addEventListener('dragstart', e => { if (e.target.closest?.('.fchip')) e.preventDefault(); });
+document.addEventListener('pointerup', () => endDrag(false));
+document.addEventListener('pointercancel', () => endDrag(true));
+
+function close() { $('modal').classList.add('hidden'); }
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) close(); });
+
+function openForm(r) {
+  r = r || { name: '', container: '', portions: '', made_on: today(), eat_by: '', notes: '', location_id: '' };
+  $('modalCard').innerHTML = `<button type="button" class="modal-x" id="mx" aria-label="סגירה">${icon('x', 20)}</button>
+    <h2 style="margin:0 0 6px">${r.id ? 'עריכת אוכל' : 'הוספת אוכל'}</h2>
+    <label>מה האוכל</label><input id="fName" maxlength="80" value="${esc(r.name)}" placeholder="למשל: מרק עוף">
+    <label>איפה הוא נמצא</label><select id="fLoc"><option value="">ללא מקום (במגש)</option>${locs.filter(l => ZONES[l.name]).map(l => `<option value="${l.id}" ${l.id === r.location_id ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select>
+    <label>באיזה מכל (לא חובה)</label><input id="fCont" maxlength="60" value="${esc(r.container || '')}" placeholder="למשל: קופסה כחולה גדולה">
+    <label>כמה מנות (לא חובה)</label><input id="fPort" type="number" inputmode="numeric" min="1" max="50" value="${r.portions ?? ''}">
+    <label>הוכן בתאריך</label><input id="fMade" type="date" value="${r.made_on || ''}">
+    <label>לאכול עד (לא חובה)</label><input id="fEat" type="date" value="${r.eat_by || ''}">
+    <label>הערה (לא חובה)</label><input id="fNotes" maxlength="200" value="${esc(r.notes || '')}">
+    <button class="btn" id="fSave" type="button">שמירה</button>
+    ${r.id ? `<button class="btn secondary" id="fFin" type="button">נגמר, להוריד מהמקרר</button><button class="btn secondary" id="fDel" type="button" style="color:#991B1B;border-color:#991B1B">מחיקה</button>` : ''}`;
+  $('modal').classList.remove('hidden');
+  $('mx').onclick = close;
+  $('fSave').onclick = async () => {
+    const p = parseInt($('fPort').value);
+    const row = { name: $('fName').value.trim(), location_id: $('fLoc').value || null, container: $('fCont').value.trim() || null,
+      portions: Number.isFinite(p) && p > 0 ? p : null, made_on: $('fMade').value || null, eat_by: $('fEat').value || null, notes: $('fNotes').value.trim() || null };
+    if (!row.name) { showToast('חסר שם לאוכל', true); return; }
+    $('fSave').disabled = true;
+    const { error } = r.id ? await supabase.from('food_items').update({ ...row, updated_at: new Date().toISOString() }).eq('id', r.id) : await supabase.from('food_items').insert(row);
+    if (error) { showToast('השמירה נכשלה', true); $('fSave').disabled = false; return; }
+    close(); await load();
+  };
+  if (r.id) $('fFin').onclick = async () => {
+    const { error } = await supabase.from('food_items').update({ status: 'finished', updated_at: new Date().toISOString() }).eq('id', r.id);
+    if (error) { showToast('העדכון נכשל', true); return; }
+    close(); await load();
+  };
+  if (r.id) $('fDel').onclick = async () => {
+    if (!confirm('למחוק את "' + r.name + '"?')) return;
+    const { error } = await supabase.from('food_items').delete().eq('id', r.id);
+    if (error) { showToast('המחיקה נכשלה', true); return; }
+    close(); await load();
+  };
+}
+$('add').onclick = () => openForm();
+await load();
+</script>
+</body>
+</html>

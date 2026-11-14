@@ -1,7 +1,7 @@
 /* שפות: עברית היא ברירת המחדל ולא נוגעים בה. אנגלית פועלת רק בעמודים שמסומנים כמתורגמים,
    ורק כשהמשתמש בחר אותה. התרגום נעשה על הטקסט שמוצג (מילון מדויק + תבניות), כך שמה שלא תורגם נשאר בעברית. */
 const KEY = 'lang';
-export const TRANSLATED_PAGES = new Set(['aquarium', 'home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'google-setup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
+export const TRANSLATED_PAGES = new Set(['aquarium', 'home', 'tasks', 'task', 'report', 'calendar', 'history', 'shop', 'meds', 'requests', 'important', 'games', 'chat', 'fridge', 'food', 'outing', 'info', 'feedback', 'conflicts', 'admin', 'login', 'signup', 'google-setup', 'game', 'guide', 'status', 'bonus', 'ai', 'lessons']);
 
 export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
@@ -1253,7 +1253,19 @@ const D = {
   "רוח חזקה, כדאי שכבה נוספת": "Strong wind, add an extra layer",
   "שלג": "Snow",
   "שמיים בהירים": "Clear sky",
-  "אין נתוני ים למקום הזה.": "There is no sea data for this place."
+  "אין נתוני ים למקום הזה.": "There is no sea data for this place.",
+  // מסך "מה יש לאכול"
+  "מה יש לאכול": "What's to eat",
+  "אוכל מוכן": "Ready food", "הכול כבר במקרר. הוסיפו אוכל חדש בכפתור שמתחת.": "Everything is already in the fridge. Add new food with the button below.",
+  "הוספת אוכל חדש": "Add new food", "ללא מקום (במגש)": "No place (in the tray)", "נגמר, להוריד מהמקרר": "Finished, remove from the fridge", "ההעברה נכשלה": "Moving failed",
+  "הוספת אוכל למקרר": "Add food to the fridge",
+  "המקרר עוד ריק במערכת. לחצו על \"הוספת אוכל למקרר\".": "The fridge is still empty here. Tap \"Add food to the fridge\".",
+  "עריכת אוכל": "Edit food", "הוספת אוכל": "Add food", "מה האוכל": "What food is it", "איפה הוא נמצא": "Where is it",
+  "באיזה מכל (לא חובה)": "Which container (optional)", "כמה מנות (לא חובה)": "How many portions (optional)",
+  "הוכן בתאריך": "Made on", "לאכול עד (לא חובה)": "Eat by (optional)",
+  "למשל: מרק עוף": "For example: chicken soup", "למשל: קופסה כחולה גדולה": "For example: big blue box",
+  "חסר שם לאוכל": "The food needs a name", "ללא מקום": "No place", "לאכול היום": "Eat today",
+  "מדף עליון": "Top shelf", "מדף אמצעי": "Middle shelf", "מדף תחתון": "Bottom shelf", "מגירת ירקות": "Vegetable drawer", "דלת המקרר": "Fridge door", "מקפיא": "Freezer"
 };
 
 const WD = { 'ראשון': 'Sunday', 'שני': 'Monday', 'שלישי': 'Tuesday', 'רביעי': 'Wednesday', 'חמישי': 'Thursday', 'שישי': 'Friday', 'שבת': 'Saturday' };
@@ -1262,6 +1274,14 @@ const WL = { 'א': 'Sun', 'ב': 'Mon', 'ג': 'Tue', 'ד': 'Wed', 'ה': 'Thu', '�
 const STR = { 'ממתינה': 'Waiting', 'נלקחה': 'Taken', 'בוצעה': 'Done', 'נדחתה': 'Declined' };
 const dueEn = x => x === 'היום' ? 'Today' : x.replace(/^יום (\S+) (\d+)\.(\d+)$/, (_, d, a, b) => `${(WD[d] || d).slice(0, 3)} ${a}/${b}`);
 const P = [
+  [/^לאכול עד (\d+\.\d+) \(עוד (\d+) ימים\)$/, 'Eat by $1 ($2 days left)'],
+  [/^לאכול עד (\d+\.\d+)$/, 'Eat by $1'],
+  [/^עבר התאריך \((\d+\.\d+)\)$/, 'Past the date ($1)'],
+  [/^הוכן ב-(\d+\.\d+)$/, 'Made on $1'],
+  [/^(\d+) מנות$/, '$1 portions'],
+  [/^במכל: (.+)$/, 'In: $1'],
+  [/^לסמן ש"(.+)" נגמר\?$/, 'Mark "$1" as finished?'],
+  [/^למחוק את "(.+)"\?$/, 'Delete "$1"?'],
   [/^📍 מאתר (עיר|מיקום)\.\.\.$/, (m, w) => '📍 Finding ' + (w === 'עיר' ? 'city' : 'location') + '...'],
   [/^(.+): ערים מרכזיות$/, '$1: main cities'],
   [/^היי (.+), מה תרצי לדעת\?$/, 'Hi $1, what would you like to know?'],
