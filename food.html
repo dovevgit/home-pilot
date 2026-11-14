@@ -21,6 +21,7 @@
 .ftray h3{margin:0 0 6px;font-size:15px;color:#1F2937}
 .ftray .chips{display:flex;flex-wrap:wrap;gap:6px}
 .ftray .hint{font-size:13px;color:#6B7280;margin:0}
+.ftips{background:#FFF7E6;border:1px solid #F5D9A0;border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;line-height:1.5}.ftips b{display:block;margin-bottom:4px}
 .fridge-box{position:relative;margin-top:76px;line-height:0;user-select:none;-webkit-user-select:none}
 .fridge-box img{width:100%;display:block;border-radius:14px;pointer-events:none}
 .fzone{position:absolute;display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;gap:4px;padding:3px 4px 4px;box-sizing:border-box;overflow:hidden;line-height:1.2;border-radius:8px}
@@ -232,6 +233,23 @@ async function reviewsUi(r) {
     load(); await reviewsUi(r);
   };
 }
+const TIPS = [
+  [/מרק|ציר|מרקים/, ['לחמם בסיר על להבה קטנה ולערבב מדי פעם עד שמתחיל לבעבע.', 'להגיש חם בקערה, עם קרוטונים או לחם.']],
+  [/פסטה|ספגטי|מקרונ|לזניה|ניוקי|פנה/, ['לחמם במיקרוגל מכוסה, עם כף מים או רוטב, ולערבב באמצע.', 'להגיש חם, אפשר עם גבינה מגורדת.']],
+  [/אורז|קוסקוס|בורגול|פתיתים|כוסמת/, ['להוסיף כפית מים, לכסות ולחמם במיקרוגל כדקה וחצי.', 'לפורר עם מזלג לפני ההגשה.']],
+  [/עוף|שניצל|חזה|כרעיים|פרגית|הודו|כנפיים/, ['לחמם בתנור על 160 מעלות כ-15 דקות כדי שיישאר עסיסי.', 'מיקרוגל: לכסות ולחמם בהפסקות כדי שלא יתייבש.']],
+  [/קציצ|כדורי|קבב|המבורגר/, ['לחמם בסיר עם קצת רוטב או במיקרוגל מכוסה.', 'להגיש עם פירה, אורז או בפיתה.']],
+  [/בשר|סטייק|צלי|גולש|חזה בקר|אסאדו/, ['לחמם בתנור סגור עם קצת נוזל, על 150 מעלות.', 'לתת לו לנוח דקה לפני שחותכים.']],
+  [/דג|סלמון|נסיכה|אמנון|דניס/, ['לחמם בתנור על 150 מעלות, מכוסה, כ-10 דקות.', 'לא לחמם יותר מדי כדי שלא יתייבש.']],
+  [/פיצה|בורקס|פשטידה|קיש|מאפה|לחמניה/, ['לחמם בתנור על 180 מעלות כ-8 דקות כדי שיהיה פריך.', 'מיקרוגל גורם לבצק להתרכך, עדיף תנור.']],
+  [/סלט|ירקות חיים|חומוס|טחינה|סלטים/, ['מוציאים מהמקרר דקות לפני ההגשה, ולא מחממים.', 'לתבל או להוסיף שמן זית ולימון ממש לפני האכילה.']],
+  [/שקשוקה|מג'דרה|מגדרה|עדשים|שעועית|חמין|תבשיל|קדרה|פתיתים/, ['לחמם בסיר על להבה קטנה עם כף מים, ולערבב.', 'להגיש חם, אפשר עם לחם.']],
+  [/פירה|תפוחי אדמה|בטטה|צ'יפס|אפוי/, ['לחמם בתנור או בטוסטר אובן כדי שיהיה פריך מבחוץ.', 'פירה: במיקרוגל עם כף חלב וערבוב.']],
+  [/פנקייק|לביבות|וופל|חביתה|שמנת/, ['לחמם במחבת חמה או בטוסטר דקה-שתיים מכל צד.', 'להגיש מיד כשהוא חם.']]
+];
+function tipsFor(name) { const n = (name || '').trim(); if (!n) return null; const t = TIPS.find(x => x[0].test(n)); return t ? t[1] : null; }
+function tipsHtml(name) { const t = tipsFor(name); return t ? `<div class="ftips"><b>איך לחמם ולהגיש</b>${t.map(x => `<div>• ${esc(x)}</div>`).join('')}</div>` : ''; }
+
 function openForm(r) {
   markSeen(r);
   r = r || { name: '', container: '', portions: '', made_on: today(), eat_by: '', notes: '', location_id: '' };
@@ -243,7 +261,7 @@ function openForm(r) {
     <div class="fslots" id="fSlots"></div>
     <div class="fpbtns" id="fSlotBtns"></div>
     <input type="file" id="fFile" accept="image/*" class="hidden">
-    <label>מה האוכל</label><input id="fName" maxlength="80" value="${esc(r.name)}" placeholder="למשל: מרק עוף">
+    <label>מה האוכל</label><input id="fName" maxlength="80" value="${esc(r.name)}" placeholder="למשל: מרק עוף"><div id="fTips">${tipsHtml(r.name)}</div>
     <label>איפה הוא נמצא</label><select id="fLoc"><option value="">ללא מקום (במגש)</option>${locs.filter(l => ZONES[l.name]).map(l => `<option value="${l.id}" ${l.id === r.location_id ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select>
     <label>באיזה מכל (לא חובה)</label><input id="fCont" maxlength="60" value="${esc(r.container || '')}" placeholder="למשל: קופסה כחולה גדולה">
     <label>כמה מנות (לא חובה)</label><input id="fPort" type="number" inputmode="numeric" min="1" max="50" value="${r.portions ?? ''}">
@@ -258,6 +276,7 @@ function openForm(r) {
   $('modal').classList.remove('hidden');
   $('modalCard').scrollTop = 0;
   $('mx').onclick = close;
+  $('fName').addEventListener('input', () => { $('fTips').innerHTML = tipsHtml($('fName').value); });
   // תמונות: עד 3, אחת מהן מסומנת כתמונה שמופיעה במקרר
   const origPaths = (r.photo_paths && r.photo_paths.length ? r.photo_paths : (r.photo_path ? [r.photo_path] : []));
   let slots = origPaths.map(path => ({ path, url: urls[path] || null }));
