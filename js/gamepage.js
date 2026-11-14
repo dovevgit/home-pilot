@@ -68,6 +68,8 @@ function confetti(n = 90) {
 
 /* ---- מצב ---- */
 let STOPPED = null;
+let BOT = { round: -1, state: '', info: null };
+const botOff = () => { try { return localStorage.getItem('gameBotOff') === '1'; } catch (_) { return false; } };
 let roomId = GT ? gref : null, ST = null, off = 0, viewKey = '', cnt = null, mySub = false, subRound = -1, ticked = '', lastLow = -1, TIE = null, isGiver = false, errMsg = '', INV = null;
 const loadInv = async () => { try { const d = await rpc('game_invited', { p_room: roomId }); INV = new Set(d || []); } catch (_) { INV = new Set(); } viewKey = ''; render(); };
 const sNow = () => Date.now() + off;
@@ -138,6 +140,25 @@ function openWho() {
   document.body.append(m);
   m.querySelector('#gWhoX').onclick = () => m.remove();
   m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
+// הבוט (Claude) בודק את התשובות ובוחר מנצח לסבב. רץ אצל המארח בלבד; אם נכשל, המארח בוחר ידנית.
+async function runBot(round) {
+  try {
+    const { data, error } = await supabase.functions.invoke('game-judge', { body: { room: roomId } });
+    if (error) throw error;
+    if (!data?.winner_id) throw new Error('no_winner');
+    if (BOT.round !== round) return;
+    BOT.info = data;
+    await rpc('game_pick_winner', { p_room: roomId, p_winner: data.winner_id });
+    BOT.state = 'done';
+  } catch (e) {
+    if (BOT.round !== round) return;
+    let code = ''; try { code = (await e.context?.json?.())?.error || ''; } catch (_) {}
+    if (code === 'not_available') { try { localStorage.setItem('gameBotOff', '1'); } catch (_) {} BOT.state = 'off'; } else BOT.state = 'failed';
+    viewKey = '';
+  }
+  await refresh(true);
 }
 
 function confirmHalt() {
@@ -300,20 +321,28 @@ function build(key) {
   }
   if (key.startsWith('reveal')) {
     const elig2 = ST.players.filter(p => p.status === 'joined' && p.joined_round <= r.round);
+    const startBot = host && !GT && !botOff() && BOT.round !== r.round;
+    if (startBot) BOT = { round: r.round, state: 'thinking', info: null };
+    const thinking = host && BOT.round === r.round && BOT.state === 'thinking';
+    const failed = host && BOT.round === r.round && BOT.state === 'failed';
     set(`<div class="gcard"><div class="gbar"><div class="glet">${esc(r.letter)}</div><div><b style="font-size:20px">כל התשובות לאות ${esc(r.letter)}</b></div></div>
       <div class="gcats">${CATS.map(([n, k], i) => `<div class="gcat" style="--k:var(${k})"><h3><span class="gico sm">${ICO[n]}</span>${catName(n)}</h3>${elig2.map(p => { const t = (ST.answers?.[p.user_id] || [])[i]; return `<div class="gans">${av(p.user_id, 30)}${t ? `<span class="t">${esc(t)}</span>` : '<span class="t nada">לא ענה/תה</span>'}</div>`; }).join('')}</div>`).join('')}</div></div>
-      <div class="gcard"><p class="gwho" style="margin-bottom:6px">${host ? 'מי ניצח/ה בסבב?' : 'המנהל בוחר מנצח לסבב'}</p>
-      ${host ? `<div class="gpick">${elig2.map(p => `<button class="gpl" data-id="${p.user_id}" type="button">${av(p.user_id)}<span>${nm(p.user_id)}</span></button>`).join('')}</div>` : '<p class="ghint">מחכים להכרעה…</p>'}</div>`, () => {
+      <div class="gcard"><p class="gwho" style="margin-bottom:6px">${host ? (thinking ? 'הבוט בודק את התשובות…' : 'מי ניצח/ה בסבב?') : 'בוחרים מנצח לסבב'}</p>
+      ${host ? (thinking ? '<p class="ghint">זה לוקח כמה שניות</p>' : `${failed ? '<p class="ghint">הבוט לא הצליח לבדוק, בחרו מנצח ידנית</p>' : ''}<div class="gpick">${elig2.map(p => `<button class="gpl" data-id="${p.user_id}" type="button">${av(p.user_id)}<span>${nm(p.user_id)}</span></button>`).join('')}</div>`) : '<p class="ghint">מחכים להכרעה…</p>'}</div>`, () => {
       sfx.reveal(); window.scrollTo({ top: 0 });
     });
     document.querySelectorAll('.gpick .gpl').forEach(b => b.onclick = () => { sfx.ok(); act('game_pick_winner', { p_room: roomId, p_winner: b.dataset.id }); });
+    if (startBot) setTimeout(() => runBot(r.round), 0);
     return;
   }
   if (key.startsWith('win')) {
     const w = ST.round_winner;
+    const bi = host && BOT.round === r.round ? BOT.info : null;
+    const bmax = bi ? Math.max(1, ...bi.scores.map(x => x.total)) : 1;
+    const botSummary = bi ? `<div style="margin-top:10px"><p class="gsub" style="font-size:16px">ניקוד הסבב לפי הבוט</p><div class="gscore">${bi.scores.slice().sort((a, b) => b.total - a.total).map(x => `<div class="gsr">${av(x.id, 36)}<span style="width:48px">${nm(x.id)}</span><div class="bg"><i style="width:${x.total / bmax * 100}%"></i></div><span class="n">${x.total}</span></div>`).join('')}</div>${bi.tied ? '<p class="ghint">היה תיקו, הבוט הגריל מנצח מבין השווים</p>' : ''}</div>` : '';
     set(`${head()}<div class="gcard main"><div class="gcrown">⭐</div><p class="gwho">${w ? nm(w) + ' ניצח/ה בסבב ' + r.round : 'סבב ' + r.round + ' נגמר'}</p>
       ${w ? `<div style="display:grid;place-items:center;margin:8px 0">${av(w, 72)}</div>` : ''}
-      <p class="ghint">המנצח הכללי יוכרז רק בסיום המשחק</p>${prizeBadge(r)}
+      <p class="ghint">המנצח הכללי יוכרז רק בסיום המשחק</p>${prizeBadge(r)}${botSummary}
       ${host ? `<button class="gbtn go" id="gNext" type="button">סבב הבא</button><button class="gbtn ghost" id="gEnd" type="button">סיום משחק</button>`
              : `<p class="ghint">מחכים שהמנהל ימשיך</p><button class="gbtn ghost" id="gLeave" type="button">יציאה מהמשחק</button>`}</div>`, () => { sfx.ok(); confetti(50); window.scrollTo({ top: 0 }); });
     bind('#gNext', () => act('game_start_round', { p_room: roomId }));
