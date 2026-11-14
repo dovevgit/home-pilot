@@ -558,6 +558,7 @@ const D = {
   "כן, להפסיק": "Yes, stop it",
   "המשך משחק": "Keep playing",
   "המשחק הופסק": "The game was stopped",
+  "המשחק נסגר. אפשר לפתוח משחק חדש": "The game was closed. You can open a new one",
   "המשחק תיכף יתחיל": "The game is about to start",
   "כולם הצטרפו ✓": "Everyone has joined ✓",
   "לחיצה על שם שולחת הזמנה": "Tap a name to send an invitation",

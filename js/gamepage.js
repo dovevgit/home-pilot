@@ -21,6 +21,7 @@ const GT = guestToken();
 let me, profiles = [], gcall = null, gref = null;
 if (GT) { const x = await guestMode('game', GT); me = x.me; gcall = x.call; gref = x.ref; }
 else { const x = await initPage({ active: 'game', title: 'חי צומח דומם', back: 'index.html' }); me = x.me; profiles = x.profiles; }
+const isParent = !GT && me?.role === 'admin';
 const byId = Object.fromEntries(profiles.map(p => [p.id, p]));
 if (GT) byId[me.id] = me;
 // שמות של שחקנים שאינם ברשימה הרגילה (אורחים)
@@ -205,7 +206,7 @@ function build(key) {
   const set = (html, after) => {
     viewKey = key; clearInterval(cnt); cnt = null; G.innerHTML = html; if (after) after();
     // כפתור "מי במשחק": בכל מסך של משחק פתוח, גם למי שעוד לא הצטרף
-    if (!GT && r && r.host_id === me.id && ['wait', 'play', 'reveal', 'win'].includes(r.status) && !$('#gHalt')) {
+    if (!GT && r && (r.host_id === me.id ? ['wait', 'play', 'reveal', 'win'].includes(r.status) : isParent) && !$('#gHalt')) {
       G.insertAdjacentHTML('beforeend', '<button class="gbtn ghost" id="gHalt" type="button" style="margin-top:4px">הפסק משחק</button>');
       bind('#gHalt', confirmHalt);
     }
@@ -220,7 +221,7 @@ function build(key) {
   const bind = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
 
   if (key.startsWith('none')) {
-    const stoppedCard = STOPPED ? `<div class="gcard main"><div class="gcrown">✋</div><p class="gwho">המשחק הופסק</p><p class="ghint">${nm(STOPPED)} הפסיק/ה את המשחק</p></div>` : '';
+    const stoppedCard = STOPPED ? `<div class="gcard main"><div class="gcrown">✋</div><p class="gwho">המשחק הופסק</p><p class="ghint">המשחק נסגר. אפשר לפתוח משחק חדש</p></div>` : '';
     if (GT) { set(STOPPED ? `${head()}${stoppedCard}` : `${head()}<div class="gcard main"><p class="gsub">המשחק הסתיים</p><p class="ghint">תודה ששיחקת!</p></div>`); return; }
     set(`${head()}${stoppedCard}<div class="gcard main"><p class="gsub">אין משחק פתוח עכשיו</p>
       ${isGiver ? `<div class="gprize"><label for="gPrize">פרס למנצח הכללי (בנקודות)</label><input id="gPrize" type="number" inputmode="numeric" min="0" max="1000" placeholder="ריק = משחק בלי פרס"></div>` : ''}
