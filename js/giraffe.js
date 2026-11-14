@@ -2,10 +2,10 @@
 'use strict';
 /* הג'ירפה: נכנסת מצד אחד של הדשא במסך הבית, צועדת לאט עד הצד השני ויוצאת, מדי פעם.
    גבוהה כמו מרחק הקפיצה של החתול: הראש מגיע עד שדה "כתבו הודעה למשפחה".
-   לא נוגעת בלחיצות. רצה רק כשהדשא על המסך. */
+   לחיצה עליה = היא רצה ובורחת. רצה רק כשהדשא על המסך. */
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 var N=6, RATIO=240/300, SPEED=44, DEF_H=140;
-var gr=null,wrap=null,box=null,anim=null,timer=0;
+var gr=null,wrap=null,box=null,anim=null,timer=0,img=null,fleeing=false;
 function find(n){ gr=document.getElementById('dgGrass'); if(gr)build(); else if(n<30)setTimeout(function(){find(n+1)},300); }
 function build(){
   var st=document.createElement('style');
@@ -14,14 +14,24 @@ function build(){
   +'#gf .gfi{position:absolute;inset:0;overflow:hidden}#gf.r .gfi{transform:scaleX(-1)}'
   +'#gf img{position:absolute;left:0;top:0;height:100%;width:'+(N*100)+'%;max-width:none;-webkit-user-drag:none;animation:gfstep .95s steps('+N+',end) infinite}'
   +'@keyframes gfstep{from{transform:translateX(0)}to{transform:translateX(-100%)}}'
+  +'#gf .gh{position:absolute;left:18%;right:18%;top:12%;bottom:0;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}'
   +'@media print{#gfw{display:none!important}}';
   document.head.appendChild(st);
   wrap=document.createElement('div'); wrap.id='gfw'; wrap.setAttribute('aria-hidden','true');
   box=document.createElement('div'); box.id='gf';
-  box.innerHTML='<div class="gfi"><img alt="" draggable="false" src="icons/giraffe/walk.webp"></div>';
+  box.innerHTML='<div class="gfi"><img alt="" draggable="false" src="icons/giraffe/walk.webp"></div><div class="gh"></div>';
+  img=box.querySelector('img');
+  box.querySelector('.gh').addEventListener('pointerdown',flee);
   wrap.appendChild(box); gr.appendChild(wrap);
   document.addEventListener('visibilitychange',function(){ if(!anim)return; if(document.visibilityState==='visible')anim.play(); else anim.pause(); });
   next(5000+Math.random()*5000);
+}
+/* לחיצה על הג'ירפה: היא רצה ובורחת לאותו כיוון שהיא הולכת, מהר פי 5 */
+function flee(e){
+  if(e){ e.stopPropagation(); }
+  if(!anim||fleeing)return; fleeing=true;
+  anim.playbackRate=5; img.style.animationDuration='.2s';
+  if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}
 }
 /* גובה הג'ירפה: מהדשא עד קצה העליון של שדה ההודעה (כמו קפיצת החתול). בלי שדה: גובה רגיל */
 function height(){
@@ -42,7 +52,7 @@ function go(){
   var xs=fromLeft?-W-12:GW+12,xe=fromLeft?GW+12:-W-12;
   box.style.display='block';
   anim=box.animate([{transform:'translateX('+xs+'px)'},{transform:'translateX('+xe+'px)'}],{duration:Math.abs(xe-xs)/SPEED*1000,easing:'linear',fill:'forwards'});
-  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; next(25000+Math.random()*35000); };
+  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; fleeing=false; img.style.animationDuration=''; next(25000+Math.random()*35000); };
 }
 find(0);
 })();
