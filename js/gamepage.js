@@ -111,7 +111,7 @@ function computeKey() {
   if (ST.room.status === 'final') TIE = null;
   const r = ST.room, m = ST.me;
   if (TIE && r.host_id === me.id) return 'tie';
-  if (!m || m.status === 'left' || m.status === 'declined') return 'out:' + (m?.status || 'none');
+  if (!m || m.status === 'left' || m.status === 'declined') return 'out:' + (m?.status || 'none') + ':' + (r.status === 'final');
   if (m.status === 'pending') return 'pending';
   const elig = m.joined_round <= r.round;
   const sub = (mySub && subRound === r.round) || (ST.submitted || []).includes(me.id);
@@ -160,6 +160,7 @@ function build(key) {
   }
   if (key.startsWith('out')) {
     const st = ST.me?.status;
+    if (r.status === 'final') { set(`${head()}<div class="gcard main"><p class="gsub">המשחק הסתיים</p><p class="ghint">אפשר לפתוח משחק חדש אחרי שהמארח יסגור אותו</p></div>`); return; }
     set(`${head()}<div class="gcard main"><p class="gsub">${nm(r.host_id)} פתח/ה משחק חי צומח דומם</p>
       ${st === 'declined' ? '<p class="ghint">המנהל לא אישר את ההצטרפות</p>' : ''}${prizeBadge(r)}
       <button class="gbtn go" id="gJoin" type="button">${st === 'declined' ? 'בקש להצטרף שוב' : 'הצטרף למשחק'}</button></div>`);

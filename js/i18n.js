@@ -541,6 +541,7 @@ const D = {
   "הפעולה נכשלה": "The action failed",
   "הזמן אורח בקישור": "Invite a guest by link",
   "המשחק הסתיים": "The game is over",
+  "אפשר לפתוח משחק חדש אחרי שהמארח יסגור אותו": "You can open a new game after the host closes this one",
   "תודה ששיחקת!": "Thanks for playing!",
   "אין משחק פתוח עכשיו": "No open game right now",
   "פרס למנצח הכללי (בנקודות)": "Prize for the overall winner (points)",
