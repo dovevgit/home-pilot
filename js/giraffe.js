@@ -5,7 +5,7 @@
    לחיצה עליה = היא רצה ובורחת. רצה רק כשהדשא על המסך. */
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 var N=6, RATIO=240/300, SPEED=44, DEF_H=140;
-var gr=null,wrap=null,box=null,anim=null,timer=0,img=null,fleeing=false;
+var gr=null,wrap=null,box=null,anim=null,timer=0,img=null,fleeing=false,retSide=null,curLeft=false;
 function find(n){ gr=document.getElementById('dgGrass'); if(gr)build(); else if(n<30)setTimeout(function(){find(n+1)},300); }
 function build(){
   var st=document.createElement('style');
@@ -47,13 +47,13 @@ function onScreen(){ var r=gr.getBoundingClientRect(); return document.visibilit
 function next(ms){ clearTimeout(timer); timer=setTimeout(go,ms); }
 function go(){
   if(!onScreen()){ next(5000); return; }
-  var H=height(),W=Math.round(H*RATIO),GW=gr.clientWidth,fromLeft=Math.random()<.5;
+  var H=height(),W=Math.round(H*RATIO),GW=gr.clientWidth,fromLeft=retSide===null?Math.random()<.5:retSide; retSide=null; curLeft=fromLeft;
   box.style.width=W+'px'; box.style.height=H+'px';
   box.classList.toggle('r',fromLeft); /* הדמות מביטה שמאלה; בהליכה ימינה הופכים אותה */
   var xs=fromLeft?-W-12:GW+12,xe=fromLeft?GW+12:-W-12;
   box.style.display='block';
   anim=box.animate([{transform:'translateX('+xs+'px)'},{transform:'translateX('+xe+'px)'}],{duration:Math.abs(xe-xs)/SPEED*1000,easing:'linear',fill:'forwards'});
-  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; fleeing=false; box.classList.remove('fl'); img.style.animationDuration=''; next(25000+Math.random()*35000); };
+  anim.onfinish=anim.oncancel=function(){ box.style.display='none'; anim=null; var fl=fleeing; fleeing=false; box.classList.remove('fl'); img.style.animationDuration=''; if(fl){ retSide=!curLeft; next(8000); } else next(25000+Math.random()*35000); };
 }
 find(0);
 })();
