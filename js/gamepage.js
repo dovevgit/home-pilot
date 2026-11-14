@@ -67,6 +67,7 @@ function confetti(n = 90) {
 }
 
 /* ---- מצב ---- */
+let STOPPED = null;
 let roomId = GT ? gref : null, ST = null, off = 0, viewKey = '', cnt = null, mySub = false, subRound = -1, ticked = '', lastLow = -1, TIE = null, isGiver = false, errMsg = '', INV = null;
 const loadInv = async () => { try { const d = await rpc('game_invited', { p_room: roomId }); INV = new Set(d || []); } catch (_) { INV = new Set(); } viewKey = ''; render(); };
 const sNow = () => Date.now() + off;
@@ -91,7 +92,11 @@ async function refresh(force) {
     if (!roomId && !GT) { const cur = await rpc('game_current'); roomId = cur?.room_id || null; }
     if (roomId) {
       const st = await rpc('game_state', { p_room: roomId });
-      if (!st || st.room.status === 'closed') { roomId = null; ST = null; } else { off = st.now - Date.now(); ST = st; learnNames(st); }
+      if (!st || st.room.status === 'closed') {
+        // המארח הפסיק משחק שהיה באמצע (לא סיום רגיל): מי שהיה בפנים רואה "המשחק הופסק"
+        if (ST && ST.room.status !== 'final' && ST.room.host_id !== me.id && ST.me?.status === 'joined') { STOPPED = ST.room.host_id; learnNames(ST); }
+        roomId = null; ST = null;
+      } else { STOPPED = null; off = st.now - Date.now(); ST = st; learnNames(st); }
     } else ST = null;
   } catch (_) { /* נשארים עם המצב האחרון */ }
   render();
@@ -100,14 +105,64 @@ async function refresh(force) {
 const playersRow = (list, tags = {}) => `<div class="gplayers">${list.map(p => `<div class="gpl">${av(p.user_id)}<span>${nm(p.user_id)}</span>${tags[p.user_id] || ''}</div>`).join('')}</div>`;
 const prizeBadge = r => r.prize > 0 ? `<div style="text-align:center"><span class="gpbadge">פרס למנצח הכללי: ${r.prize} נקודות</span></div>` : '';
 
+/* ---- מי במשחק ומי מחכה בחוץ ---- */
+function whoHtml() {
+  const r = ST?.room; if (!r) return '';
+  const pl = (ST.players || []).filter(p => p.status === 'joined' || p.status === 'pending');
+  const inIds = new Set(pl.map(p => p.user_id));
+  const tags = {};
+  pl.forEach(p => {
+    tags[p.user_id] = p.status === 'pending' ? '<span class="gtag2 wait">ממתין/ה לאישור</span>'
+      : p.user_id === r.host_id ? '<span class="gtag2 mgr">מנהל/ת</span>'
+      : (r.status !== 'lobby' && p.joined_round > r.round) ? '<span class="gtag2">נכנס/ה בסבב הבא</span>'
+      : p.guest ? '<span class="gtag2">אורח/ת</span>' : '';
+  });
+  const out = GT ? null : profiles.filter(p => p.is_user !== false && p.active !== false && !inIds.has(p.id));
+  return `<h2 style="margin:0 0 4px">מי במשחק</h2>
+    <h3 class="gfh">במשחק (${pl.length})</h3>${playersRow(pl, tags)}
+    ${out ? `<h3 class="gfh">מחכים בחוץ (${out.length})</h3>${out.length
+      ? `<div class="gplayers">${out.map(p => `<div class="gpl">${avatar(p, 58)}<span>${esc(p.name)}</span></div>`).join('')}</div>`
+      : '<p class="ghint">כל המשפחה במשחק</p>'}` : ''}`;
+}
+function refreshWho() {
+  const c = $('#gWhoC');
+  if (!c) return;
+  if (!ST) { $('#gWhoM')?.remove(); return; }
+  c.innerHTML = whoHtml();
+}
+function openWho() {
+  if (!ST || $('#gWhoM')) return;
+  const m = document.createElement('div');
+  m.className = 'modal'; m.id = 'gWhoM'; m.style.zIndex = 99;
+  m.innerHTML = `<div class="modal-card" style="text-align:center"><div id="gWhoC">${whoHtml()}</div><button class="btn secondary" id="gWhoX" type="button" style="margin-top:12px">סגור</button></div>`;
+  document.body.append(m);
+  m.querySelector('#gWhoX').onclick = () => m.remove();
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
+function confirmHalt() {
+  if ($('#gHaltM')) return;
+  const m = document.createElement('div');
+  m.className = 'modal'; m.id = 'gHaltM'; m.style.zIndex = 99;
+  m.innerHTML = `<div class="modal-card" style="text-align:center"><h2 style="margin:0 0 6px">להפסיק את המשחק?</h2><p style="margin:0 0 10px">כל המשתתפים יראו שהמשחק הופסק.</p><button class="btn" id="gHaltYes" type="button">כן, להפסיק</button><button class="btn secondary" id="gHaltNo" type="button" style="margin-top:8px">המשך משחק</button></div>`;
+  document.body.append(m);
+  m.querySelector('#gHaltNo').onclick = () => m.remove();
+  m.querySelector('#gHaltYes').onclick = async () => {
+    m.remove();
+    try { await rpc('game_close', { p_room: roomId }); } catch (e) { showToast(errText(e), true); }
+    await refresh(true);
+  };
+}
+
 function render() {
   const key = computeKey();
   if (key !== viewKey) build(key);
   liveUpdate();
+  refreshWho();
 }
 
 function computeKey() {
-  if (!ST) return 'none:' + isGiver;
+  if (!ST) return 'none:' + isGiver + ':' + (STOPPED || '');
   if (ST.room.status === 'final') TIE = null;
   const r = ST.room, m = ST.me;
   if (TIE && r.host_id === me.id) return 'tie';
@@ -128,6 +183,13 @@ function build(key) {
   const r = ST?.room, host = r && r.host_id === me.id;
   const set = (html, after) => {
     viewKey = key; clearInterval(cnt); cnt = null; G.innerHTML = html; if (after) after();
+    // כפתור "מי במשחק": בכל מסך של משחק פתוח, גם למי שעוד לא הצטרף
+    if (!GT && r && r.host_id === me.id && ['wait', 'play', 'reveal', 'win'].includes(r.status) && !$('#gHalt')) {
+      G.insertAdjacentHTML('beforeend', '<button class="gbtn ghost" id="gHalt" type="button" style="margin-top:4px">הפסק משחק</button>');
+      bind('#gHalt', confirmHalt);
+    }
+    if (r && !$('#gWho')) { document.body.insertAdjacentHTML('beforeend', '<button class="gwhobtn" id="gWho" type="button">מי במשחק</button>'); $('#gWho').onclick = openWho; }
+    if (!r) $('#gWho')?.remove();
     // כפתור הזמנת אורח זמין בכל מסך של משחק פתוח, לבני משפחה שמשתתפים בו
     if (!GT && r && ST?.me?.status === 'joined' && !['final'].includes(r.status) && !$('#gGuest')) {
       G.insertAdjacentHTML('beforeend', '<button class="gbtn ghost" id="gGuest" type="button" style="margin-top:4px">הזמן אורח בקישור</button>');
@@ -137,8 +199,9 @@ function build(key) {
   const bind = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
 
   if (key.startsWith('none')) {
-    if (GT) { set(`${head()}<div class="gcard main"><p class="gsub">המשחק הסתיים</p><p class="ghint">תודה ששיחקת!</p></div>`); return; }
-    set(`${head()}<div class="gcard main"><p class="gsub">אין משחק פתוח עכשיו</p>
+    const stoppedCard = STOPPED ? `<div class="gcard main"><div class="gcrown">✋</div><p class="gwho">המשחק הופסק</p><p class="ghint">${nm(STOPPED)} הפסיק/ה את המשחק</p></div>` : '';
+    if (GT) { set(STOPPED ? `${head()}${stoppedCard}` : `${head()}<div class="gcard main"><p class="gsub">המשחק הסתיים</p><p class="ghint">תודה ששיחקת!</p></div>`); return; }
+    set(`${head()}${stoppedCard}<div class="gcard main"><p class="gsub">אין משחק פתוח עכשיו</p>
       ${isGiver ? `<div class="gprize"><label for="gPrize">פרס למנצח הכללי (בנקודות)</label><input id="gPrize" type="number" inputmode="numeric" min="0" max="1000" placeholder="ריק = משחק בלי פרס"></div>` : ''}
       <p class="ghint">פותחים משחק, ואז בוחרים את מי להזמין: בני משפחה או אורח בקישור</p>
       <button class="gbtn go" id="gOpen" type="button">פתח משחק</button>${getLang() === 'en' ? '<button class="gbtn go" id="gOpenEn" type="button" style="margin-top:8px">Open an English game (A–Z)</button>' : ''}</div>`);
@@ -178,13 +241,15 @@ function build(key) {
     const joined = ST.players.filter(p => p.status === 'joined'), pend = ST.players.filter(p => p.status === 'pending');
     const tags = {}; joined.forEach(p => { tags[p.user_id] = p.user_id === r.host_id ? '<span class="gtag2 mgr">מנהל/ת</span>' : '<span class="gtag2">מחובר/ת</span>'; });
     pend.forEach(p => { tags[p.user_id] = '<span class="gtag2 wait">ממתין/ה לאישור</span>'; });
-    set(`${head()}<div class="gcard main"><p class="gsub">${nm(r.host_id)} פתח/ה משחק. מי שהוזמן ולוחץ "הצטרף" נכנס</p>
+    const outside = profiles.filter(p => p.is_user !== false && p.active !== false && p.id !== me.id && !joined.some(x => x.user_id === p.id));
+    set(`${head()}<div class="gcard main"><p class="gsub">${host ? 'מי שהצטרף מופיע כאן. כשכולם בפנים, לוחצים "התחל משחק"' : `הצטרפת למשחק של ${nm(r.host_id)}`}</p>
+      <h3 class="gfh">הצטרפו (${joined.length})</h3>
       ${playersRow(joined.concat(pend), tags)}${prizeBadge(r)}
-      ${host && !GT ? `<h3 class="gfh">הזמן מהמשפחה</h3><div class="gfams">${profiles.filter(p => p.is_user !== false && p.active !== false && p.id !== me.id).map(p => {
-        const inG = joined.some(x => x.user_id === p.id), inv = INV && INV.has(p.id);
-        return `<button class="gfam" data-id="${p.id}" type="button" ${inG || inv ? 'disabled' : ''}>${avatar(p, 46)}<span>${esc(p.name)}</span><small>${inG ? 'במשחק' : inv ? 'הוזמן/ה ✓' : 'הזמן'}</small></button>`; }).join('')}</div>` : ''}
-      ${host ? `<button class="gbtn go" id="gStart" type="button">התחל משחק</button><button class="gbtn ghost" id="gClose" type="button">סגירת המשחק</button>`
-             : `<p class="ghint">מחכים שהמנהל יתחיל</p><button class="gbtn ghost" id="gLeave" type="button">יציאה מהמשחק</button>`}</div>`);
+      ${host && !GT ? (outside.length ? `<h3 class="gfh">מחכים בחוץ (${outside.length})</h3><p class="ghint">לחיצה על שם שולחת הזמנה</p><div class="gfams">${outside.map(p => {
+        const inv = INV && INV.has(p.id);
+        return `<button class="gfam" data-id="${p.id}" type="button" ${inv ? 'disabled' : ''}>${avatar(p, 46)}<span>${esc(p.name)}</span><small>${inv ? 'הוזמן/ה ✓' : 'הזמן'}</small></button>`; }).join('')}</div>` : '<p class="ghint">כולם הצטרפו ✓</p>') : ''}
+      ${host ? `<button class="gbtn go" id="gStart" type="button">התחל משחק</button><button class="gbtn ghost" id="gClose" type="button">הפסק משחק</button>`
+             : `<p class="gwho" style="font-size:22px">המשחק תיכף יתחיל</p><p class="ghint">מחכים שהמנהל יתחיל</p><button class="gbtn ghost" id="gLeave" type="button">יציאה מהמשחק</button>`}</div>`);
     if (host && !GT && INV === null) loadInv();
     document.querySelectorAll('.gfam:not([disabled])').forEach(b => b.onclick = async () => {
       b.disabled = true;
@@ -192,7 +257,7 @@ function build(key) {
       catch (e) { showToast(errText(e), true); b.disabled = false; }
     });
     bind('#gStart', () => { sfx.start(); act('game_start_round', { p_room: roomId }); });
-    bind('#gClose', () => act('game_close', { p_room: roomId }));
+    bind('#gClose', confirmHalt);
     bind('#gLeave', () => act('game_leave', { p_room: roomId }));
     return;
   }
