@@ -77,8 +77,8 @@ if (me?.family_id !== OWNER_FAMILY) { location.replace('index.html'); await new 
 const $ = id => document.getElementById(id);
 let locs = [], items = [], seen = new Set(), avg = {};
 // במסך הזה קוראים להורים אמא ואבא
-const dn = n => ({ 'ויקי': 'אמא', 'דובב': 'אבא' })[n] || n;
-const ORDER = ['ויקי', 'דובב', 'נועה', 'מאיה'];
+const dn = n => ({ 'ויקי': 'אמא', 'דובב': 'אבא' })[n] || n; // גם שמות ישנים וגם החדשים
+const ORDER = ['אמא', 'ויקי', 'אבא', 'דובב', 'נועה', 'מאיה'];
 const cooks = () => (profiles || []).filter(p => p.is_user !== false).sort((a, b) => { const x = ORDER.indexOf(a.name), y = ORDER.indexOf(b.name); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
 const nameOf = id => dn((profiles || []).find(p => p.id === id)?.name) || 'מישהו';
 const starsTxt = n => '★'.repeat(n) + '☆'.repeat(5 - n);
