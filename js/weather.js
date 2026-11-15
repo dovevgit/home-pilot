@@ -150,7 +150,7 @@ function seaScene(sea, phase) {
   const sp = ride ? Math.max(1.2, Math.min(2.4, 2.8 - h)) : 4;
   const wv = Math.max(7, 16 - h * 6);
   const girl = ride
-    ? `<span class="wxgirl"><img class="ba" src="icons/weather/surf1.webp" alt=""><img class="bb" src="icons/weather/surf2.webp" alt=""></span>`
+    ? `<span class="wxgirl wxanim">${[1,2,3,4,5,6,7,8].map(n => `<img class="f f${n}" src="icons/weather/surfm${n}.webp" alt="">`).join('')}</span>`
     : `<span class="wxgirl wxsit"><img src="icons/weather/sit.webp" alt=""></span>`;
   return `<div class="wxsea ws-${phase}" style="--sp:${sp}s;--wv:${wv}s" aria-hidden="true">${girl}<span class="wxwaves"></span></div>`;
 }

@@ -402,7 +402,7 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 @keyframes wxflash{0%,90%,100%{opacity:0}92%{opacity:.55}94%{opacity:.05}96%{opacity:.4}98%{opacity:0}}
 @keyframes wxtwinkle{from{opacity:.4}to{opacity:1}}
 @keyframes wxpulse{0%,100%{transform:scale(.82);opacity:.6}35%{transform:scale(1.2);opacity:1}60%{transform:scale(1.02);opacity:.78}}
-@media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxwaves,.wxsky,.wxsky::before,.wxglow .wxemo::after,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}}
+@media (prefers-reduced-motion:reduce){.s-dawn,.s-dusk,.wxgirl,.wxgirl .ba,.wxgirl .bb,.wxanim .f,.wxwaves,.wxsky,.wxsky::before,.wxglow .wxemo::after,.s-storm::after,.s-night::after,.wxbird,.wxbob,.wxbob .ba,.wxbob .bb,.wxglow .wxemo::before{animation:none}.wxbird{left:var(--x)}.wxanim .f1{opacity:1}}
 #wxmodal .modal-x{z-index:5;width:44px;height:44px;background:#fff;color:#111827;border:1.5px solid rgba(17,24,39,.25);box-shadow:0 2px 8px rgba(0,0,0,.35)}
 /* הדגשה שהכפתור נלחץ */
 .wxcard,.wxloc .btn,.wxfind .btn,.wxresb,#wxmodal .modal-x{transition:transform .12s,filter .12s,box-shadow .12s}
@@ -425,6 +425,18 @@ header.bar.hasBubEn h1{inset-inline-end:116px}
 .wxgirl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 .wxgirl .bb{opacity:0;animation:wxflapB calc(var(--sp)*.8) steps(1,end) infinite}
 .wxgirl .ba{animation:wxflapA calc(var(--sp)*.8) steps(1,end) infinite}
+/* גולשת מונפשת: 8 תנוחות ברצף, מהירות לפי גובה הגלים */
+.wxanim{width:164px;margin-left:-82px}
+.wxanim .f{opacity:0;animation:wxframe calc(var(--sp)*1.2) steps(1,end) infinite}
+.wxanim .f1{animation-delay:0s}
+.wxanim .f2{animation-delay:calc(var(--sp)*.15)}
+.wxanim .f3{animation-delay:calc(var(--sp)*.3)}
+.wxanim .f4{animation-delay:calc(var(--sp)*.45)}
+.wxanim .f5{animation-delay:calc(var(--sp)*.6)}
+.wxanim .f6{animation-delay:calc(var(--sp)*.75)}
+.wxanim .f7{animation-delay:calc(var(--sp)*.9)}
+.wxanim .f8{animation-delay:calc(var(--sp)*1.05)}
+@keyframes wxframe{0%{opacity:1}12.5%{opacity:0}100%{opacity:0}}
 .wxsit{bottom:40px;animation-name:wxsit}
 .wxwaves{position:absolute;left:0;bottom:-2px;width:200%;aspect-ratio:2400/395;z-index:2;background:url(../icons/weather/sea-waves.webp) 0 100%/50% 100% repeat-x;animation:wxscroll var(--wv) linear infinite}
 @keyframes wxscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
