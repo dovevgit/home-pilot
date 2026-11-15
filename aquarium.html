@@ -86,6 +86,32 @@ function spawnNew(){const present=new Set(fish.map(f=>f.k));let pool=SPEC.map(s=
 // creatures
 // creatures
 const jelly=mkObj(A.jelly,64,'');const horse=mkObj(A.horse,46,'');const snail=mkObj(A.snail,44,'');const star=mkObj(A.star,54,'');
+// סרטן: יוצא מפתח הטירה, מטייל על החול וחוזר. הקואורדינטות בעולם הרקע (800x1421)
+const CR={st:'hide',t:rnd(8,16),s:0,fr:0,ft:0,wait:0,flip:1};
+const crab=document.createElement('div');crab.className='o';crab.style.display='none';crab.style.width='0';
+const crv=document.createElement('div');crv.style.cssText='position:absolute;left:0;top:0;overflow:hidden';
+const crs=new Image();crs.src=A.crab;crs.style.cssText='position:absolute;left:0;top:0;max-width:none;display:block';crv.appendChild(crs);crab.appendChild(crv);world.appendChild(crab);
+function crabPath(){const tx=rnd(330,470);return [[624,952],[640,1072],[tx,1072]]}
+let CP=crabPath();
+function crabLen(){let L=0;for(let i=1;i<CP.length;i++)L+=Math.hypot(CP[i][0]-CP[i-1][0],CP[i][1]-CP[i-1][1]);return L}
+function crabAt(s){let L=crabLen();s=clamp(s,0,L);for(let i=1;i<CP.length;i++){const a=CP[i-1],b=CP[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=d||i===CP.length-1){const u=d?clamp(s/d,0,1):1;return {x:a[0]+(b[0]-a[0])*u,y:a[1]+(b[1]-a[1])*u,dx:b[0]-a[0],dy:b[1]-a[1]}}s-=d}}
+function crabStep(dt){
+ if(CR.st==='hide'){CR.t-=dt;if(CR.t<=0){CP=crabPath();CR.s=0;CR.st='out';crab.style.display=''}else return}
+ let moving=false;const L=crabLen(),v=36;
+ if(CR.st==='out'){CR.s+=v*dt;moving=true;if(CR.s>=L){CR.s=L;CR.st='look';CR.wait=rnd(2.5,5)}}
+ else if(CR.st==='look'){CR.wait-=dt;if(CR.wait<=0){CR.st='back'}}
+ else if(CR.st==='back'){CR.s-=v*dt;moving=true;if(CR.s<=0){CR.s=0;CR.st='hide';CR.t=rnd(25,55);crab.style.display='none';return}}
+ const p=crabAt(CR.s);
+ if(moving){CR.ft+=dt;if(CR.ft>.13){CR.ft=0;CR.fr=(CR.fr+1)%6}
+  const sx=CR.st==='out'?p.dx:-p.dx;if(Math.abs(p.dx)>Math.abs(p.dy)*.5)CR.flip=sx<0?1:-1}
+ else CR.fr=0;
+ const K=Math.max(W/800,H/1421),ox=(W-800*K)/2,oy=H-1421*K;
+ const e=clamp(CR.s/40,0,1),sc=.5+.5*clamp(CR.s/130,0,1),w=112*K*sc,h=w*182/220;
+ crv.style.width=w+'px';crv.style.height=h+'px';crs.style.width=(w*6)+'px';crs.style.height=h+'px';crs.style.transform='translateX('+(-CR.fr*w)+'px)';
+ const bob=(moving?Math.abs(Math.sin(CR.ft/.13*Math.PI))*1.5*K:0);
+ crv.style.transform='scaleX('+CR.flip+')';crab.style.transform='translate3d('+(ox+p.x*K-w/2)+'px,'+(oy+p.y*K-h-bob)+'px,0)';
+ crab.style.opacity=e;crab.style.zIndex=901;
+}
 const J={x:W*.75,y:H*.32,ph:0},S={x:W*.3,dir:1};
 let bubbles=[],sat=55,night=false;
 function bub(x,y,sz){const k=sz>14?'bubL':sz>9?'bubM':'bubS';const o=mkObj(A[k],sz,'bb');world.appendChild(o);bubbles.push({o,x,y,sz,v:rnd(14,26),ph:rnd(0,6)})}
@@ -127,6 +153,7 @@ function loop(now){if(!running)return;const dt=Math.min(.05,(now-last)/1000);las
  S.x+=S.dir*3*dt;if(S.x>W*.55){S.dir=-1}if(S.x<W*.3){S.dir=1}
  snail.style.transform=`translate(${S.x}px,${H*.905}px) scaleX(${S.dir})`;snail.style.zIndex=900;
  star.style.transform=`translate(${W*.55}px,${H*.935}px) rotate(-12deg)`;star.style.zIndex=900;
+ crabStep(dt);
  // bubbles
  if(Math.random()<dt*.5)bub(rnd(W*.08,W*.92),sandY()+20,rnd(5,15));
  bubbles.forEach(b=>{b.y-=b.v*dt;b.x+=Math.sin(tt*1.1+b.ph)*6*dt;b.o.style.transform=`translate(${b.x}px,${b.y}px)`;b.o.style.zIndex=800;b.o.style.opacity=b.y<30?b.y/30:.9});
