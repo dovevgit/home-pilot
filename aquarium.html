@@ -86,12 +86,12 @@ function spawnNew(){const present=new Set(fish.map(f=>f.k));let pool=SPEC.map(s=
 // creatures
 // creatures
 const jelly=mkObj(A.jelly,64,'');const horse=mkObj(A.horse,46,'');const snail=mkObj(A.snail,44,'');const star=mkObj(A.star,54,'');
-// סרטן: יוצא מפתח הטירה, מטייל על החול וחוזר. הקואורדינטות בעולם הרקע (800x1421)
+// סרטן: מופיע בהדרגה על החול ליד הסלעים, מטייל על החול וחוזר. המסלול נשאר על החול הפתוח, רחוק מהאלמוגים. הקואורדינטות בעולם הרקע (800x1421)
 const CR={st:'hide',t:rnd(8,16),s:0,fr:0,ft:0,wait:0,flip:1};
 const crab=document.createElement('div');crab.className='o';crab.style.display='none';crab.style.width='0';
 const crv=document.createElement('div');crv.style.cssText='position:absolute;left:0;top:0;overflow:hidden';
 const crs=new Image();crs.src=A.crab;crs.style.cssText='position:absolute;left:0;top:0;max-width:none;display:block';crv.appendChild(crs);crab.appendChild(crv);world.appendChild(crab);
-function crabPath(){const tx=rnd(330,470);return [[624,952],[640,1072],[tx,1072]]}
+function crabPath(){const tx=rnd(390,440);return [[560,1088],[480,1100],[tx,1100]]}
 let CP=crabPath();
 function crabLen(){let L=0;for(let i=1;i<CP.length;i++)L+=Math.hypot(CP[i][0]-CP[i-1][0],CP[i][1]-CP[i-1][1]);return L}
 function crabAt(s){let L=crabLen();s=clamp(s,0,L);for(let i=1;i<CP.length;i++){const a=CP[i-1],b=CP[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=d||i===CP.length-1){const u=d?clamp(s/d,0,1):1;return {x:a[0]+(b[0]-a[0])*u,y:a[1]+(b[1]-a[1])*u,dx:b[0]-a[0],dy:b[1]-a[1]}}s-=d}}
