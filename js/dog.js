@@ -95,13 +95,16 @@ function place(){
   dog.style.transform='translate('+(S.x-55).toFixed(1)+'px,'+(S.y-110).toFixed(1)+'px)'+(S.rot?' rotate('+S.rot.toFixed(1)+'deg)':'');
 }
 /* הקו עליו הכלב עומד: קצה מלבן ההודעה, או מעל התפריט התחתון כשגוללים למטה */
+var hbar=true; /* מרווח ביטחון: מעבר בין הליכה על המלבן לצניחה מתרחש רק אחרי גלילה של כמה פיקסלים מעבר לקו, כדי שתזוזה קטנה לא תחליף מצב שוב ושוב */
 function ground(){
   var card=document.querySelector('#announce .announce');
   if(card){
     var r=card.getBoundingClientRect();
     if(scrollY<5)S.restTop=r.top;
     var lim=scrollY<5?50:Math.min(110,Math.max(50,(S.restTop||110)-30));
-    if(r.width>150&&r.top>lim&&r.top<innerHeight-40){
+    var edge=hbar?lim-30:lim+30;
+    hbar=r.width>150&&r.top>edge&&r.top<innerHeight-40;
+    if(hbar){
       var l=r.left+14+46,rr=r.right-14-46;
       return{y:r.top+3,bar:true,l:l,r:Math.max(l+50,rr),cx:(r.left+r.right)/2};
     }
@@ -129,13 +132,13 @@ function startGlide(){
   if(S.mode==='glide')return; var g=ground();
   S.from={x:S.x,y:S.y}; S.mode='glide'; S.t0=performance.now();
   var dist=Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y); S.dur=Math.min(8000,Math.max(3200,dist/.12)); S.rot=0;
-  show('glide','gliding'); S.curG=-1; place();
+  show('glide','gliding'); S.curG=0; setFrame('glide',0); place();
 }
 function startFly(){
   if(S.mode==='fly')return; var g=ground();
   S.mode='fly'; S.from={x:S.x,y:S.y}; S.t0=performance.now(); S.rot=0;
   S.dur=Math.min(8000,Math.max(3500,Math.hypot(clamp(S.x,g.l,g.r)-S.x,g.y-S.y)/.1));
-  show('climb','flying'); S.curC=-1; place();
+  show('climb','flying'); S.curC=0; setFrame('climb',0); place();
 }
 function startAngry(){ if(S.mode==='chase'||S.mode==='pee'||S.mode==='glide'||S.mode==='fly'||S.mode==='poop'||S.mode==='slink')return; S.mode='angry'; S.until=performance.now()+3000; S.nextBark=0; S.rot=0; show('face','angry'); setFrame('face',2); place(); }
 function hop(){
@@ -325,18 +328,18 @@ function frame(ts){
   }else if(m==='sit'){
     S.y=g.y; S.x=clamp(S.x,g.l,g.r); place(); if(ts>S.until)startWalk();
   }else if(m==='glide'){
-    if(g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=3500; S.homeBar=true; S.mode='fly'; show('climb','flying'); S.curC=-1; requestAnimationFrame(frame); return; }
+    if(g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=3500; S.homeBar=true; S.mode='fly'; show('climb','flying'); S.curC=0; setFrame('climb',0); place(); requestAnimationFrame(frame); return; }
     var A=S.from,Bx=clamp(A.x,g.l,g.r),By=g.y;
     var u=Math.min(1,(ts-S.t0)/S.dur),e=(ts-S.t0)/1000,env=Math.min(1,(1-u)*4,u*5+.25);
-    var gi=Math.floor(e/.4)%2; if(gi!==S.curG){S.curG=gi;setFrame('glide',gi)}
+    var gi=Math.max(0,Math.floor(e/.4))%2; if(gi!==S.curG){S.curG=gi;setFrame('glide',gi)}
     S.x=clamp(A.x+(Bx-A.x)*u+Math.sin(e*.95)*46*env,50,innerWidth-50); S.y=A.y+(By-A.y)*u;
     S.rot=Math.cos(e*.95)*10*env+Math.sin(e*2.3)*2.2*env;
     if(reduce||u>=1){ S.x=clamp(S.x,g.l,g.r); S.y=g.y; S.rot=0; S.homeBar=false; S.face=1; startSit(1800); } else place();
   }else if(m==='fly'){
-    if(!g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=false; S.mode='glide'; show('glide','gliding'); S.curG=-1; requestAnimationFrame(frame); return; }
+    if(!g.bar){ S.from={x:S.x,y:S.y}; S.t0=ts; S.dur=1800; S.homeBar=false; S.mode='glide'; show('glide','gliding'); S.curG=0; setFrame('glide',0); place(); requestAnimationFrame(frame); return; }
     var A2=S.from,Bx2=clamp(A2.x,g.l,g.r),By2=g.y;
     var u2=Math.min(1,(ts-S.t0)/S.dur),k=1-Math.pow(1-u2,2);
-    var ci=[0,1,2,1][Math.floor((ts-S.t0)/260)%4]; if(ci!==S.curC){S.curC=ci;setFrame('climb',ci)}
+    var ci=[0,1,2,1][Math.max(0,Math.floor((ts-S.t0)/260))%4]; if(ci!==S.curC){S.curC=ci;setFrame('climb',ci)}
     S.x=A2.x+(Bx2-A2.x)*k+Math.sin(u2*9)*10*(1-u2); S.y=A2.y+(By2-A2.y)*k; S.rot=Math.sin(u2*9)*4*(1-u2);
     if(reduce||u2>=1){ S.x=Bx2; S.y=g.y; S.rot=0; S.homeBar=g.bar; startSit(2200); } else place();
   }else if(m==='angry'||m==='hop'){
