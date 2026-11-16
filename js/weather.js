@@ -287,7 +287,7 @@ export async function mountWeather(host) {
     renderCard(); if (!modal.classList.contains('hidden')) renderModal();
     resolvePlace();
   }
-  function setLoc(l) { loc = l; placeRetry = 0; placeBusy = false; saveLoc(l); data = null; renderCard(); refresh(); }
+  function setLoc(l) { loc = l; placeRetry = 0; placeBusy = false; placeTried = ''; saveLoc(l); data = null; renderCard(); refresh(); }
 
   function useGps(auto) {
     if (gpsBusy) return;
