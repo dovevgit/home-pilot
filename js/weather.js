@@ -38,8 +38,15 @@ async function fetchJson(url) {
 // שם המקום לפי קואורדינטות (BigDataCloud, חינמי ובלי מפתח). נקרא רק אחרי לחיצה על "המיקום שלי".
 const uiLang = () => { try { return localStorage.getItem('lang') === 'en' ? 'en' : 'he'; } catch (_) { return 'he'; } };
 async function findPlace(lat, lon) {
-  const j = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${uiLang()}`);
-  return String(j.city || j.locality || j.principalSubdivision || j.countryName || '').trim().slice(0, 40);
+  // שירות ראשון: BigDataCloud. אם נחסם או לא החזיר שם, שירות גיבוי: OpenStreetMap (Nominatim)
+  try {
+    const j = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${uiLang()}`);
+    const n = String(j.city || j.locality || j.principalSubdivision || j.countryName || '').trim().slice(0, 40);
+    if (n) return n;
+  } catch (_) {}
+  const j = await fetchJson(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}&accept-language=${uiLang()}`);
+  const a = j.address || {};
+  return String(a.city || a.town || a.village || a.municipality || a.county || a.state || a.country || '').trim().slice(0, 40);
 }
 
 // חיפוש עיר בעולם (Open-Meteo, חינמי ובלי מפתח). נשלח רק הטקסט שהוקלד בשדה החיפוש.
