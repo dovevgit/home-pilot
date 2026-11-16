@@ -173,7 +173,7 @@ export function startImportant(me, profiles) {
           let path = null;
           if (photoBlob) {
             path = `reports/${me.id}/imp-${crypto.randomUUID()}.jpg`;
-            const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', upsert: false });
+            const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
             if (up.error) throw new Error('upload');
           }
           const ins = await supabase.from('important_msgs').insert({ to_users: [sid], body: txt || null, photo_path: path, parent_id: ids[ids.length - 1] });
@@ -256,7 +256,7 @@ export function startImportant(me, profiles) {
         let path = null;
         if (photoBlob) {
           path = `reports/${me.id}/imp-${crypto.randomUUID()}.jpg`;
-          const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', upsert: false });
+          const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
           if (up.error) throw new Error('upload');
         }
         const ins = await supabase.from('important_msgs').insert({ to_users: [otherId], body: txt || null, photo_path: path, parent_id: lastFromOther?.id || null });

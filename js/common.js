@@ -334,8 +334,8 @@ export async function submitReport({ task, userId, note, photoPath }) {
   });
   return { error, slot: (task.slots || [])[done] || null };
 }
-// הקטנת תמונה לרוחב/גובה מקסימלי של 1600 פיקסל, JPEG
-export async function shrinkImage(file, max = 1600) {
+// הקטנת תמונה לרוחב/גובה מקסימלי של 1280 פיקסל, JPEG
+export async function shrinkImage(file, max = 1280) {
   let bmp;
   try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
   catch (_) {

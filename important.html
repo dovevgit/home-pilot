@@ -141,7 +141,7 @@ $('send').onclick = async () => {
     let path = null;
     if (blob) {
       path = `reports/${me.id}/imp-${crypto.randomUUID()}.jpg`;
-      const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+      const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
       if (up.error) throw new Error('upload');
     }
     const r = await supabase.from('important_msgs').insert(kind === 'list' ? { to_users: [...sel], body: null, kind: 'list', items } : { to_users: [...sel], body: txt || null, photo_path: path });

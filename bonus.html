@@ -163,7 +163,7 @@ function render() {
   $('pendBox').classList.toggle('hidden', !pend.length);
   $('pendN').textContent = pend.length;
   $('pend').innerHTML = pend.map(c => `<div class="bn-card"><div class="bn-row">${avatar(byId[c.user_id], 48)}<div class="bn-t"><b>${esc(byId[c.user_id]?.name || 'מישהו')}</b><small>${c.status === 'requested' ? 'מבקש/ת לבצע' : 'דיווח/ה'}: ${esc(c.title)}</small></div><span class="bn-pts" dir="ltr">⭐ +${c.points}</span></div>
-    ${c.photo_path && urls[c.photo_path] ? `<img class="bn-thumb" src="${urls[c.photo_path]}" alt="תמונת הוכחה" data-zoom="${urls[c.photo_path]}">` : ''}
+    ${c.photo_path && urls[c.photo_path] ? `<img class="bn-thumb" loading="lazy" decoding="async" src="${urls[c.photo_path]}" alt="תמונת הוכחה" data-zoom="${urls[c.photo_path]}">` : ''}
     <div class="bn-act">${c.status === 'requested' ? `<button class="btn" data-rok="${c.id}" type="button">אישור לבצע</button><button class="btn secondary" data-rno="${c.id}" type="button">דחייה</button>` : `<button class="btn" data-ok="${c.id}" type="button">אישור</button><button class="btn secondary" data-no="${c.id}" type="button">דחייה</button>`}</div></div>`).join('');
   if (showAdmin) {
     const list = tasks.filter(t => kindOf(t) === tab);
@@ -185,7 +185,7 @@ async function sendClaim(taskId, photoBlob) {
     if (photoBlob) {
       showToast('מעלה תמונה...');
       path = `reports/${me}/bonus-${crypto.randomUUID()}.jpg`;
-      const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', upsert: false });
+      const up = await supabase.storage.from('photos').upload(path, photoBlob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
       if (up.error) throw new Error('upload');
     }
     const { error } = await supabase.rpc('claim_bonus', { p_task: taskId, p_photo: path });

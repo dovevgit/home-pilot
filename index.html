@@ -222,7 +222,7 @@ else {
     return `<div class="card recent" style="margin-bottom:8px;padding:8px 12px">${avatar(who, 40)}
       <div style="flex:1;min-width:0"><b style="font-size:16px">${esc(who?.name || 'מישהו')} ביצע/ה: ${esc(t?.title || '')}</b>
       <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> ${when}${r.body ? ' · ' + esc(r.body) : ''} · <span class="pts" dir="ltr">+${pts}</span></div></div>
-      ${urls[r.photo_path] ? `<img class="th" src="${urls[r.photo_path]}" alt="">` : ''}</div>`;
+      ${urls[r.photo_path] ? `<img class="th" loading="lazy" decoding="async" src="${urls[r.photo_path]}" alt="">` : ''}</div>`;
   }).join('');
 }
 

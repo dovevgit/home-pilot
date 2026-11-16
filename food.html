@@ -155,7 +155,7 @@ function chip(r) {
   const d = daysLeft(r.eat_by);
   const cls = d !== null && d < 0 ? ' old' : d !== null && d <= 2 ? ' warn' : '';
   const fresh = seen.has(r.id) ? '' : ' fresh';
-  return `<div class="fchip${cls}${fresh}" data-id="${r.id}">${r.photo_path && urls[r.photo_path] ? `<img class="fth" src="${esc(urls[r.photo_path])}" alt="" draggable="false">` : '🥘'}<span>${esc(r.name)}</span>${fliesHtml(r)}${avg[r.id] ? `<b class="fstar">★${avg[r.id].toFixed(1).replace('.0', '')}</b>` : ''}</div>`;
+  return `<div class="fchip${cls}${fresh}" data-id="${r.id}">${r.photo_path && urls[r.photo_path] ? `<img class="fth" loading="lazy" decoding="async" src="${esc(urls[r.photo_path])}" alt="" draggable="false">` : '🥘'}<span>${esc(r.name)}</span>${fliesHtml(r)}${avg[r.id] ? `<b class="fstar">★${avg[r.id].toFixed(1).replace('.0', '')}</b>` : ''}</div>`;
 }
 
 function render() {
@@ -341,7 +341,7 @@ function openForm(r) {
     for (const sl of slots) {
       if (!sl.blob) continue;
       const path = `${me.family_id}/${crypto.randomUUID()}.jpg`;
-      const up = await supabase.storage.from('food-photos').upload(path, sl.blob, { contentType: 'image/jpeg', upsert: false });
+      const up = await supabase.storage.from('food-photos').upload(path, sl.blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
       if (up.error) {
         if (uploaded.length) { try { await supabase.storage.from('food-photos').remove(uploaded); } catch (_) {} }
         showToast('העלאת התמונה נכשלה', true); $('fSave').disabled = false; return;

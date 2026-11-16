@@ -98,7 +98,7 @@ function render(scroll) {
     const mine = m.user_id === me; const who = byId[m.user_id];
     const aud = m.photo_path && m.payload?.audio && urls[m.photo_path] ? `<audio class="maud" controls preload="metadata" src="${urls[m.photo_path]}"></audio>` : '';
     const stk = m.payload?.sticker && STICKERS.includes(m.payload.sticker) ? `<img class="mstk" src="stickers/${m.payload.sticker}.webp" alt="מדבקה">` : '';
-    const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
+    const img = m.photo_path && !m.payload?.audio && urls[m.photo_path] ? `<img class="mimg" loading="lazy" decoding="async" src="${urls[m.photo_path]}" alt="תמונה" data-src="${urls[m.photo_path]}">` : '';
     return `${sep}<div class="msg ${mine ? 'mine' : ''}">${avatar(who, 36)}
       <div class="bubble">${mine ? '' : `<b>${esc(who?.name || 'מישהו')}</b>`}${stk}${img}${aud}${m.payload?.removed ? `<div class="note" style="margin:0">${m.payload.audio ? '🎤' : '📷'} הקובץ נמחק אחרי 60 יום</div>` : ''}${m.body ? `<div>${bodyHtml(m.body)}</div>` : ''}${time}${mine ? `<button type="button" class="mdel" data-del="${m.id}" aria-label="מחיקת הודעה">⋮</button>` : ''}</div></div>`;
   }).join('');
@@ -239,7 +239,7 @@ for (const id of ['photo', 'camera']) $(id).addEventListener('change', async e =
     showToast('מעלה תמונה...');
     const blob = await shrinkImage(f);
     const path = `reports/${me}/chat-${crypto.randomUUID()}.jpg`;
-    const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+    const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
     if (up.error) throw new Error('upload');
     await post({ photo_path: path, body: $('text').value.trim() || null }); $('text').value = '';
   } catch (_) { showToast('העלאת התמונה נכשלה', true); }

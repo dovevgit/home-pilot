@@ -113,7 +113,7 @@ $('send').onclick = async () => {
     let path = null;
     if (blob) {
       path = `reports/${session.user.id}/${crypto.randomUUID()}.jpg`;
-      const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+      const up = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
       if (up.error) throw new Error('upload');
     }
     const r = await submitReport({ task: t, userId: session.user.id, note: $('note').value.trim(), photoPath: path });

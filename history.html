@@ -130,7 +130,7 @@ async function load() {
   });
   $('list').innerHTML = window.__rows.map((x, i) => `
     <button type="button" class="hrow" data-i="${i}">
-      ${x.url ? `<img class="th" src="${x.url}" alt="">` : (x.t ? iconBox(x.t, 46) : '')}
+      ${x.url ? `<img class="th" loading="lazy" decoding="async" src="${x.url}" alt="">` : (x.t ? iconBox(x.t, 46) : '')}
       <div class="tmain"><b><span>${esc(x.who?.name || 'מישהו')}</span> <span>ביצע/ה:</span> <span data-user>${esc(x.t?.title || '')}</span></b>
         <small><span dir="ltr">${esc(x.when)}</span>${x.r.body ? ' · ' + esc(x.r.body) : ''}</small></div>
       <span class="pts" dir="ltr">+${x.pts}</span></button>`).join('');
