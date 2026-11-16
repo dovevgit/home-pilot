@@ -243,7 +243,7 @@ export async function mountWeather(host) {
       <p class="wxsrc">Open-Meteo</p>`;
     mc.querySelector('#wxX').onclick = closeModal;
     mc.querySelector('#wxSel').onchange = e => { if (['gps', 'place', 'busy'].includes(e.target.value)) return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
-    mc.querySelector('#wxGps').onclick = useGps;
+    mc.querySelector('#wxGps').onclick = () => useGps();
     mc.querySelector('#wxFindF').onsubmit = e => { e.preventDefault(); doSearch(mc.querySelector('#wxQ').value); };
     mc.querySelector('#wxRes').onclick = e => {
       const b = e.target.closest('[data-i]'); const r = results[+b?.dataset.i]; if (!r) return;
@@ -282,13 +282,16 @@ export async function mountWeather(host) {
   }
   function setLoc(l) { loc = l; placeRetry = 0; placeBusy = false; saveLoc(l); data = null; renderCard(); refresh(); }
 
-  function useGps() {
+  function useGps(auto) {
     if (gpsBusy) return;
+    if (auto === true && !navigator.geolocation) return;
     if (!navigator.geolocation) { msg = 'המכשיר לא מאפשר לקבל מיקום. אפשר לבחור עיר מהרשימה.'; renderModal(); return; }
-    msg = ''; gpsBusy = true; renderModal();
+    const quiet = auto === true;
+    msg = ''; gpsBusy = true; if (!quiet) renderModal();
     const ok = p => { gpsBusy = false; msg = ''; setLoc({ type: 'gps', lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2) }); };
     const fail = e => {
       gpsBusy = false;
+      if (quiet) { try { localStorage.setItem('wxAutoTried', '1'); } catch (_) {} return; }
       msg = e?.code === 1 ? 'אין אישור מיקום. בהגדרות הטלפון: הרשאות, מיקום, לאשר לאפליקציה או לדפדפן. אחר כך לנסות שוב, או לבחור עיר מהרשימה.'
         : e?.code === 3 ? 'האיתור לקח יותר מדי זמן. אפשר לנסות שוב או לבחור עיר מהרשימה.'
         : 'הטלפון לא הצליח לאתר מיקום. אפשר לנסות שוב במקום פתוח או לבחור עיר מהרשימה.';
@@ -302,6 +305,14 @@ export async function mountWeather(host) {
   }
 
   await refresh();
+  // זיהוי מיקום אוטומטי: רק אם המשתמש עוד לא בחר מיקום במכשיר, ולא סירב קודם. נבדק פעם אחת למכשיר
+  try {
+    if (!localStorage.getItem(KEY) && !localStorage.getItem('wxAutoTried') && navigator.geolocation) {
+      const st = navigator.permissions ? await navigator.permissions.query({ name: 'geolocation' }).catch(() => null) : null;
+      if (st?.state !== 'denied') useGps(true);
+      else localStorage.setItem('wxAutoTried', '1');
+    }
+  } catch (_) {}
   setInterval(() => { if (!document.hidden) refresh(); }, MAX_AGE);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 }
