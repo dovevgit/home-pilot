@@ -138,6 +138,8 @@ const seaState = h => h == null ? '' : h < 0.5 ? 'ים רגוע' : h < 1 ? 'גל
 const n0 = x => x == null ? '–' : String(Math.round(x));
 const n1 = x => x == null ? '–' : Number(x).toFixed(1);
 const val = s => `<b dir="ltr">${s}</b>`;
+// השעה האמיתית עכשיו במקום (לפי אזור הזמן שחזר מהשרת), ולא שעת המדידה האחרונה שמעוגלת לרבע שעה
+const nowAt = tz => { try { return new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()); } catch (_) { return null; } };
 const daysHtml = day => {
   const t = day.time || [], codes = day.weather_code || [];
   if (t.length < 2 || !codes.length) return '';
@@ -235,7 +237,7 @@ export async function mountWeather(host) {
         <div class="wxres" id="wxRes">${resHtml()}</div>
         <p class="error" id="wxMsg" role="alert">${esc(msg)}</p></div>
       <div class="wxsec">מזג אוויר</div>
-      ${cur.time ? row('השעה במקום', val(String(cur.time).slice(11, 16))) : ''}
+      ${cur.time ? row('השעה במקום', `<b dir="ltr" id="wxNow">${nowAt(data.w.timezone) || String(cur.time).slice(11, 16)}</b>`) : ''}
       ${day.sunrise?.[0] ? row('זריחה', val(String(day.sunrise[0]).slice(11, 16))) : ''}
       ${day.sunset?.[0] ? row('שקיעה', val(String(day.sunset[0]).slice(11, 16))) : ''}
       ${row('מרגיש כמו', val(n0(cur.apparent_temperature) + ' °C'))}
@@ -249,6 +251,8 @@ export async function mountWeather(host) {
       ${seaHtml}
       <p class="wxsrc">Open-Meteo</p>`;
     mc.querySelector('#wxX').onclick = closeModal;
+    const nowEl = mc.querySelector('#wxNow');
+    if (nowEl && data.w.timezone) { const tick = setInterval(() => { if (!nowEl.isConnected) return clearInterval(tick); const t = nowAt(data.w.timezone); if (t) nowEl.textContent = t; }, 15000); }
     mc.querySelector('#wxSel').onchange = e => { if (['gps', 'place', 'busy'].includes(e.target.value)) return; msg = ''; setLoc({ type: 'city', name: e.target.value }); };
     mc.querySelector('#wxGps').onclick = () => useGps();
     mc.querySelector('#wxFindF').onsubmit = e => { e.preventDefault(); doSearch(mc.querySelector('#wxQ').value); };
