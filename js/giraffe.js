@@ -6,7 +6,7 @@
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 var N=6, RATIO=240/300, SPEED=44, DEF_H=140;
 var gr=null,wrap=null,box=null,anim=null,timer=0,img=null,fleeing=false,retSide=null,curLeft=false;
-var RUN_SRC='icons/giraffe/run.webp',BACK_SRC='icons/giraffe/runback.webp',lookT1=0,lookT2=0;
+var RUN_SRC='icons/giraffe/run.webp',BACK_SRC='icons/giraffe/runback.webp',lookT1=0,lookT2=0,lookT3=0,lookT4=0;
 function find(n){ gr=document.getElementById('dgGrass'); if(gr)build(); else if(n<30)setTimeout(function(){find(n+1)},300); }
 function build(){
   var st=document.createElement('style');
@@ -33,9 +33,14 @@ function flee(e){
   if(e){ e.stopPropagation(); }
   if(!anim||fleeing)return; fleeing=true;
   anim.playbackRate=5; box.classList.add('fl'); img.style.animationDuration='.24s';
-  /* פעם אחת בריצה היא מסתכלת אחורה: מחליפים לרצף ציורים אחר (אותו מספר פריימים, כך שהתנועה נמשכת בלי קפיצה) ואז חוזרים */
-  clearTimeout(lookT1); clearTimeout(lookT2);
-  lookT1=setTimeout(function(){ if(!anim||!fleeing)return; img.src=BACK_SRC; lookT2=setTimeout(function(){ img.src=RUN_SRC; },900); },250+Math.random()*350);
+  /* בריצה היא מסתכלת אחורה פעמיים: מחליפים לרצף ציורים אחר (אותו מספר פריימים, כך שהתנועה נמשכת בלי קפיצה) ואז חוזרים.
+     התזמון לפי הזמן שנשאר לריצה, כדי ששתי ההסתכלויות ייכנסו גם כשהיא קרובה לקצה */
+  clearTimeout(lookT1); clearTimeout(lookT2); clearTimeout(lookT3); clearTimeout(lookT4);
+  var left=(anim.effect.getTiming().duration-(anim.currentTime||0))/5;
+  var len=Math.max(220,Math.min(550,left*.26));
+  function look(at,k1,k2){ var t1=setTimeout(function(){ if(!anim||!fleeing)return; img.src=BACK_SRC; },at); var t2=setTimeout(function(){ img.src=RUN_SRC; },at+len); return [t1,t2]; }
+  var l1=look(left*.10,0,0), l2=look(left*.10+len+Math.max(160,left*.12),0,0);
+  lookT1=l1[0]; lookT2=l1[1]; lookT3=l2[0]; lookT4=l2[1];
   if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}
 }
 /* גובה הג'ירפה: מהדשא עד קצה העליון של שדה ההודעה (כמו קפיצת החתול). בלי שדה: גובה רגיל */
@@ -57,7 +62,7 @@ function go(){
   var xs=fromLeft?-W-12:GW+12,xe=fromLeft?GW+12:-W-12;
   box.style.display='block';
   anim=box.animate([{transform:'translateX('+xs+'px)'},{transform:'translateX('+xe+'px)'}],{duration:Math.abs(xe-xs)/SPEED*1000,easing:'linear',fill:'forwards'});
-  anim.onfinish=anim.oncancel=function(){ clearTimeout(lookT1); clearTimeout(lookT2); if(img.getAttribute('src')!==RUN_SRC)img.src=RUN_SRC; box.style.display='none'; anim=null; var fl=fleeing; fleeing=false; box.classList.remove('fl'); img.style.animationDuration=''; if(fl){ retSide=!curLeft; next(8000); } else next(25000+Math.random()*35000); };
+  anim.onfinish=anim.oncancel=function(){ clearTimeout(lookT1); clearTimeout(lookT2); clearTimeout(lookT3); clearTimeout(lookT4); if(img.getAttribute('src')!==RUN_SRC)img.src=RUN_SRC; box.style.display='none'; anim=null; var fl=fleeing; fleeing=false; box.classList.remove('fl'); img.style.animationDuration=''; if(fl){ retSide=!curLeft; next(8000); } else next(25000+Math.random()*35000); };
 }
 find(0);
 })();
