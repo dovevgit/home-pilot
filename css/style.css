@@ -199,6 +199,9 @@ body.chatpage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .picbtn{margin:4px auto 0;display:inline-flex;align-items:center;gap:5px;border:1.5px solid #CBD5E1;background:#fff;color:var(--text2);border-radius:999px;padding:3px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .picbtn.on{background:#FFF1CC;border-color:#F5B83D;color:#7A4A00}
 .mgrid.nopics .stack{display:none}
+.mgrid:not(.nopics) .mc .hn{display:none}
+.mgrid:not(.nopics) .mc.hol{background:var(--bg)}
+.mgrid:not(.nopics) .mc.hol.has{background:#EAF3FF}
 .mgrid.nopics .mc{justify-content:flex-start;gap:4px}
 .mgrid.nopics .mc .hn{font-size:11px;white-space:normal;text-overflow:clip;text-align:center}
 .mc.hol{background:#FFF1CC}
