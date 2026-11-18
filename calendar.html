@@ -20,7 +20,7 @@
 <main>
   <div class="calnav">
     <button type="button" class="sqbtn" id="prev" aria-label="חודש קודם"></button>
-    <div class="calttl"><b id="mTitle"></b></div>
+    <div class="calttl"><b id="mTitle"></b><button type="button" class="picbtn" id="pics"></button></div>
     <button type="button" class="sqbtn" id="next" aria-label="חודש הבא"></button>
   </div>
   <div class="faces" id="faces"></div>
@@ -174,6 +174,11 @@ $('mine').addEventListener('click', e => { const b = e.target.closest('.calev');
 $('modalCard').addEventListener('click', e => { const b = e.target.closest('.calev'); if (b) openEvent(b.dataset.id); });
 $('faces').addEventListener('click', e => { const b = e.target.closest('.face'); if (!b) return; who = b.dataset.w; draw(); });
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) close(); });
+// הסתרת תמונות המשפחה במשבצות כדי לראות את החגים (נשמר במכשיר)
+let noPics = false; try { noPics = localStorage.getItem('calNoPics') === '1'; } catch (_) {}
+const drawPics = () => { $('grid').classList.toggle('nopics', noPics); $('pics').innerHTML = `${icon('eye', 16)} ${noPics ? 'הצג תמונות' : 'הסתר תמונות'}`; $('pics').classList.toggle('on', noPics); };
+$('pics').onclick = () => { noPics = !noPics; try { localStorage.setItem('calNoPics', noPics ? '1' : '0'); } catch (_) {} drawPics(); };
+drawPics();
 $('next').onclick = () => shift(1);
 $('prev').onclick = () => shift(-1);
 load();

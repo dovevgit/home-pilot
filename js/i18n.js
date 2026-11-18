@@ -10,7 +10,7 @@ const D = {
   "ראש השנה": "Rosh Hashanah", "יום כיפור": "Yom Kippur", "סוכות": "Sukkot", "חול המועד סוכות": "Sukkot (intermediate days)", "הושענא רבה": "Hoshana Rabbah", "שמחת תורה": "Simchat Torah",
   "ט״ו בשבט": "Tu BiShvat", "פורים": "Purim", "שושן פורים": "Shushan Purim", "פסח": "Passover", "חול המועד פסח": "Passover (intermediate days)", "שביעי של פסח": "Last day of Passover",
   "ל״ג בעומר": "Lag BaOmer", "יום ירושלים": "Jerusalem Day", "שבועות": "Shavuot", "תשעה באב": "Tisha B'Av", "יום השואה": "Holocaust Remembrance Day", "יום הזיכרון": "Memorial Day", "יום העצמאות": "Independence Day",
-  "חנוכה": "Hanukkah", "חוה״מ": "Chol HaMoed", "שביעי פסח": "Passover 7", "עצמאות": "Independence", "זיכרון": "Memorial", "שואה": "Holocaust", "י׳ ירושלים": "Jerusalem", "הושע״ר": "Hoshana R.",
+  "הסתר תמונות": "Hide photos", "הצג תמונות": "Show photos", "חנוכה": "Hanukkah", "חוה״מ": "Chol HaMoed", "שביעי פסח": "Passover 7", "עצמאות": "Independence", "זיכרון": "Memorial", "שואה": "Holocaust", "י׳ ירושלים": "Jerusalem", "הושע״ר": "Hoshana R.",
   "כלב שיצו": "Shih Tzu dog",
   "שליחת האפליקציה": "Send the app",
   "שולחים למי שרוצה בית משלו. הוא נרשם עם חשבון Google.": "Send it to anyone who wants their own home. They sign up with a Google account.",
