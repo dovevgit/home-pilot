@@ -20,7 +20,7 @@
 <main>
   <div class="calnav">
     <button type="button" class="sqbtn" id="prev" aria-label="חודש קודם"></button>
-    <div class="calttl"><b id="mTitle"></b><div class="calpills"><button type="button" class="picbtn" id="pics"></button><button type="button" class="picbtn" id="now">חודש נוכחי</button></div></div>
+    <div class="calttl"><b id="mTitle"></b><div class="calpills"><button type="button" class="picbtn" id="pics"></button><button type="button" class="picbtn" id="now"></button></div></div>
     <button type="button" class="sqbtn" id="next" aria-label="חודש הבא"></button>
   </div>
   <div class="faces" id="faces"></div>
@@ -179,6 +179,7 @@ let noPics = false; try { noPics = localStorage.getItem('calNoPics') === '1'; } 
 const drawPics = () => { $('grid').classList.toggle('nopics', noPics); $('pics').innerHTML = `${icon('eye', 16)} ${noPics ? 'הצג תמונות' : 'הצג חגים'}`; $('pics').classList.toggle('on', noPics); };
 $('pics').onclick = () => { noPics = !noPics; try { localStorage.setItem('calNoPics', noPics ? '1' : '0'); } catch (_) {} drawPics(); };
 drawPics();
+$('now').innerHTML = `${icon('calendar-days', 16)} חודש נוכחי`;
 $('now').onclick = () => { ym = today.slice(0, 7); draw(); };
 $('next').onclick = () => shift(1);
 $('prev').onclick = () => shift(-1);
