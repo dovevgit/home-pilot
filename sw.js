@@ -1,5 +1,5 @@
 // Service worker: קבצי האפליקציה ותמונות נפתחים מהטלפון לפתיחה מהירה. נתונים (Supabase) תמיד מהרשת.
-const CACHE = 'habayit-p252';
+const CACHE = 'habayit-p253';
 // תמונות נשמרות בנפרד ולא נמחקות בכל עדכון. מחליפים תמונה קיימת באותו שם? מגדילים את IMG (img-habayit-1 ל-img-habayit-2)
 const IMG = 'img-habayit-1';
 const isImg = u => /\.(webp|png|jpe?g)$/i.test(new URL(u, self.location.href).pathname);
@@ -25,7 +25,9 @@ self.addEventListener('fetch', e => {
   if (e.request.headers.has('range') || /\.(mp3|m4a|wav|ogg|mp4|webm)$/i.test(url.pathname)) return;
   // תמונות של האפליקציה (דמויות, רקעים, מדבקות): מהטלפון, ונשמרות גם אחרי עדכונים. (קובצי שמע לא כאן: ספארי דורש תשובות חלקיות)
   if (isImg(url.href)) {
-    e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
+    // אם ההורדה נכשלה (רשת רגעית), מנסים שוב אחרי שנייה
+    const get = () => fetch(e.request).catch(() => new Promise(ok => setTimeout(ok, 1000)).then(() => fetch(e.request)));
+    e.respondWith(caches.match(e.request).then(hit => hit || get().then(r => {
       if (r.ok && r.status === 200) { const copy = r.clone(); caches.open(IMG).then(c => c.put(e.request, copy)); }
       return r;
     })));

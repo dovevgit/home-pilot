@@ -149,16 +149,28 @@ export async function signedUrls(paths) {
   return out;
 }
 
+// בקשה לשרת עם עד 3 ניסיונות (שגיאת רשת רגעית, למשל כשהטלפון מתעורר)
+async function withRetry(fn, tries = 3) {
+  let r;
+  for (let i = 0; i < tries; i++) {
+    try { r = await fn(); } catch (e) { r = { data: null, error: e }; }
+    if (!r.error) return r;
+    await new Promise(ok => setTimeout(ok, 700 * (i + 1)));
+  }
+  return r;
+}
+
 /* ---------- מעטפת העמוד: כותרת, תפריט תחתון, מגירה ---------- */
 export async function initPage({ active = '', title = '', back = null, menu = true } = {}) {
   const EN = initI18n(active);
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.replace('login.html'); await new Promise(() => {}); }
   // בית סגור: מנתקים ומציגים הודעה (הסימון נקבע ב-families.closed_at)
-  // בדיקת "בית סגור" ורשימת בני המשפחה יוצאות יחד (במקביל)
-  const profP = supabase.from('profiles').select('*').eq('active', true).order('created_at').then(r => r); // then: הבקשה יוצאת עכשיו
+  // בדיקת "בית סגור" ורשימת בני המשפחה יוצאות יחד (במקביל).
+  // כשהטלפון רק התעורר, הבקשות הראשונות נכשלות לפעמים (הרשת עוד לא מוכנה), ולכן מנסים שוב
+  const profP = withRetry(() => supabase.from('profiles').select('*').eq('active', true).order('created_at'));
   try {
-    const { data: closed } = await supabase.rpc('my_family_closed');
+    const { data: closed } = await withRetry(() => supabase.rpc('my_family_closed'));
     if (closed === true) {
       try { await supabase.auth.signOut(); } catch (_) {}
       try { localStorage.removeItem('myFam'); localStorage.removeItem('myName'); } catch (_) {}
@@ -171,6 +183,9 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
     }
   } catch (_) {}
   const { data: profiles, error: profErr } = await profP;
+  // גם אחרי כמה ניסיונות אין רשימת משפחה (אין רשת): טוענים את הדף מחדש פעם אחת, במקום להציג אותו בלי שמות ותמונות
+  if (profErr) { try { if (!sessionStorage.getItem('profReload')) { sessionStorage.setItem('profReload', '1'); location.reload(); await new Promise(() => {}); } } catch (_) {} }
+  else { try { sessionStorage.removeItem('profReload'); } catch (_) {} }
   // נכנס עם Google אבל עדיין אין לו בית: ממשיכים ליצירת בית
   if (!profErr && Array.isArray(profiles) && profiles.length === 0) { location.replace('google-setup.html'); await new Promise(() => {}); }
   (profiles || []).forEach(p => { if (p.avatar_path && p.avatar_path.startsWith('static/')) p.avatar_url = 'icons/avatars/' + p.avatar_path.slice(7); });
