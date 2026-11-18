@@ -7,6 +7,10 @@ export const getLang = () => { try { return localStorage.getItem(KEY) === 'en' ?
 export function setLang(l) { try { localStorage.setItem(KEY, l === 'en' ? 'en' : 'he'); } catch (_) {} }
 
 const D = {
+  "ראש השנה": "Rosh Hashanah", "יום כיפור": "Yom Kippur", "סוכות": "Sukkot", "חול המועד סוכות": "Sukkot (intermediate days)", "הושענא רבה": "Hoshana Rabbah", "שמחת תורה": "Simchat Torah",
+  "ט״ו בשבט": "Tu BiShvat", "פורים": "Purim", "שושן פורים": "Shushan Purim", "פסח": "Passover", "חול המועד פסח": "Passover (intermediate days)", "שביעי של פסח": "Last day of Passover",
+  "ל״ג בעומר": "Lag BaOmer", "יום ירושלים": "Jerusalem Day", "שבועות": "Shavuot", "תשעה באב": "Tisha B'Av", "יום השואה": "Holocaust Remembrance Day", "יום הזיכרון": "Memorial Day", "יום העצמאות": "Independence Day",
+  "חנוכה": "Hanukkah", "חוה״מ": "Chol HaMoed", "שביעי פסח": "Passover 7", "עצמאות": "Independence", "זיכרון": "Memorial", "שואה": "Holocaust", "י׳ ירושלים": "Jerusalem", "הושע״ר": "Hoshana R.",
   "כלב שיצו": "Shih Tzu dog",
   "שליחת האפליקציה": "Send the app",
   "שולחים למי שרוצה בית משלו. הוא נרשם עם חשבון Google.": "Send it to anyone who wants their own home. They sign up with a Google account.",
@@ -1539,6 +1543,7 @@ const P = [
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+)$/, (_, d, a, b) => `${WD[d]}, ${a}/${b}`],
   [/^(.*) · כל שבוע$/, '$1 · Every week'],
   [/^🎂 יום הולדת (\d+) ל(.+)$/, '🎂 $2 turns $1'],
+  [/^חנוכה · נר (\d)$/, 'Hanukkah · candle $1'],
   [/^הדיווח נשלח, \+(\d+) נקודות( \(באיחור\))?$/, (_, n, l) => `Report sent, +${n} points${l ? ' (overdue)' : ''}`],
   [/^השליחה נכשלה: (.*)$/, 'Sending failed: $1'],
   [/^יום (ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת), (\d+)\.(\d+) ·$/, (_, d, a, b) => `${WD[d]}, ${a}/${b} ·`],

@@ -196,6 +196,9 @@ body.chatpage{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .mc{position:relative;aspect-ratio:1/1.15;border:0;border-radius:12px;background:var(--bg);font:inherit;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 2px;cursor:pointer;min-width:0}
 .mc.off{background:transparent;cursor:default}
 .mc.has{background:#EAF3FF}
+.mc.hol{background:#FFF1CC}
+.mc .hn{font-size:9.5px;font-weight:800;color:#8A5300;line-height:1.1;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.calhol{display:flex;align-items:center;gap:10px;background:#FFF4D6;border:2px solid #F5B83D;border-radius:14px;padding:8px 12px;margin-bottom:8px;color:#7A4A00;font-size:17px}
 .mc.today{outline:2.5px solid var(--blue);outline-offset:-1px}
 .mc .dn{font-weight:800;font-size:15px}
 .stack{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;direction:ltr;min-height:22px}
