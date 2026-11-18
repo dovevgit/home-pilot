@@ -155,6 +155,8 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.replace('login.html'); await new Promise(() => {}); }
   // בית סגור: מנתקים ומציגים הודעה (הסימון נקבע ב-families.closed_at)
+  // בדיקת "בית סגור" ורשימת בני המשפחה יוצאות יחד (במקביל)
+  const profP = supabase.from('profiles').select('*').eq('active', true).order('created_at').then(r => r); // then: הבקשה יוצאת עכשיו
   try {
     const { data: closed } = await supabase.rpc('my_family_closed');
     if (closed === true) {
@@ -168,7 +170,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
       await new Promise(() => {});
     }
   } catch (_) {}
-  const { data: profiles, error: profErr } = await supabase.from('profiles').select('*').eq('active', true).order('created_at');
+  const { data: profiles, error: profErr } = await profP;
   // נכנס עם Google אבל עדיין אין לו בית: ממשיכים ליצירת בית
   if (!profErr && Array.isArray(profiles) && profiles.length === 0) { location.replace('google-setup.html'); await new Promise(() => {}); }
   (profiles || []).forEach(p => { if (p.avatar_path && p.avatar_path.startsWith('static/')) p.avatar_url = 'icons/avatars/' + p.avatar_path.slice(7); });
@@ -189,7 +191,7 @@ export async function initPage({ active = '', title = '', back = null, menu = tr
         localStorage.setItem('genAt2', String(Date.now()));
         import('./generate.js').then(async G => {
           const r = await G.generateOccurrences(session.user.id);
-          if (r && r.created > 0 && !sessionStorage.getItem('genReload')) { sessionStorage.setItem('genReload', '1'); location.reload(); }
+          if (r && r.created > 0) { if (active === 'home') dispatchEvent(new Event('tasks-generated')); else if (!sessionStorage.getItem('genReload')) { sessionStorage.setItem('genReload', '1'); location.reload(); } }
         }).catch(() => {});
       }
     } catch (_) {}
