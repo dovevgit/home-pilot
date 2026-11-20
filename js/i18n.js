@@ -106,7 +106,7 @@ const D = {
   'היסטוריה ודיווחים': 'History and reports', 'יום': 'Day', 'שבוע': 'Week', 'חודש': 'Month', 'משימה': 'Task', 'כל המשימות': 'All tasks',
   'סיכום שבוע': 'Week summary', 'סיכום חודש': 'Month summary', 'נותרו': 'Remaining', 'רשימת דיווחים אחרונים': 'Recent reports',
   'אין דיווחים בתקופה הזאת': 'No reports in this period', 'לא הצלחנו לטעון נתונים': 'Could not load data', 'אתמול': 'Yesterday',
-  'ביצע/ה:': 'completed:', 'תמונת הדיווח': 'Report photo', 'אין תמונה לדיווח הזה': 'No photo for this report', 'להיסטוריה המלאה': 'Full history', 'מחיקת הדיווח': 'Delete report',
+  'ביצע/ה:': 'completed:', 'תמונת הדיווח': 'Report photo', 'אין תמונה לדיווח הזה': 'No photo for this report', 'להיסטוריה המלאה': 'Full history', 'חזרה לדף הבית': 'Back to home', 'מחיקת הדיווח': 'Delete report',
   'למחוק את הדיווח הזה? אי אפשר לשחזר.': 'Delete this report? This cannot be undone.',
   'חנות': 'Shop', 'היתרה שלי': 'My balance', 'בקשות לאישור': 'Requests for approval', 'החנות': 'Shop', '+ מוצר חדש': '+ New item',
   'הרכישות שלי': 'My purchases', 'הרכישות בחנות': 'Shop purchases', 'אין רכישות עדיין': 'No purchases yet', '🗑 מחיקת היסטוריית רכישות': '🗑 Delete purchase history',

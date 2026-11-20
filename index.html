@@ -246,10 +246,22 @@ else {
         <div><b style="font-size:19px">${esc(x.who?.name || 'מישהו')}</b><div class="note" style="margin:0;text-align:start"><span data-user>${esc(x.t?.title || '')}</span> · <span dir="ltr">${esc(x.when)}</span> · <span class="pts" dir="ltr">+${x.pts}</span></div></div></div>
       ${x.url ? `<img class="zoom" src="${x.url}" alt="תמונת הדיווח">` : '<p class="empty">אין תמונה לדיווח הזה</p>'}
       ${x.r.body ? `<div class="card" data-user style="margin-top:10px;background:var(--bg)">${esc(x.r.body)}</div>` : ''}
-      <a class="btn secondary" href="history.html" style="width:100%;margin-top:12px;text-decoration:none">להיסטוריה המלאה</a>`;
+      <button type="button" class="btn" id="rcBack" style="width:100%;margin-top:12px">${icon('arrow-right', 20)} חזרה לדף הבית</button>
+      <a class="btn secondary" id="rcHist" href="history.html" style="width:100%;margin-top:8px;text-decoration:none">להיסטוריה המלאה</a>`;
     pm.classList.remove('hidden');
-    pc.querySelector('#px').onclick = () => pm.classList.add('hidden');
+    /* כפתור "חזור" של הטלפון סוגר את הכרטיס ונשאר בדף הבית */
+    if (!recentOpen) { history.pushState({ rc: 1 }, ''); recentOpen = true; }
+    pc.querySelector('#px').onclick = closeRecent;
+    pc.querySelector('#rcBack').onclick = closeRecent;
+    pc.querySelector('#rcHist').onclick = () => { recentOpen = false; history.replaceState(null, ''); };
   };
+  let recentOpen = false;
+  function closeRecent() {
+    if (recentOpen && history.state?.rc) history.back();
+    else { recentOpen = false; pm.classList.add('hidden'); }
+  }
+  addEventListener('popstate', () => { if (recentOpen) { recentOpen = false; pm.classList.add('hidden'); } });
+  pm.addEventListener('click', e => { if (e.target === pm && recentOpen) closeRecent(); });
   rEl.addEventListener('click', e => { const el = e.target.closest('.recent[data-ri]'); if (el) openRecent(el); });
   rEl.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const el = e.target.closest('.recent[data-ri]'); if (el) { e.preventDefault(); openRecent(el); } });
 }
