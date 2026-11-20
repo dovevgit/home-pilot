@@ -1,5 +1,5 @@
 // Service worker: קבצי האפליקציה ותמונות נפתחים מהטלפון לפתיחה מהירה. נתונים (Supabase) תמיד מהרשת.
-const CACHE = 'habayit-p253';
+const CACHE = 'habayit-p254';
 // תמונות נשמרות בנפרד ולא נמחקות בכל עדכון. מחליפים תמונה קיימת באותו שם? מגדילים את IMG (img-habayit-1 ל-img-habayit-2)
 const IMG = 'img-habayit-1';
 const isImg = u => /\.(webp|png|jpe?g)$/i.test(new URL(u, self.location.href).pathname);

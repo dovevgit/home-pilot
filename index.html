@@ -226,16 +226,32 @@ else {
   if (paths.length) {
     Object.assign(urls, await signedUrls(paths));
   }
-  rEl.innerHTML = reps.map(r => {
+  const recRows = [];
+  rEl.innerHTML = reps.map((r, i) => {
     const t = tById[r.task_id]; const who = byId[r.user_id];
     const slot = t && r.payload?.slot_n ? (t.slots || [])[r.payload.slot_n - 1] : null;
     const pts = t ? pointsFor(t, slot, new Date(r.created_at)).points : 0;
     const when = ilDate(new Date(r.created_at)) === today ? tx('היום') : ilDate(new Date(r.created_at));
-    return `<div class="card recent" style="margin-bottom:8px;padding:8px 12px">${avatar(who, 40)}
+    recRows.push({ r, t, who, pts, url: urls[r.photo_path], when: `${ilTime(new Date(r.created_at))} ${when}` });
+    return `<div class="card recent" role="button" tabindex="0" data-ri="${i}" style="margin-bottom:8px;padding:8px 12px;cursor:pointer">${avatar(who, 40)}
       <div style="flex:1;min-width:0"><b style="font-size:16px">${esc(who?.name || 'מישהו')} ביצע/ה: ${esc(t?.title || '')}</b>
       <div class="note" style="text-align:start;margin:0"><span dir="ltr">${ilTime(new Date(r.created_at))}</span> ${when}${r.body ? ' · ' + esc(r.body) : ''} · <span class="pts" dir="ltr">+${pts}</span></div></div>
       ${urls[r.photo_path] ? `<img class="th" loading="lazy" decoding="async" src="${urls[r.photo_path]}" alt="">` : ''}</div>`;
   }).join('');
+  /* לחיצה על דיווח: כרטיס גדול כמו בהיסטוריה */
+  const openRecent = el => {
+    const x = recRows[+el.dataset.ri]; if (!x) return;
+    pc.innerHTML = `<button type="button" class="modal-x" id="px" aria-label="סגירה">${icon('x', 22)}</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${avatar(x.who, 44)}
+        <div><b style="font-size:19px">${esc(x.who?.name || 'מישהו')}</b><div class="note" style="margin:0;text-align:start"><span data-user>${esc(x.t?.title || '')}</span> · <span dir="ltr">${esc(x.when)}</span> · <span class="pts" dir="ltr">+${x.pts}</span></div></div></div>
+      ${x.url ? `<img class="zoom" src="${x.url}" alt="תמונת הדיווח">` : '<p class="empty">אין תמונה לדיווח הזה</p>'}
+      ${x.r.body ? `<div class="card" data-user style="margin-top:10px;background:var(--bg)">${esc(x.r.body)}</div>` : ''}
+      <a class="btn secondary" href="history.html" style="width:100%;margin-top:12px;text-decoration:none">להיסטוריה המלאה</a>`;
+    pm.classList.remove('hidden');
+    pc.querySelector('#px').onclick = () => pm.classList.add('hidden');
+  };
+  rEl.addEventListener('click', e => { const el = e.target.closest('.recent[data-ri]'); if (el) openRecent(el); });
+  rEl.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const el = e.target.closest('.recent[data-ri]'); if (el) { e.preventDefault(); openRecent(el); } });
 }
 
 /* --- הודעות: תג שלא נקראו, רשימה ושורת כתיבה --- */
